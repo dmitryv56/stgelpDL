@@ -133,9 +133,69 @@ def chart_predict(dict_predict, n_predict, cp, ds, title, Y_label ):
     return
 
 
+"""
+Prints the table of forecasts where the columns are actual model names and rows are forecasted values at t+1, t+2,...
 
+"""
+
+def tbl_predict(dict_predict, n_predict,cp, ds, title):
+    """
+
+    :param dict_predict: the dictionary with key is actual model name and value is a vector of predicted values, i.e.
+                         {<act/model name>:<predict array>, <act.model name>: <predict array>, ... }
+    :param n_predict: number of predicts. There is a length of predict array in dict_predict
+    :param cp:  -ControlPlane object
+    :param ds:  - dataset object
+    :param title: - title, i.e. "Imbalance forecasting"
+    :return:
+    """
+
+    n_row = n_predict
+    n_col = len(dict_predict)
+    head_list = []
+    atemp = np.zeros((n_row, n_col), dtype=np.float32)
+    i = j = 0
+    for k, v in dict_predict.items():
+        head_list.append(k)
+        i = 0
+        for elem in range(len(v)):
+            atemp[i][j] = v[i]
+            i += 1
+        j += 1
+    #   print
+
+    ds.predict_date = None                              # set predict date on the last sample into dataset
+    dt=ds.predict_date + timedelta(minutes=cp.discret)  # first predict date/time
+    date_time = dt.strftime("%d-%m-%Y:%H-%M")
+
+    print(str(title).center(80))
+
+    if cp.fp is not None:
+        cp.fp.write('\n')
+        cp.fp.write(str(title).center(80))
+        cp.fp.write('\n')
+        cp.fp.write("Date Time".ljust(18))
+        print("Date Time".ljust(18))
+        for elem in range(len(head_list)):
+            cp.fp.write(head_list[elem].center(18))
+            print(head_list[elem].center(18))
+        cp.fp.write('\n')
+
+        for i in range(atemp.shape[0]):
+            cp.fp.write(date_time.ljust(18))
+            print(date_time.ljust(18))
+            for j in range(atemp.shape[1]):
+                cp.fp.write("{0:18.3f}".format(atemp[i][j]))
+                print("{0:18.3f}".format(atemp[i][j]))
+            cp.fp.write('\n')
+            dt = dt + timedelta(minutes=cp.discret)
+            date_time = dt.strftime("%d-%m-%Y:%H-%M")
 
     return
+
+
+
+
 
 
 

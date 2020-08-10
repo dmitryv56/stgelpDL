@@ -1,32 +1,27 @@
 #! /usr/bin/python3
-import sys
-from predictor.control import controlPlane
-from predictor.dataset import dataset
-from predictor.NNmodel import MLP, CNN, LSTM
+
 import copy
-import matplotlib.pyplot as plt
-import numpy as np
-from predictor.api import show_autocorr, chart_MAE, chart_MSE,  prepareDataset, d_models_assembly, fit_models
-from predictor.api import save_modeles_in_repository, deserialize_lst_trained_models, get_list_trained_models
-from predictor.api import predict_model, chart_predict
-from predictor.utility import msg2log
-from pathlib import Path
 
-
+from predictor.api import d_models_assembly, fit_models, save_modeles_in_repository,  get_list_trained_models
+from predictor.api import predict_model, chart_predict, tbl_predict
 
 def drive_auto(cp, ds):
     pass
 
-
+"""
+1.check list of modeles
+2.create models from template
+3.update model parameters (n_steps)
+4.compile models
+5.train modeles 
+6. save modeles 
+"""
 def drive_train(cp, ds):
-    pass
     """
-    1.check list of modeles
-    2.create models from template
-    3.update model parameters (n_steps)
-    4.compile models
-    5.train modeles 
-    6. save modeles 
+
+    :param cp:  ControlPlane object
+    :param ds:  dataset object
+    :return:
     """
     d_models = {}
 
@@ -54,13 +49,21 @@ def drive_train(cp, ds):
     return
 
 
+"""
+1. check if model exists
+2. check if history for forecat exists (dataset)
+3. load models
+4. predict
+5. predict analysis
 
+"""
 def drive_predict(cp, ds):
-    #check if model exists
-    #check if history for forecat exists (dataset)
-    # load models
-    # predict
-    # predict analysis
+    """
+
+    :param cp: ControlPlane object
+    :param ds: dataset object
+    :return:
+    """
 
     ds.data_for_predict = cp.n_steps
     ds.predict_date = None
@@ -73,11 +76,9 @@ def drive_predict(cp, ds):
 
     chart_predict(dict_predict, n_predict, cp, ds, "{} forecasting".format(cp.rcpower_dset), cp.rcpower_dset)
 
+    tbl_predict(dict_predict, n_predict, cp, ds, "{} Predict".format(cp.rcpower_dset))
 
     return
-
-
-
 
 def drive_control(cp, ds):
     pass
