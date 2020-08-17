@@ -2,15 +2,13 @@
 
 
 import pandas as pd
-import numpy as np
 from datetime import timedelta
-import datetime as dt
 import copy
 
 from predictor.utility import tsBoundaries2log, tsSubset2log, dataset_properties2log
-from predictor.api import  get_scaler4train, scale_sequence, TimeSeries2SupervisedLearningData
+from predictor.api import get_scaler4train, scale_sequence, TimeSeries2SupervisedLearningData
 
-class dataset():
+class Dataset():
 
     df       = None      # pandas DataFrame
     df_train = None

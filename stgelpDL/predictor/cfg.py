@@ -62,7 +62,10 @@ else:
     PATH_REPOSITORY = "f:\\model_Repository"
 
 ALL_MODELS = {'MLP':[(0, "mlp_1"), (1,"mlp_2")], 'CNN':[(2,'univar_cnn')],\
-              'LSTM':[(3,'vanilla_lstm'),(4,'stacked_lstm'), (5,'bidir_lstm')]}
+              'LSTM':[(3,'vanilla_lstm'),(4,'stacked_lstm'), (5,'bidir_lstm')],
+                'tsARIMA':[(6,'seasonal_arima'),(7,'best_arima')]}
+
+# ALL_MODELS = {'tsARIMA':[(6,'seasonal_arima'),(7,'best_arima')]}
 
 #training model
 EPOCHS     = 100
@@ -79,4 +82,11 @@ POOL_SIZE      = 2
 #MLP model
 HIDDEN_NEYRONS = 16
 DROPOUT        = 0.2
+
+#ARIMA
+SEASONALY_PERIOD = 6  # hour season , 144 for daily season
+PREDICT_LAG      = 20
+MAX_P            = 5
+MAX_Q            = 5
+MAX_D            = 3
 

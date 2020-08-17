@@ -9,30 +9,31 @@ from pathlib import Path
 
 from tensorflow import random
 
-from predictor.dataset import dataset
+from predictor.dataset import Dataset
 
 from predictor.cfg import AUTO_PATH, TRAIN_PATH, PREDICT_PATH, CONTROL_PATH, MODES, ACTUAL_MODE
 from predictor.cfg import MAGIC_SEED, CSV_PATH, DT_DSET, RCPOWER_DSET, DISCRET
 from predictor.cfg import TEST_CUT_OFF, VAL_CUT_OFF, LOG_FILE_NAME, STOP_ON_CHART_SHOW, PATH_REPOSITORY, ALL_MODELS
 from predictor.cfg import EPOCHS, N_STEPS, N_FEATURES, UNITS, FILTERS, KERNEL_SIZE, POOL_SIZE, HIDDEN_NEYRONS, DROPOUT
-
-from predictor.control import controlPlane
+from predictor.cfg import SEASONALY_PERIOD, PREDICT_LAG, MAX_P, MAX_Q, MAX_D
+from predictor.control import ControlPlane
 from predictor.api import prepareDataset
 
 from predictor.utility import msg2log
-
 
 """
 This Control Plane function creates a dataset and runs specified plane functions (Train plane or Predict Plane)
 """
 def drive_STGELPDL(cp):
 
-    ds = dataset(cp.csv_path, cp.dt_dset, cp.rcpower_dset, cp.discret, cp.fc)  # create dataset
+    ds = Dataset(cp.csv_path, cp.dt_dset, cp.rcpower_dset, cp.discret, cp.fc)  # create dataset
     prepareDataset(cp, ds, cp.fc)
+
+    cp.ts_analysis(ds)
 
     cp.modes[cp.actual_mode](cp, ds)
 
-    pass
+    return
 
 
 def main(argc, argv):
@@ -59,7 +60,7 @@ def main(argc, argv):
     fp = open(file_for_predict_logging, 'w+')
     fc = open(file_for_control_logging, 'w+')
 
-    cp = controlPlane()
+    cp = ControlPlane()
 
     cp.modes = MODES
     cp.actual_mode = ACTUAL_MODE
@@ -93,25 +94,35 @@ def main(argc, argv):
     cp.fp = fp
     cp.ft = ft
 
+    cp.seasonaly_period = SEASONALY_PERIOD
+    cp.predict_lag = PREDICT_LAG
+    cp.max_p = MAX_P
+    cp.max_q = MAX_Q
+    cp.max_d = MAX_D
+
      # for debug
     # cp.actual_mode = cp.predict_path
 
 
-    title = "Short Term Green Energy Load Predictor {} started at ".format(cp.actual_mode)
+    title1 = "Short Term Green Energy Load Predictor {} ".format(cp.actual_mode)
+    title2 = "started at"
     msg = "{}\n".format(date_time)
-    msg2log(title, msg, fc)
-    msg2log(title, msg, fp)
-    msg2log(title, msg, ft)
+    msg2log("{} (Control Plane) {} ".format(title1, title2), msg, fc)
+    msg2log("{} (Train Plane) {} ".format(title1, title2), msg, ft)
+    msg2log("{} (Predict Plane) {} ".format(title1, title2), msg, fp)
+
 
     drive_STGELPDL(cp)
 
-    title = "Short Term Green Energy Load Predictor finised at "
+    title1 = "Short Term Green Energy Load Predictor "
+    title2 = " finished at "
     now = datetime.now()
     date_time = now.strftime("%d_%m_%y__%H_%M_%S")
     msg = "{}\n".format(date_time)
-    msg2log(title, msg, fc)
-    msg2log(title, msg, fp)
-    msg2log(title, msg, ft)
+    msg2log("{} Control Plane {}".format(title1,title2), msg, fc)
+    msg2log("{} Train Plane {}".format(title1, title2), msg, ft)
+    msg2log("{} Predict Plane {}".format(title1,title2), msg, fp)
+
 
     fc.close()
     fp.close()

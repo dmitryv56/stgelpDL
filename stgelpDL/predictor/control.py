@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 import copy
+from predictor.Statmodel import tsARIMA
 
 
-class controlPlane():
-    pass
+class ControlPlane():
+
     _csv_path = None
     _modes = None
     _actual_mode = None
@@ -32,6 +33,12 @@ class controlPlane():
     _folder_control_log = None
     _folder_train_log = None
     _folder_predict_log = None
+    _seasonaly_period = 144
+    _predict_lag      = 20
+    _max_p            = 5
+    _max_q            = 5
+    _max_d            = 5
+
 
     def __init__(self):
         # log file handlers
@@ -264,10 +271,57 @@ class controlPlane():
 
     folder_predict_log = property(get_folder_predict_log, set_folder_predict_log)
 
+    def set_seasonaly_period(self, val):
+        type(self)._seasonaly_period = val
 
+    def get_seasonaly_period(self):
+        return type(self)._seasonaly_period
 
+    seasonaly_period = property(get_seasonaly_period, set_seasonaly_period)
 
+    def set_predict_lag(self, val):
+        type(self)._predict_lag = val
 
+    def get_predict_lag(self):
+        return type(self)._predict_lag
 
+    predict_lag = property(get_predict_lag, set_predict_lag)
 
+    def set_max_p(self, val):
+        type(self)._max_p = val
 
+    def get_max_p(self):
+        return type(self)._max_p
+
+    max_p = property(get_max_p, set_max_p)
+
+    def set_max_q(self, val):
+        type(self)._max_q = val
+
+    def get_max_q(self):
+        return type(self)._max_q
+
+    max_q = property(get_max_q, set_max_q)
+
+    def set_max_d(self, val):
+        type(self)._max_d = val
+
+    def get_max_d(self):
+        return type(self)._max_d
+
+    max_d = property(get_max_d, set_max_d)
+
+    """
+    Control Plane method for time series analysis
+  
+    """
+    def ts_analysis(self,ds ):
+        pass
+        arima = tsARIMA("control_arima", "tsARIMA", 32, 100, self.fc)
+        arima.param =(0, 0, 0, self.max_p, self.max_d, self.max_q, self.predict_lag, self._seasonaly_period, self.discret, ds.df[self.rcpower_dset].values)
+        arima.path2modelrepository = self.path_repository
+        arima.timeseries_name = self.rcpower_dset
+        arima.control_arima()
+        arima.ts_analysis()
+
+        return

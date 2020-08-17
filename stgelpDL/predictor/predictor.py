@@ -3,9 +3,6 @@ import os
 import sys
 from pathlib import Path
 from tensorflow.keras.models import Sequential, save_model, load_model
-from tensorflow.keras.metrics import MeanSquaredError
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.metrics import mean_squared_error
 from pickle import dump, load
 
 
@@ -109,8 +106,10 @@ class Predictor():
             currDir = Path(model_folder)
             if not sys.platform == "win32":
             # WindowsPath is not iterable
-                for currFile in currDir:
-                    self.f.write("  {}\n".format(currFile))
+            #     for currFile in currDir:
+            #         self.f.write("  {}\n".format(currFile))
+                pass
+
         return
     """
     TODO

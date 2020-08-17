@@ -1,7 +1,6 @@
 #! /usr/bin/python3
 
 import copy
-
 from predictor.api import d_models_assembly, fit_models, save_modeles_in_repository,  get_list_trained_models
 from predictor.api import predict_model, chart_predict, tbl_predict
 
@@ -35,7 +34,7 @@ def drive_train(cp, ds):
     print(d_models)
 
     if cp.fc is not None:
-        cp.fc.write("\n   Actual Neuron Net Models\n")
+        cp.fc.write("\n   Actual Neuron Net and Statistical Time Series Models\n")
         for k, v in d_models.items():
             cp.fc.write("{} - > {}\n".format(k, v))
 

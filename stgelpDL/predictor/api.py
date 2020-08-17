@@ -1,51 +1,50 @@
 #!/usr/bin/python3
 
-import sys
-import numpy as np
-import pandas as pd
-from sklearn.preprocessing import MinMaxScaler
-from tensorflow.keras.models import Sequential, save_model, load_model
 
+import numpy as np
+from sklearn.preprocessing import MinMaxScaler
+
+from predictor.Statmodel import tsARIMA
 from predictor.NNmodel import MLP, LSTM, CNN
-from predictor.predictor import Predictor
+
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from pickle import dump, load
 import copy
-import time
+
 from datetime import timedelta
 from predictor.utility import msg2log, chunkarray2log, svld2log, vector_logging, shift
 
 
-def chart_MAE(history, n_steps, logfolder, stop_on_chart_show=True):
+def chart_MAE(name_model, name_time_series, history, n_steps, logfolder, stop_on_chart_show=True):
     # Plot history: MAE
     plt.close("all")
     plt.plot(history.history['loss'], label='MAE (training data)')
     plt.plot(history.history['val_loss'], label='MAE (validation data)')
-    plt.title('Mean Absolute Error (Time Steps = {}'.format(n_steps))
+    plt.title('Mean Absolute Error {} {} (Time Steps = {})'.format(name_model, name_time_series, n_steps))
     plt.ylabel('MAE value')
     plt.xlabel('No. epoch')
     plt.legend(loc="upper left")
     plt.show(block=stop_on_chart_show)
     if logfolder is not None:
-        plt.savefig("{}/MAE_{}.png".format(logfolder, n_steps))
+        plt.savefig("{}/MAE_{}_{}_{}.png".format(logfolder, name_model, name_time_series, n_steps))
     return
 
 
-def chart_MSE(history, n_steps, logfolder, stop_on_chart_show=True):
+def chart_MSE(name_model, name_time_series, history, n_steps, logfolder, stop_on_chart_show=True):
     # Plot history: MSE
     plt.close("all")
     plt.plot(history.history['mean_squared_error'], label='MSE (training data)')
     plt.plot(history.history['val_mean_squared_error'], label='MSE (validation data)')
-    plt.title('MSE (Time Steps = {}'.format(n_steps))
+    plt.title('MSE {} {} (Time Steps = {})'.format(name_model, name_time_series,n_steps))
     plt.ylabel('MSE value')
     plt.xlabel('No. epoch')
     plt.legend(loc="upper left")
     plt.show(block=stop_on_chart_show)
     if logfolder is not None:
-        plt.savefig("{}/MSE_{}.png".format(logfolder, n_steps))
+        plt.savefig("{}/MSE_{}.png".format(logfolder, name_model, name_time_series, n_steps))
     return
 
 
@@ -326,6 +325,7 @@ Now are exists:
     MLP -> mlp_1, mlp_2
     CNN -> univar_cnn
     LSTM -> vanilla_LSTM, stacked_LASM, bdir_LSTM
+    tsARIMA -> seasonal_arima, besr_arima
 
 """
 def d_models_assembly(d_models, keyType, valueList, cp, ds):
@@ -349,20 +349,39 @@ def d_models_assembly(d_models, keyType, valueList, cp, ds):
         elif keyType == "CNN":
             curr_model = CNN(name_model, keyType, cp.n_steps, cp.epochs, cp.fc)
             curr_model.param = (cp.n_steps, cp.n_features)
+        elif keyType == "tsARIMA":
+            curr_model = tsARIMA(name_model, keyType, cp.n_steps, cp.epochs, cp.fc)
+            if name_model == 'seasonal_arima':
+                curr_model.param =(1, 1, 1,  1, 1, 1, cp.seasonaly_period, cp.predict_lag, cp.discret * 60, \
+                                   ds.df[cp.rcpower_dset].values)
+
+            elif name_model == 'best_arima':
+                curr_model.param =(1, 1, 1,  cp.max_p, cp.max_q, cp.max_d, cp.predict_lag, cp.discret * 60, \
+                                   ds.df[cp.rcpower_dset].values)
+
+            else:
+                smsg = "Undefined name of ARIMA {}\n It is not supported by STGELDP!".format(keyType)
+                print(smsg)
+                if cp.fc is not None:
+                    cp.fc.write(smsg)
+                return
         else:
-            smsg = "Undefined type of Neuron Net {}\n It is not supported by STGELDP!".format(keyType)
+            smsg = "Undefined type of Neuron Net or ARIMA {}\n It is not supported by STGELDP!".format(keyType)
             print(smsg)
             if cp.fc is not None:
                 cp.fc.write(smsg)
             return
-        funcname = getattr(curr_model, name_model)
-
-        curr_model.set_model_from_template(funcname)
         curr_model.path2modelrepository = cp.path_repository
         curr_model.timeseries_name = cp.rcpower_dset
+        if keyType != "tsARIMA":   # no scaler for ARIMA
+            curr_model.scaler = ds.scaler
+
+        funcname = getattr(curr_model, name_model)
+        curr_model.set_model_from_template(funcname)
+
         print (str(curr_model))
         msg2log(d_models_assembly, str(curr_model), cp.ft)
-        curr_model.scaler = ds.scaler
+
         d_models[index_model] = curr_model
     return
 
@@ -385,8 +404,12 @@ def fit_models(d_models,  cp, ds):
         msg2log(fit_models.__name__, "\n\n {} model  fitting\n".format(curr_model.nameModel), cp.ft)
         history = curr_model.fit_model()
 
-        chart_MAE(history, cp.n_steps, cp.folder_train_log, cp.stop_on_chart_show)
-        chart_MSE(history, cp.n_steps, cp.folder_train_log, cp.stop_on_chart_show)
+        if curr_model.typeModel == "CNN" or curr_model.typeModel == "LSTM" or curr_model.typeModel == "MLP":
+
+            chart_MAE(curr_model.nameModel, cp.rcpower_dset, history, cp.n_steps, cp.folder_train_log, cp.stop_on_chart_show)
+            chart_MSE(curr_model.nameModel, cp.rcpower_dset, history, cp.n_steps, cp.folder_train_log, cp.stop_on_chart_show)
+        elif curr_model.typeModel == "tsARIMA":
+            curr_model.fitted_model_logging()
 
         histories[k] = history
 
@@ -440,7 +463,10 @@ def save_modeles_in_repository(d_models,  cp):
 
         filepath_to_save_model = Path(curr_model.path2modelrepository) / curr_model.timeseries_name / curr_model.typeModel/curr_model.nameModel
 
-        curr_model.save_model_wrapper()
+        if curr_model.typeModel == "CNN" or curr_model.typeModel=="LSTM" or curr_model.typeModel == "MLP":
+            curr_model.save_model_wrapper()
+        elif curr_model.typeModel == "tsARIMA":
+            curr_model.save_model()
 
         title = "Fitted model {} : {} saved".format(curr_model.typeModel, curr_model.nameModel)
         msg = "Path to repository is {}".format(filepath_to_save_model)
@@ -581,10 +607,10 @@ def autocorr(x, lags, f=None):
     return np.array(corr)
 
 
-def autocorr_firstDiff(x, lags, f=None):
+def autocorr_firstDiff(x, lags,  f=None):
     x_fd = np.array([])
     for i in range(len(x) - 1):
-        x_fd = np.append(x_fd, x[i] - x[i + 1])
+        x_fd = np.append(x_fd, x[i+1] - x[i])
     chunkarray2log("First Diff. Time Series ...", x_fd[:16], 8, f)
     mean = np.mean(x_fd)
     var = np.var(x_fd)
@@ -598,7 +624,7 @@ def autocorr_firstDiff(x, lags, f=None):
 def autocorr_secondDiff(x, lags, f=None):
     x_sd = np.array([])
     for i in range(len(x) - 2):
-        x_sd = np.append(x_sd, x[i] - 2 * x[i + 1] + x[i + 2])
+        x_sd = np.append(x_sd, x[i+2] - 2 * x[i +1] + x[i])
     chunkarray2log("Second Diff. Time Series ...", x_sd[:16], 8, f)
     mean = np.mean(x_sd)
     var = np.var(x_sd)
@@ -606,6 +632,19 @@ def autocorr_secondDiff(x, lags, f=None):
 
     corr = [1.0 if l == 0 else np.sum(xp[l:] * xp[:-l]) / (len(x_sd) * var) for l in lags]
     chunkarray2log("Second Diff. Autocorrelation ...", corr[:16], 8, f)
+    return np.array(corr)
+
+def autocorr_firstDiffSeasonDiff(x, lags, f=None):
+    x_sd = np.array([])
+    for i in range(len(x) - 144 -1):
+        x_sd = np.append(x_sd, x[i+145] -  x[i + 144] - x[i + 1] +x[i])
+    chunkarray2log("(First Diff. * Season Diff) Time Series ...", x_sd[:16], 8, f)
+    mean = np.mean(x_sd)
+    var = np.var(x_sd)
+    xp = x_sd - mean
+
+    corr = [1.0 if l == 0 else np.sum(xp[l:] * xp[:-l]) / (len(x_sd) * var) for l in lags]
+    chunkarray2log("(First Diff. * Season Diff) Autocorrelation ...", corr[:16], 8, f)
     return np.array(corr)
 
 
@@ -616,9 +655,9 @@ def show_autocorr(y, lag_max, title, logfolder, stop_on_chart_show=True, f=None)
     fig, ax = plt.subplots()
     fig.suptitle(title, fontsize=16)
 
-    for funcii, labelii in zip([autocorr, autocorr_firstDiff, autocorr_secondDiff], \
+    for funcii, labelii in zip([autocorr, autocorr_firstDiff, autocorr_secondDiff,autocorr_firstDiffSeasonDiff], \
                                ['Time Series Autocorrelation', 'First Diff. Autocorrelation',
-                                'Second Diff. Autocorrelation']):
+                                'Second Diff. Autocorrelation','(First Diff * Season Diff) Autokorrrelation ']):
         cii = funcii(y, lags, f)
         print(labelii)
         print(cii)

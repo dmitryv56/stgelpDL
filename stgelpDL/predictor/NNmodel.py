@@ -1,20 +1,14 @@
 #!/usr/bin/python3
 
 import tensorflow as tf
-from tensorflow import keras
 from tensorflow.keras import layers
-from tensorflow.keras.utils import Sequence
-
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.metrics import MeanSquaredError
-from tensorflow.keras.layers import LSTM
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import Bidirectional,TimeDistributed,Flatten
 
 from tensorflow.keras.layers import Conv1D
 from tensorflow.keras.layers import MaxPooling1D
 from tensorflow.keras import metrics, models
-from tensorflow.keras.models import  save_model, load_model
 from predictor.predictor import Predictor
 from predictor.utility import msg2log
 import copy
