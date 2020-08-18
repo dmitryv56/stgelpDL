@@ -19,11 +19,12 @@ from predictor.cfg import SEASONALY_PERIOD, PREDICT_LAG, MAX_P, MAX_Q, MAX_D
 from predictor.control import ControlPlane
 from predictor.api import prepareDataset
 
-from predictor.utility import msg2log
+from predictor.utility import msg2log, exec_time
 
 """
 This Control Plane function creates a dataset and runs specified plane functions (Train plane or Predict Plane)
 """
+@exec_time
 def drive_STGELPDL(cp):
 
     ds = Dataset(cp.csv_path, cp.dt_dset, cp.rcpower_dset, cp.discret, cp.fc)  # create dataset
@@ -41,6 +42,9 @@ def main(argc, argv):
 
     now = datetime.now()
     date_time = now.strftime("%d_%m_%y__%H_%M_%S")
+
+    with open("execution_time.log", 'w') as fel:
+        fel.write("Time execution logging started at {}\n\n".format(datetime.now().strftime("%d %m %y %H:%M:%S")))
 
     dir_path = os.path.dirname(os.path.realpath(__file__))
     folder_for_train_logging = Path(dir_path) / "Logs" / TRAIN_PATH / date_time
@@ -101,6 +105,7 @@ def main(argc, argv):
     cp.max_d = MAX_D
 
      # for debug
+    # cp.actual_mode = cp.train_path
     # cp.actual_mode = cp.predict_path
 
 
@@ -127,6 +132,10 @@ def main(argc, argv):
     fc.close()
     fp.close()
     ft.close()
+
+
+    with open("execution_time.log", 'a') as fel:
+        fel.write("Time execution logging finished at {}\n\n".format(datetime.now().strftime("%d %m %y %H:%M:%S")))
 
     return
 

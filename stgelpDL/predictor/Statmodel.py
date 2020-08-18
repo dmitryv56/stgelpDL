@@ -9,6 +9,7 @@ import copy
 from pickle import dump, load
 from pathlib import Path
 import sys
+from predictor.utility import exec_time
 
 class Statmodel(Predictor):
     _param = ()
@@ -51,6 +52,7 @@ class Statmodel(Predictor):
 
         return
 
+    @exec_time
     def fit_model(self):
         history =[]
         pass
@@ -73,23 +75,32 @@ class Statmodel(Predictor):
 
         return history
 
+    @exec_time
+    def predict_n_steps(self, n_predict_number):
+        y=self.model.predict(n_predict_number,exogenous=None)
+
+        return y
+
+    def load_model_wrapper(self):
+        self.load_model()
+        return True
 
     def load_model(self):
 
         model_folder = Path(self.path2modelrepository) / self.timeseries_name / self.typeModel / self.nameModel
         Path(model_folder).mkdir(parents=True, exist_ok=True)
         arima_saved_file = Path(model_folder) / "arima.pkl"
-        with open(model_folder, 'rb') as pkl:
-            load(self.model, pkl)
+        with open(arima_saved_file, 'rb') as pkl:
+            self.model = load( pkl)
 
         if self.f is not None:
             self.f.write("Model loaded from {} ".format(model_folder))
             currDir = Path(model_folder)
 
-            if not sys.platform == "win32":
-                # WindowsPath is not iterable
-                for currFile in currDir:
-                    self.f.write("  {}\n".format(currFile))
+            # if not sys.platform == "win32":
+            #     # WindowsPath is not iterable
+            #     for currFile in currDir:
+            #         self.f.write("  {}\n".format(currFile))
         return
 
 
@@ -219,7 +230,7 @@ class tsARIMA(Statmodel):
         return "{} TimeSeries\nARIMA ({},{},{}) Seasonal ARM ({}{},{}) with period ={}".format( \
             self.timeseries_name, self.ar_order,self.d_order, self._ma_order, self.AR_order, self.D_order, \
             self.MA_order, self.period)
-
+    @exec_time
     def seasonal_arima(self): #:
         title=self.__str__()
         # rcpower = ds.df[cp.rcpower_dset].values
@@ -236,6 +247,7 @@ class tsARIMA(Statmodel):
 
         return model
 
+    @exec_time
     def best_arima(self): #:
         title=self.__str__()
         # rcpower = ds.df[cp.rcpower_dset].values
@@ -245,6 +257,7 @@ class tsARIMA(Statmodel):
 
         return None
 
+    @exec_time
     def control_arima(self): #:
         title=self.__str__()
         # rcpower = ds.df[cp.rcpower_dset].values
@@ -295,9 +308,7 @@ class tsARIMA(Statmodel):
 
         return
 
-
-
-
+    @exec_time
     def ts_analysis(self):
 
         pass

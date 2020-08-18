@@ -1,6 +1,7 @@
 #!/usr/bin/python3
-import sys
+
 import numpy as np
+from time import time, perf_counter
 """
 print to log
 """
@@ -178,3 +179,26 @@ def shift(arr, num, fill_value=np.nan):
     else:
         shift_arr[:] = arr
     return shift_arr
+
+"""
+Decorator exec_time
+"""
+def exec_time(function):
+    def timed(*args,**kw):
+        time_start = perf_counter()
+        ret_value=function(*args,**kw)
+        time_end = perf_counter()
+
+        execution_time = time_end - time_start
+
+        arguments =", ".join([str(arg) for arg in args] + ["{}={}".format(k, kw[k]) for k in kw])
+
+        smsg ="  {:.2f} sec  for {}({})\n".format(  execution_time , function.__name__, arguments)
+        print(smsg)
+
+        with open("execution_time.log",'a') as fel:
+            fel.write(smsg)
+
+        return ret_value
+    return timed
+

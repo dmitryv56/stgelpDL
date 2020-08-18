@@ -10,7 +10,7 @@ from tensorflow.keras.layers import Conv1D
 from tensorflow.keras.layers import MaxPooling1D
 from tensorflow.keras import metrics, models
 from predictor.predictor import Predictor
-from predictor.utility import msg2log
+from predictor.utility import msg2log,exec_time
 import copy
 
 
@@ -52,6 +52,7 @@ class NNmodel(Predictor):
 
         return
 
+    @exec_time
     def set_model_from_saved(self, path_2_saved_model):
 
         old_model = models.load_model(path_2_saved_model)
@@ -62,6 +63,7 @@ class NNmodel(Predictor):
         self.model = old_model
         return old_model
 
+    @exec_time
     def updOneLeInSavedModel(self, old_model, layer_number, key, value):
         pass
 
@@ -100,6 +102,7 @@ class NNmodel(Predictor):
     updates key:value in the layer 'config' dictionary
     """
 
+    @exec_time
     def updConfigSavedModel(self, old_model,
                             list_updates):  # [(layer_number, key, value),(layer_number, key, value)...]
         """
@@ -151,6 +154,7 @@ class NNmodel(Predictor):
 
         return
 
+    @exec_time
     def fit_model(self):
         X, y, X_val, y_val, n_steps, n_features, n_epochs, logfolder, f = self.param_fit
         history = self.model.fit(X, y, epochs=n_epochs, verbose=0, validation_data=(X_val, y_val), )

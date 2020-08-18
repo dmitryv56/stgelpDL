@@ -5,7 +5,7 @@ import pandas as pd
 from datetime import timedelta
 import copy
 
-from predictor.utility import tsBoundaries2log, tsSubset2log, dataset_properties2log
+from predictor.utility import tsBoundaries2log, tsSubset2log, dataset_properties2log,exec_time
 from predictor.api import get_scaler4train, scale_sequence, TimeSeries2SupervisedLearningData
 
 class Dataset():
@@ -58,6 +58,7 @@ class Dataset():
 
     predict_date = property(get_predict_date, set_predict_date)
 
+    @exec_time
     def readDataSet(self ):
         """
 
@@ -106,6 +107,8 @@ class Dataset():
     """
     This method is used for split dataset on 2 (or 3) subdatasets : training, evaliation (and testing)
     """
+
+    @exec_time
     def set_train_val_test_sequence(self):
         """
 
@@ -145,6 +148,7 @@ class Dataset():
 
         return  datePredict, actvalPredict
 
+    @exec_time
     def dset2arrays(self, n_steps, n_features, n_epochs):
 
 

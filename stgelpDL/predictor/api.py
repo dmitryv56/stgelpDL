@@ -15,7 +15,7 @@ from pickle import dump, load
 import copy
 
 from datetime import timedelta
-from predictor.utility import msg2log, chunkarray2log, svld2log, vector_logging, shift
+from predictor.utility import msg2log, chunkarray2log, svld2log, vector_logging, shift,exec_time
 
 
 def chart_MAE(name_model, name_time_series, history, n_steps, logfolder, stop_on_chart_show=True):
@@ -115,7 +115,7 @@ def chart_predict(dict_predict, n_predict, cp, ds, title, Y_label ):
     #
     # plt.plot(times, array_act, label='Y act')
 
-    plt.title('{} (Forecastiong on   {} samples)'.format(title, n_predict))
+    plt.title('{} (Short Term Predict on {} steps)'.format(title, n_predict))
 
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M'))
     plt.gca().xaxis.set_major_locator(mdates.MinuteLocator(interval=cp.discret))
@@ -127,7 +127,7 @@ def chart_predict(dict_predict, n_predict, cp, ds, title, Y_label ):
     plt.show(block=cp.stop_on_chart_show)
     title.replace(" ", "_")
     if cp.folder_predict_log is not None:
-        plt.savefig("{}/{}-{}_samples.png".format(cp.folder_predict_log, title, n_predict))
+        plt.savefig("{}/{}-{}_steps.png".format(cp.folder_predict_log, title, n_predict))
 
     return
 
@@ -328,6 +328,7 @@ Now are exists:
     tsARIMA -> seasonal_arima, besr_arima
 
 """
+@exec_time
 def d_models_assembly(d_models, keyType, valueList, cp, ds):
     """
 
@@ -385,7 +386,7 @@ def d_models_assembly(d_models, keyType, valueList, cp, ds):
         d_models[index_model] = curr_model
     return
 
-
+@exec_time
 def fit_models(d_models,  cp, ds):
     pass
     histories = {}
@@ -544,11 +545,12 @@ From dictionary dict_model with items <act. model>:(<type  model or class >, <pa
 instantiated and predict processed.
 The type model belongs to 'LSTM','CNN','MLP'
 """
+@exec_time
 def predict_model(dict_model,  cp, ds, n_predict = 1):
 
     dict_predict= {}
     vec_4_predict = copy.copy(ds.data_for_predict)
-    vector_logging("The tail of {} time series for short temp prediction\n".format(cp.rcpower_dset), vec_4_predict, 8, cp.fp)
+    vector_logging("The tail of {} time series for short term prediction\n".format(cp.rcpower_dset), vec_4_predict, 8, cp.fp)
     pass
     for key, value in dict_model.items():
         (model_type, path_model_name) = value
@@ -558,14 +560,37 @@ def predict_model(dict_model,  cp, ds, n_predict = 1):
             curr_model = CNN(  key, model_type, cp.n_steps, cp.epochs, cp.fp)
         elif model_type == "LSTM":
             curr_model = LSTM( key, model_type, cp.n_steps, cp.epochs, cp.fp)
+        elif model_type == "tsARIMA":
+            curr_model = tsARIMA(key, model_type, cp.n_steps, cp.epochs, cp.fc)
+            if key == 'seasonal_arima':
+                curr_model.param = (1, 1, 1, 1, 1, 1, cp.seasonaly_period, cp.predict_lag, cp.discret * 60, \
+                                    ds.df[cp.rcpower_dset].values)
+
+            elif key == 'best_arima':
+                curr_model.param = (1, 1, 1, cp.max_p, cp.max_q, cp.max_d, cp.predict_lag, cp.discret * 60, \
+                                    ds.df[cp.rcpower_dset].values)
+
+            else:
+                smsg = "Undefined name of ARIMA {}\n It is not supported by STGELDP!".format(key)
+                print(smsg)
+                if cp.fc is not None:
+                    cp.fc.write(smsg)
+                return
         else:
+            smsg = "Undefined type of Neuron Net or ARIMA {}\n It is not supported by STGELDP!".format(key)
+            print(smsg)
+            if cp.fc is not None:
+                cp.fc.write(smsg)
             return
 
         curr_model.timeseries_name = cp.rcpower_dset
         curr_model.path2modelrepository = cp.path_repository
-        curr_model.scaler = ds.scaler
+        if model_type == "MLP" or model_type == "CNN" or model_type == "LSTM":
+            curr_model.scaler = ds.scaler
+
         print(str(curr_model))
         msg2log(predict_model.__name__, str(curr_model), cp.fp)
+
         status = curr_model.load_model_wrapper()
 
         y=np.zeros(n_predict)
@@ -575,18 +600,24 @@ def predict_model(dict_model,  cp, ds, n_predict = 1):
             vector_logging("After scaling\n", vec_4_predict_sc, 16, cp.fp)
         else:
             vec_4_predict_sc = copy.copy(vec_4_predict)
-        for k in range(n_predict):
-            y_sc =curr_model.predict_one_step(vec_4_predict_sc)
+        if model_type == "MLP" or  model_type == "CNN" or  model_type == "LSTM":
+            for k in range(n_predict):
+                y_sc =curr_model.predict_one_step(vec_4_predict_sc)
 
-            y_pred=y_sc
-            if curr_model.scaler is not None:
-                y_pred = curr_model.scaler.inverse_transform((y_sc))
-            y[ins_index]=y_pred
-            ins_index+=1
+                y_pred=y_sc
+                if curr_model.scaler is not None:
+                    y_pred = curr_model.scaler.inverse_transform((y_sc))
+                y[ins_index]=y_pred
+                ins_index+=1
 
-            vec_4_predict_sc = shift(vec_4_predict_sc, -1, y_sc)
-            # vector_logging("After shift\n", vec_4_predict_sc, 16, cp.fp)
-        vector_logging("{} Short termm forecasting\n".format(curr_model.nameModel), y, 4, cp.fp)
+                vec_4_predict_sc = shift(vec_4_predict_sc, -1, y_sc)
+                # vector_logging("After shift\n", vec_4_predict_sc, 16, cp.fp)
+        elif model_type == "tsARIMA":   # saved ARIMA models contain the time seies into. So in order to predict ,
+                                        # is need to pass the forcasting lag
+                                        #
+            y = curr_model.predict_n_steps( n_predict)
+
+        vector_logging("{} Short Term Forecasting\n".format(curr_model.nameModel), y, 4, cp.fp)
         dict_predict[curr_model.nameModel]=copy.copy(y)
 
     return dict_predict

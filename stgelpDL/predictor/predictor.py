@@ -28,7 +28,7 @@ class Predictor():
 
     def __str__(self):
         return 'id :' + str(self.get_id()) + ' model: ' + self.nameModel + "  type: " + self.typeModel + \
-               "\nmodel repository:" + self.path2modelrepository + "\time series :" + self.timeseries_name
+               "\nmodel repository: " + self.path2modelrepository + ": time series :" + self.timeseries_name
 
     # ============ setter/getter ==============================
     def get_id(self):

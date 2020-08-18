@@ -3,7 +3,9 @@
 import copy
 from predictor.api import d_models_assembly, fit_models, save_modeles_in_repository,  get_list_trained_models
 from predictor.api import predict_model, chart_predict, tbl_predict
+from predictor.utility import exec_time
 
+@exec_time
 def drive_auto(cp, ds):
     pass
 
@@ -15,13 +17,14 @@ def drive_auto(cp, ds):
 5.train modeles 
 6. save modeles 
 """
+@exec_time
 def drive_train(cp, ds):
     """
-
     :param cp:  ControlPlane object
     :param ds:  dataset object
     :return:
     """
+
     d_models = {}
 
     for keyType, valueList in cp.all_models.items():
@@ -56,6 +59,7 @@ def drive_train(cp, ds):
 5. predict analysis
 
 """
+@exec_time
 def drive_predict(cp, ds):
     """
 
@@ -73,7 +77,7 @@ def drive_predict(cp, ds):
     dict_predict = predict_model(dict_model, cp, ds, n_predict)
 
 
-    chart_predict(dict_predict, n_predict, cp, ds, "{} forecasting".format(cp.rcpower_dset), cp.rcpower_dset)
+    chart_predict(dict_predict, n_predict, cp, ds, "{} Predict".format(cp.rcpower_dset), cp.rcpower_dset)
 
     tbl_predict(dict_predict, n_predict, cp, ds, "{} Predict".format(cp.rcpower_dset))
 
