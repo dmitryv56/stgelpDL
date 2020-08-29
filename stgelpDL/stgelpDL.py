@@ -21,6 +21,9 @@ from predictor.api import prepareDataset
 
 from predictor.utility import msg2log, exec_time
 
+import  predictor.demandwidget as dw
+
+
 """
 This Control Plane function creates a dataset and runs specified plane functions (Train plane or Predict Plane)
 """
@@ -142,6 +145,28 @@ def main(argc, argv):
 
 
 if __name__ == "__main__":
+    with open("abc.log", 'w') as flog:
+        scaled_data=False
+        dwdg = dw.DemandWidget(scaled_data,"2020-08-26T00:00", "2020-08-29T18:00", "hour", None, None, flog)
+        dwdg.set_url()
+
+        print(dwdg.url)
+
+        requested_widget = dwdg.getDemandRT(None)
+        dwdg.plot_ts(os.getcwd(), False)
+        dwdg.autocorr_show(os.getcwd(), False)
+
+        scaled_data=True
+        dwdg_scaled = dw.DemandWidget(scaled_data, "2020-08-26T00:00", "2020-08-29T18:00", "hour", None, None, flog)
+        dwdg_scaled.url = dwdg.url
+
+        print(dwdg_scaled.url)
+
+        requested_widget = dwdg_scaled.getDemandRT(requested_widget)
+        dwdg_scaled.plot_ts(os.getcwd(), False)
+        dwdg_scaled.autocorr_show(os.getcwd(), False)
+
+    exit(0)
 
     random.set_seed(MAGIC_SEED)
     main(len(sys.argv), sys.argv)
