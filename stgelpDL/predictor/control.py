@@ -14,6 +14,7 @@ class ControlPlane():
     _control_path = None
     _dt_dset = "Date Time"
     _rcpower_dset = "Imbalance"
+    _rcpower_dst_auto = None
     _discret = 10
     _test_cut_off = None
     _val_cut_off = None
@@ -31,13 +32,22 @@ class ControlPlane():
     _hidden_neyrons = 16
     _dropout = 0.2
     _folder_control_log = None
-    _folder_train_log = None
+    _folder_train_log   = None
     _folder_predict_log = None
-    _seasonaly_period = 144
-    _predict_lag      = 20
-    _max_p            = 5
-    _max_q            = 5
-    _max_d            = 5
+    _folder_auto_log    = None
+    _seasonaly_period   = 144
+    _predict_lag        = 20
+    _max_p              = 5
+    _max_q              = 5
+    _max_d              = 5
+
+    _scaled_data_4_auto = False
+    _start_date_4_auto  = None
+    _end_data_4_auto    = None
+    _time_trunc_4_auto  = 'hour'
+    _geo_limit_4_auto   = None
+    _geo_ids_4_auto     = None
+    _last_time_auto     = None
 
 
     def __init__(self):
@@ -45,6 +55,8 @@ class ControlPlane():
         self.fc = None
         self.fp = None
         self.ft = None
+        self.fa = None
+        self.state = None
         pass
 
     def set_csv_path(self, val):
@@ -118,6 +130,14 @@ class ControlPlane():
         return type(self)._rcpower_dset
 
     rcpower_dset = property(get_rcpower_dset, set_rcpower_dset)
+
+    def set_rcpower_dset_auto(self, val):
+        type(self)._rcpower_dset_auto = copy.copy(val)
+
+    def get_rcpower_dset_auto(self):
+        return type(self)._rcpower_dset_auto
+
+    rcpower_dset_auto = property(get_rcpower_dset_auto, set_rcpower_dset_auto)
 
     def set_discret(self, val):
         type(self)._discret = val
@@ -271,6 +291,14 @@ class ControlPlane():
 
     folder_predict_log = property(get_folder_predict_log, set_folder_predict_log)
 
+    def set_folder_auto_log(self, val):
+        type(self)._folder_auto_log = copy.copy(val)
+
+    def get_folder_auto_log(self):
+        return type(self)._folder_auto_log
+
+    folder_auto_log = property(get_folder_auto_log, set_folder_auto_log)
+
     def set_seasonaly_period(self, val):
         type(self)._seasonaly_period = val
 
@@ -310,6 +338,68 @@ class ControlPlane():
         return type(self)._max_d
 
     max_d = property(get_max_d, set_max_d)
+
+    def set_scaled_data_4_auto(self, val):
+        type(self)._scaled_data_4_auto = val
+
+    def get_scaled_data_4_auto(self):
+        return type(self)._scaled_data_4_auto
+
+    scaled_data_4_auto = property(get_scaled_data_4_auto, set_scaled_data_4_auto)
+
+    def set_start_date_4_auto(self, val):
+        type(self)._start_date_4_auto = val
+
+    def get_start_date_4_auto(self):
+        return type(self)._start_date_4_auto
+
+    start_date_4_auto = property(get_start_date_4_auto, set_start_date_4_auto)
+
+    def set_end_data_4_auto(self, val):
+        type(self)._end_data_4_auto = val
+
+    def get_end_data_4_auto(self):
+        return type(self)._end_data_4_auto
+
+    end_data_4_auto = property(get_end_data_4_auto, set_end_data_4_auto)
+
+    def set_time_trunc_4_auto(self, val):
+        type(self)._time_trunc_4_auto = val
+
+    def get_time_trunc_4_auto(self):
+        return type(self)._time_trunc_4_auto
+
+    time_trunc_4_auto = property(get_time_trunc_4_auto, set_time_trunc_4_auto)
+
+    def set_geo_limit_4_auto(self, val):
+        type(self)._geo_limit_4_auto = val
+
+    def get_geo_limit_4_auto(self):
+        return type(self)._geo_limit_4_auto
+
+    geo_limit_4_auto = property(get_geo_limit_4_auto, set_geo_limit_4_auto)
+
+    def set_geo_ids_4_auto(self, val):
+        type(self)._geo_ids_4_auto = val
+
+    def get_geo_ids_4_auto(self):
+        return type(self)._geo_ids_4_auto
+
+    geo_ids_4_auto = property(get_geo_ids_4_auto, set_geo_ids_4_auto)
+
+    def set_last_time_auto(self, val):
+        type(self)._last_time_auto = val
+
+    def get_last_time_auto(self):
+        return type(self)._last_time_auto
+
+    last_time_auto = property(get_last_time_auto, set_last_time_auto)
+
+
+    """
+    common Control Plane methods
+    """
+
 
     """
     Control Plane method for time series analysis

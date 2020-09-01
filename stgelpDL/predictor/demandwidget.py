@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import os
+import time
 import requests
 import json
 import pandas as pd
@@ -238,6 +239,10 @@ class DemandWidget():
 
         self.ts_size = short_size  # time series size
 
+        self.names[1] = self.names[1].replace(' ','_')
+        self.names[2] = self.names[2].replace(' ', '_')
+        self.names[3] = self.names[3].replace(' ', '_')
+
         self.df = pd.DataFrame(columns=[self.names[0], self.names[1], self.names[2], self.names[3]])
 
         # for i in range(self.ts_size):
@@ -273,13 +278,10 @@ class DemandWidget():
                      },
                     ignore_index=True)
 
-
-
         for i in range(self.ts_size):
             dt_obj = DemandWidget.ISO8601toDateTime(self.df[self.names[0]][i])
             self.df[self.names[0]][i] = dt_obj
-
-        self.last_time = self.df[self.names[0]].max()
+            self.last_time = self.df[self.names[0]].max()
         # pd.set_option('display.max_rows', None)
         print(self.df)
 
@@ -468,6 +470,31 @@ class DemandWidget():
         show_autocorr(x, (int)(len(x) / 4), self.title, logfolder, stop_on_chart_show, self.f)
 
         return
+
+    def to_csv(self,path_to_serfile):
+
+        self.df.to_csv(path_to_serfile)
+        nloops=0
+        while not os.path.exists(path_to_serfile):
+            time.sleep(1)
+            nloops +=1
+            if nloops>32 :
+                break
+
+        if (not os.path.exists(path_to_serfile)) or (not os.path.isfile(path_to_serfile)) :
+            msg = "{} file is not ready".format(path_to_serfile)
+            print(msg)
+            if self.f is not None:
+                self.f.write("\n{}\n".format(msg))
+                raise ValueError(msg)
+            return None
+
+        msg="DataFrame serialized to file {}".format(path_to_serfile)
+        print(msg)
+        if self.f is not None:
+            self.f.write('\n{}\n'.format(msg))
+
+        return path_to_serfile
 
 
 if __name__ == "__main__":

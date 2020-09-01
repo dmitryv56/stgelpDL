@@ -31,11 +31,19 @@ class Dataset():
         self.test_cut_off=60
         self.val_cut_off=600
         self.scaler = None
+        self.X = None
+        self.y = None
+        self.X_val = None
+        self.y_val = None
+        self.X_test = None
+        self.y_test = None
+        self.rcpower = None
+
 
 
 
     def __str__(self):
-        s = 'csv-file:' + self.csv_path +  '\n Date/Time : ' + self.dt_dset + "  Time Series Name : " \
+        s = 'csv-file:' + str(self.csv_path)  +  '\n Date/Time : ' + self.dt_dset + "  Time Series Name : " \
             + self.rcpower_dset + " discretization: " + str(self.discret)
         if self.f is not None:
             self.f.write(s)
@@ -62,14 +70,14 @@ class Dataset():
     def readDataSet(self ):
         """
 
-        :param csv_path :  csv -file was made by excel export.It can contain data on many characteristics. For time series ,
+        self.csv_path :  csv -file was made by excel export.It can contain data on many characteristics. For time series ,
                             we need data about date and time and actual data about some feature, like as Imbalance in the
                             power grid. If we consider cvs-dataset as a matrix, then the first row or header contains the
                             names of the columns. The samples must de equidistance
-        :param dt_dset:     name of date/time column
-        :param rcpower_dset:name of actual characteristic.
-        :discret :          discretization, this used for logging
-        :f :                log file handler
+        self.dt_dset:     name of date/time column
+        self.rcpower_dset:name of actual characteristic.
+        self.discret :          discretization, this used for logging
+        self.f :                log file handler
         :return:            df -pandas DataFrame object
         """
         self.df = pd.read_csv(self.csv_path)
@@ -112,18 +120,18 @@ class Dataset():
     def set_train_val_test_sequence(self):
         """
 
-        :param df: DataFrame object
-        :param dt_dset: - date/time  header name, i.e. "Date Time"
-        :param rcpower_dset: - actual characteristic header name, i.e. "Imbalance"
-        :param test_cut_off: - value to pass time delta value in the 'minutes' resolution or None, like as
+        self.df: DataFrame object
+        self.dt_dset: - date/time  header name, i.e. "Date Time"
+        self.rcpower_dset: - actual characteristic header name, i.e. "Imbalance"
+        self.test_cut_off: - value to pass time delta value in the 'minutes' resolution or None, like as
                                'minutes=<value>.' NOte: the timedelta () function does not accept string as parameter, but
                                as value timedelta(minutes=value)
                                The last sampled values before time cutoff represent the test sequence.
-        :param val_cut_off: -  value to pass time delta value in the 'minutes' resolution or None, like as
+        self.val_cut_off: -  value to pass time delta value in the 'minutes' resolution or None, like as
                                'minutes=<value>.'
                                The last sampled values before the test sequence.
 
-        :param f:            - log file hadler
+        self.f:            - log file hadler
         :return:
         """
         if self.test_cut_off is None or self.test_cut_off == "":

@@ -17,7 +17,7 @@ PREDICT_PATH = 'predict'
 CONTROL_PATH = 'control'
 
 MODES ={AUTO_PATH: drive_auto, TRAIN_PATH: drive_train,PREDICT_PATH:drive_predict,CONTROL_PATH:drive_control}
-ACTUAL_MODE = TRAIN_PATH
+ACTUAL_MODE = AUTO_PATH
 """
 # Dataset properties. Can be replaced by command-line parameters.
 A csv file is used as dataset in the current version.
@@ -38,6 +38,9 @@ else:
 # Header names and discrtization in minutes
 DT_DSET      = "Date Time"
 RCPOWER_DSET = "Imbalance"
+
+RCPOWER_DSET_AUTO = 'Real demand'
+
 DISCRET      = 10
 
 # The time cutoffs for the formation of the validation  and test sequence in the format of the parameter passed
@@ -89,4 +92,14 @@ PREDICT_LAG      = 20
 MAX_P            = 5
 MAX_Q            = 5
 MAX_D            = 3
+
+
+#AUTO_PATH
+
+SCALED_DATA_FOR_AUTO = False
+START_DATE_FOR_AUTO  = "2020-08-01 00:00:00"
+END_DATE_FOR_AUTO    = "2020-08-31 00:00:00"
+TIME_TRUNC_FOR_AUTO  = 'hour'
+GEO_LIMIT_FOR_AUTO   = None
+GEO_IDS_FOR_AUTO     = None
 

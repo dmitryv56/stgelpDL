@@ -58,6 +58,7 @@ def chart_2series(df, title, Y_label, dt_dset, array_pred, array_act, n_pred, lo
     :param array_pred: - predict numpy vector
     :param array_act:  - actual values numpy vector
     :param n_pred:     - length of array_pred and array_act
+    :param logfolder   - log folder path
     :param stop_on_chart_show: True if stop on the chart show and wait User' action
     :return:
     """
@@ -337,6 +338,7 @@ def d_models_assembly(d_models, keyType, valueList, cp, ds):
     :param keyType: string value, type of NN model like as 'MLP','CNN','LSTM'
     :param valueList: tuple(index,model name) , i.e. (0,'mlp_1'),(1,'mlp_2') like as all models defined in cfg.py
     :param cp: instance of ControlPlane class
+    :param ds: instance of Dataset class
     :return:
     """
     for tuple_item in valueList:
@@ -453,7 +455,6 @@ def save_modeles_in_repository(d_models,  cp):
 
     :param d_models:
     :param cp:
-    :param ds:
     :return:
     """
     # save modeles
@@ -485,7 +486,7 @@ def serialize_lst_trained_models(dict_srz, cp):
     filepath_to_serialize = Path( Path(cp.path_repository) / cp.rcpower_dset / cp.rcpower_dset).with_suffix('.pkl')
 
     with open(filepath_to_serialize,'wb') as fw:
-        x=dump(dict_srz, fw)
+        dump(dict_srz, fw)
     msg ="Trained models list serialized in {}\n".format(filepath_to_serialize)
     msg2log(serialize_lst_trained_models.__name__, msg, cp.ft)
 
@@ -682,7 +683,7 @@ def autocorr_firstDiffSeasonDiff(x, lags, f=None):
 def show_autocorr(y, lag_max, title, logfolder, stop_on_chart_show=True, f=None):
     y = np.array(y).astype('float')
     lags = range(lag_max)
-
+    plt.close("all")
     fig, ax = plt.subplots()
     fig.suptitle(title, fontsize=16)
 

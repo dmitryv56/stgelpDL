@@ -5,8 +5,13 @@ from time import time, perf_counter
 """
 print to log
 """
+# constants
+cSFMT = "%Y-%m-%d %H:%M:%S"
+
 
 """
+
+
 tsBoundaries2log prints and logs time series boundaries characterisics (min,max,len)
 """
 

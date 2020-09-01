@@ -12,16 +12,18 @@ from tensorflow import random
 from predictor.dataset import Dataset
 
 from predictor.cfg import AUTO_PATH, TRAIN_PATH, PREDICT_PATH, CONTROL_PATH, MODES, ACTUAL_MODE
-from predictor.cfg import MAGIC_SEED, CSV_PATH, DT_DSET, RCPOWER_DSET, DISCRET
+from predictor.cfg import MAGIC_SEED, CSV_PATH, DT_DSET, RCPOWER_DSET, RCPOWER_DSET_AUTO, DISCRET
 from predictor.cfg import TEST_CUT_OFF, VAL_CUT_OFF, LOG_FILE_NAME, STOP_ON_CHART_SHOW, PATH_REPOSITORY, ALL_MODELS
 from predictor.cfg import EPOCHS, N_STEPS, N_FEATURES, UNITS, FILTERS, KERNEL_SIZE, POOL_SIZE, HIDDEN_NEYRONS, DROPOUT
 from predictor.cfg import SEASONALY_PERIOD, PREDICT_LAG, MAX_P, MAX_Q, MAX_D
+from predictor.cfg import SCALED_DATA_FOR_AUTO,START_DATE_FOR_AUTO,END_DATE_FOR_AUTO ,TIME_TRUNC_FOR_AUTO
+from predictor.cfg import GEO_LIMIT_FOR_AUTO , GEO_IDS_FOR_AUTO
 from predictor.control import ControlPlane
 from predictor.api import prepareDataset
 
 from predictor.utility import msg2log, exec_time
 
-import  predictor.demandwidget as dw
+
 
 
 """
@@ -50,22 +52,35 @@ def main(argc, argv):
         fel.write("Time execution logging started at {}\n\n".format(datetime.now().strftime("%d %m %y %H:%M:%S")))
 
     dir_path = os.path.dirname(os.path.realpath(__file__))
+
     folder_for_train_logging = Path(dir_path) / "Logs" / TRAIN_PATH / date_time
     folder_for_predict_logging = Path(dir_path) / "Logs" / PREDICT_PATH / date_time
     folder_for_control_logging = Path(dir_path) / "Logs" / CONTROL_PATH / date_time
+    folder_for_auto_logging    = Path(dir_path) / "Logs" / AUTO_PATH / date_time
+
     Path(folder_for_train_logging).mkdir(parents=True, exist_ok=True)
     Path(folder_for_predict_logging).mkdir(parents=True, exist_ok=True)
     Path(folder_for_control_logging).mkdir(parents=True, exist_ok=True)
+    Path(folder_for_auto_logging).mkdir(parents=True, exist_ok=True)
+
     suffics = ".log"
-    file_for_train_logging = Path(folder_for_train_logging, RCPOWER_DSET + "_" + Path(__file__).stem).with_suffix(
+    sRCPOWER_DSET= RCPOWER_DSET
+    if ACTUAL_MODE == AUTO_PATH:
+        sRCPOWER_DSET= RCPOWER_DSET_AUTO.replace(' ','_')
+
+    file_for_train_logging   = Path(folder_for_train_logging,   sRCPOWER_DSET + "_" + Path(__file__).stem).with_suffix(
         suffics)
-    file_for_predict_logging = Path(folder_for_predict_logging, RCPOWER_DSET + "_" + Path(__file__).stem).with_suffix(
+    file_for_predict_logging = Path(folder_for_predict_logging, sRCPOWER_DSET + "_" + Path(__file__).stem).with_suffix(
         suffics)
-    file_for_control_logging = Path(folder_for_control_logging, RCPOWER_DSET + "_" + Path(__file__).stem).with_suffix(
+    file_for_control_logging = Path(folder_for_control_logging, sRCPOWER_DSET + "_" + Path(__file__).stem).with_suffix(
         suffics)
-    ft = open(file_for_train_logging, 'w+')
+    file_for_auto_logging    = Path(folder_for_auto_logging,    sRCPOWER_DSET + "_" + Path(__file__).stem).with_suffix(
+        suffics)
+
+    ft = open(file_for_train_logging,   'w+')
     fp = open(file_for_predict_logging, 'w+')
     fc = open(file_for_control_logging, 'w+')
+    fa = open(file_for_auto_logging,    'w+')
 
     cp = ControlPlane()
 
@@ -77,6 +92,7 @@ def main(argc, argv):
     cp.control_path = CONTROL_PATH
     cp.csv_path = CSV_PATH
     cp.rcpower_dset = RCPOWER_DSET
+    cp.rcpower_dset_auto = RCPOWER_DSET_AUTO
     cp.dt_dset = DT_DSET
     cp.discret = DISCRET
     cp.test_cut_off = TEST_CUT_OFF
@@ -92,14 +108,19 @@ def main(argc, argv):
     cp.pool_size = POOL_SIZE
     cp.hidden_neyrons = HIDDEN_NEYRONS
     cp.dropout = DROPOUT
+
     cp.folder_control_log = folder_for_control_logging
-    cp.folder_train_log = folder_for_train_logging
+    cp.folder_train_log   = folder_for_train_logging
     cp.folder_predict_log = folder_for_predict_logging
+    cp.folder_auto_log    = folder_for_auto_logging
+
     cp.log_file_name = LOG_FILE_NAME
     cp.stop_on_chart_show = STOP_ON_CHART_SHOW
+
     cp.fc = fc
     cp.fp = fp
     cp.ft = ft
+    cp.fa = fa
 
     cp.seasonaly_period = SEASONALY_PERIOD
     cp.predict_lag = PREDICT_LAG
@@ -118,7 +139,7 @@ def main(argc, argv):
     msg2log("{} (Control Plane) {} ".format(title1, title2), msg, fc)
     msg2log("{} (Train Plane) {} ".format(title1, title2), msg, ft)
     msg2log("{} (Predict Plane) {} ".format(title1, title2), msg, fp)
-
+    msg2log("{} (Auto Management Plane) {} ".format(title1, title2), msg, fa)
 
     drive_STGELPDL(cp)
 
@@ -130,11 +151,13 @@ def main(argc, argv):
     msg2log("{} Control Plane {}".format(title1,title2), msg, fc)
     msg2log("{} Train Plane {}".format(title1, title2), msg, ft)
     msg2log("{} Predict Plane {}".format(title1,title2), msg, fp)
+    msg2log("{} Auto Management Plane {}".format(title1, title2), msg, fa)
 
 
     fc.close()
     fp.close()
     ft.close()
+    fa.close()
 
 
     with open("execution_time.log", 'a') as fel:
@@ -145,28 +168,7 @@ def main(argc, argv):
 
 
 if __name__ == "__main__":
-    with open("abc.log", 'w') as flog:
-        scaled_data=False
-        dwdg = dw.DemandWidget(scaled_data,"2020-08-26T00:00", "2020-08-29T18:00", "hour", None, None, flog)
-        dwdg.set_url()
 
-        print(dwdg.url)
-
-        requested_widget = dwdg.getDemandRT(None)
-        dwdg.plot_ts(os.getcwd(), False)
-        dwdg.autocorr_show(os.getcwd(), False)
-
-        scaled_data=True
-        dwdg_scaled = dw.DemandWidget(scaled_data, "2020-08-26T00:00", "2020-08-29T18:00", "hour", None, None, flog)
-        dwdg_scaled.url = dwdg.url
-
-        print(dwdg_scaled.url)
-
-        requested_widget = dwdg_scaled.getDemandRT(requested_widget)
-        dwdg_scaled.plot_ts(os.getcwd(), False)
-        dwdg_scaled.autocorr_show(os.getcwd(), False)
-
-    exit(0)
 
     random.set_seed(MAGIC_SEED)
     main(len(sys.argv), sys.argv)
