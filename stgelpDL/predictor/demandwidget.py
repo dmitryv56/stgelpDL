@@ -1,15 +1,36 @@
 #!/usr/bin/python3
+'''
+This module used for real time a dataset creating. Now we have limited access to  RED Electrica De Espana
+            https://www.https://www.ree.es/en/datos/todate
+via REData Information access API that provides a simple REST service to allow third parties to access the baсkend data
+used in REData application. By using this API , we can be able to retrieve data fom the REData widgets and use tn for
+the short term prediction by using Deep Learning and Statistcal models.
+The use of this service is simply. Onle GET requests are allowed since he purpose of this API is provide data related
+to REData app. Each widget is set up bye series indicators time series) which provide data related to particular
+category. The detailed form of the URI can be found on the site
+            https://www.ree.es/en/apidatos
+
+The  DemandWidget class is used to read data in real time, create a dataset in the format pandas' DataFrame and save
+it as csv-file.
+
+We plan , if possible,if exists information access to backend data another electrical grids, to add other classes  in
+this module which will be retrieve the time series in the real time.
+
+'''
 import os
 import time
 import requests
 import json
 import pandas as pd
 import dateutil.parser
+#import matplotlib
+#matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from datetime import timedelta
 import matplotlib.dates as mdates
 from collections import OrderedDict
 from predictor.api import show_autocorr
+from predictor.utility import cSFMT,incDateStr,decDateStr,msg2log
 
 
 
@@ -26,9 +47,24 @@ from predictor.api import show_autocorr
  So the class name is DemandWidget.
 
 """
+class DataAdapter():
+
+    def __init__(self, f = None):
+        self.f = f
+        pass
 
 
-class DemandWidget():
+class DemandWidget(DataAdapter):
+    '''
+    This class reads in real time the electrical load backend data from
+         https://www.ree.es/en/apidatos  site (RED Electrics  de Espana).
+    The paramereized GET-request is sent ,the requested widget in json-format is  received.
+    This widget is parsed and DataFrame object is created.
+    The example of full GET request is below
+
+        GET https://apidatos.ree.es/en/datos/demanda/demanda-tiempo-real?start_date=2020-08-28T00:00
+        &end_date=2020-08-28T18:00&time_trunc=hour
+    '''
     _start_date = None
     _end_date = None
     _time_trunc = None
@@ -36,6 +72,7 @@ class DemandWidget():
     _geo_ids = None
     _url_apidatos = 'https://apidatos.ree.es/en/datos/demanda/demanda-tiempo-real?'
     _title = None
+    _type_id = None
     _scaled_data =False
 
     def __init__(self, scaled__data,start__date, end__date, time__trunc, geo__limit, geo__ids, f=None):
@@ -52,8 +89,11 @@ class DemandWidget():
         self.names = []
         self.last_time = None
         self.url = None
+        self.one_word_title=""
+        super().__init__(f)
 
         pass
+
 
     @staticmethod
     def ISO8601toPyStr(ISO8601str):
@@ -69,20 +109,22 @@ class DemandWidget():
 
     @staticmethod
     def ISO8601toDateTime(ISO8601str):
-        """
+        '''
         The python date/datetime is object while ISO8601 string likes as
-        '2020-08-28T16:45:01.000+02:00'
+        '2020-08-28T16:45:01.000+02:00'. This static method converts the datetime string to datatime object.
 
-        :param ISO8601str:string in ISO8601 format , i.e. '2020-08-28T16:45:01.000+02:00'
-        :return: should be DateTime object
-        """
+
+        :param ISO8601str:
+        :return: datetime object
+        '''
+
         return dateutil.parser.parse(ISO8601str)
 
     @staticmethod
     def PyStrtoISO8601(pystr):
         """
         The python date/time string likes as '2020-08-28 16:45:01' while ISO8601 string likes as
-        '2020-08-28T16:45:01.000+02:00'
+        '2020-08-28T16:45:01.000+02:00'. This static method converts the PyString datetime to ISO-8061 string.
 
         :param pystr: string in pytho fomat, i.e. '2020-08-28 16:45:01'
         :return: should be '2020-08-28T16:45:01.000+02:00'
@@ -147,6 +189,14 @@ class DemandWidget():
 
     title = property(get_title, set_title)
 
+    def set_type_id(self, val):
+        type(self)._type_id= val
+
+    def get_type_id(self):
+        return type(self)._type_id
+
+    type_id = property(get_type_id, set_type_id)
+
     def set_scaled_data(self, val):
         type(self)._scaled_data = val
 
@@ -184,23 +234,20 @@ class DemandWidget():
                                                                           sgeo_limit,
                                                                           sgeo_ids)
 
-        print("GET {}".format(self.url))
-        if self.f is not None:
-            self.f.write("\nGET {}\n".format(self.url))
+        msg ="GET {}".format(self.url)
+        msg2log(self.set_url.__name__, msg, self.f)
 
         return
 
-    """
-           This method sends GET-request to 'https://apidatos.ree.es/en/datos/demanda/demanda-tiempo-real ' site,
-           parses received json-widget and  creates DataFrame object.
-           'GET' request like as
-           'start_date=2020-08-23T00:00&end_date=2020-08-23T02:00&time_trunc=hour&geo_trunc=electric_system&geo_limit=canarias&geo_ids=8742'
 
-
-           :return: requested widget for using in future. There is a list that comprises dictionaries and lists/
-           """
     def getDemandRT(self, requested_widget = None ):
         """
+        This method sends parameterized GET-request to 'https://apidatos.ree.es/en/datos/demanda/demanda-tiempo-real '
+        site, parses received widget in json-format and creates DataFrame object for received time series.
+        The recived request is an object comprises two dictionares 'data' and 'included' .
+        The 'data' is a header while 'included' comprises the time series of the demand in MWatt and scale time series
+        with values between 0 and 1.
+
         Scaled data mode:
         In order to get the time series scaled between 0 -1, self.scaled_data is True, this json requested widget was
         previously received and saved. Now it passed through parameter list.
@@ -236,8 +283,19 @@ class DemandWidget():
         sizes_equal, short_size, ts_sizes = self.logRequestedWidgetTimeSeries(requested_widget)
 
         self.n_ts = len(requested_widget['included'])  # number of time series
+        if self.n_ts!=3 or short_size == 0 or short_size is None:
+            msg=f"""
+                    For this Data Adapter, we expect to get three time series of  non-zero length ( Demand,Programmed, 
+                    Forecast) on every GET-request. The received widget has two time series< so the widget is discarded.
+                    The GET-reuest will be repeated after short time-out.
+                    Number of time series : {self.n_ts}
+                    Time series length    : {short_size}
+            """
+            msg2log(self.getDemandRT.__name__, msg, self.f)
+            return None
 
         self.ts_size = short_size  # time series size
+
 
         self.names[1] = self.names[1].replace(' ','_')
         self.names[2] = self.names[2].replace(' ', '_')
@@ -278,10 +336,12 @@ class DemandWidget():
                      },
                     ignore_index=True)
 
-        for i in range(self.ts_size):
-            dt_obj = DemandWidget.ISO8601toDateTime(self.df[self.names[0]][i])
-            self.df[self.names[0]][i] = dt_obj
-            self.last_time = self.df[self.names[0]].max()
+        # for i in range(self.ts_size):
+        #     dt_obj = DemandWidget.ISO8601toDateTime(self.df[self.names[0]][i])
+        #     self.df[self.names[0]][i] = dt_obj
+
+
+        self.last_time = self.df[self.names[0]].max()
         # pd.set_option('display.max_rows', None)
         print(self.df)
 
@@ -303,9 +363,7 @@ class DemandWidget():
                         Detail : {r.text}.
 
                     """
-        print(message)
-        if self.f is not None:
-            self.f.write(message)
+        msg2log(self.logErrorResponse.__name__, message, self.f)
 
         return
 
@@ -316,7 +374,9 @@ class DemandWidget():
         :param requested_widget:
         :return:
         """
-        self.title = requested_widget['data']['attributes']['title']
+        self.title   = requested_widget['data']['attributes']['title']
+        self.one_word_title=self.title.replace(' ','_')
+        self.type_id = {requested_widget['data']['type']}
         if self.scaled_data:
             self.title = "{} scaled between 0-1".format(self.title)
 
@@ -328,19 +388,21 @@ class DemandWidget():
                    Description : {requested_widget['data']['attributes']['description']}
                    Title       : {self.title}
                """
-        print(message)
-        if self.f is not None:
-            self.f.write("\n{}\n".format(message))
+        msg2log(self.logRequestedWidgetHeader.__name__, message, self.f)
+
         return
 
     def logRequestedWidgetTimeSeries(self, requested_widget):
         """
         This method selects a time series into received widget and logs them.
-        Selects the time series names for requsted widget and writes them in class variable 'names'  of list type.
+        Selects the time series names for requested widget and writes them in class variable 'names'  of list type.
+        The first is "main" time series, for example 'Real demand', followed by 'Programmed demand' and 'Forecast demand'
+        For the current times, the 'Real Demand' must be missed and so we selects  the size of' Real demand' time series
+         as ts_size
         :param requested_widget:
-        :return: sizes_equal, short_size, ts_sizes,
+        :return: sizes_equal, ts_size, ts_sizes,
                 where size_equal is a boolean flag: True - all time series have an equal size; False - different sizes
-                short_size - the size of time series or shortest time series size
+                ts_size - the size of main time series
                 ts_sizes - list of time series sizes.
 
         """
@@ -361,33 +423,26 @@ class DemandWidget():
                         Last Update :  : {requested_widget['included'][i]['attributes']['last-update']}
                         Time Series size : {ts_sizes[i]}
                     """
-            print(message)
-            if self.f is not None:
-                self.f.write("\n{}\n".format(message))
+            msg2log(self.logRequestedWidgetTimeSeries.__name__, message, self.f)
 
             self.names.append(requested_widget['included'][i]['attributes']['title'])
 
         # compare time series sizes
         sizes_equal = True
-        short_size = ts_sizes[0]
+        ts_size = ts_sizes[0]
         for i in range(n_ts - 1):
-            if short_size != ts_sizes[i + 1]:
+            if ts_size != ts_sizes[i + 1]:
                 sizes_equal = False
-                if ts_sizes[i + 1] < short_size:
-                    short_size = ts_sizes[i + 1]
+                break
 
         if not sizes_equal:
             message = f"""
                 The time series sizes are nor equal
-                The shortest time series has {short_size} size.
+                The shortest time series has {ts_size} size.
             """
+            msg2log(self.logRequestedWidgetTimeSeries.__name__, message, self.f)
 
-            print(message)
-
-            if self.f is not None:
-                self.f.write("\n{}\n".format(message))
-
-        return sizes_equal, short_size, ts_sizes
+        return sizes_equal, ts_size, ts_sizes
 
     def logDF(self):
 
@@ -416,51 +471,52 @@ class DemandWidget():
 
         for i in range(self.ts_size):
             self.f.write(
-                stemplate.format(str(i), self.df.values[i][0].strftime('%Y-%m-%d %H:%M:%S'), self.df.values[i][1],
-                                 self.df.values[i][2], self.df.values[i][3] ))
+                stemplate.format(str(i), self.df.values[i][0], self.df.values[i][1], self.df.values[i][2],
+                                 self.df.values[i][3] ))
 
         return
 
     # url_demanda = 'https://apidatos.ree.es/en/datos/demanda/demanda-tiempo-real?'
     # url = 'https://apidatos.ree.es/en/datos/demanda/demanda-tiempo-real?start_date=2020-08-23T00:00
     # &end_date=2020-08-23T02:00&time_trunc=hour&geo_trunc=electric_system&geo_limit=canarias&geo_ids=8742'
-
     def plot_ts(self, logfolder, stop_on_chart_show=True):
         plt.close("all")
         plt.style.use('seaborn-darkgrid')
-
-        # create a color palette
         palette = plt.get_cmap('Set1')
-
-        # times = mdates.drange(self.df['Date Time'].min(), self.df['Date Time'].max(), timedelta(minutes=10))
-        df1=self.df.copy(deep=True)
-        num = 0
+        fig,ax=plt.subplots()
+        num=0
+        df1 = self.df.copy(deep=True)
+        years = mdates.YearLocator()
+        months = mdates.MonthLocator()
+        year_fmt = mdates.DateFormatter('%Y')
         for column in df1.drop(['Date Time'], axis=1):
-            num += 1
-            plt.plot(df1['Date Time'], df1[column], marker='', color=palette(num), linewidth=1, alpha=0.9,
-                     label=column)
+            num+=1
+            ax.plot(df1['Date Time'], df1[column], marker='',color=palette(num), label=column)
         plt.legend(loc=2, ncol=2)
+        ax.set_title('{}'.format(self.title))
+        fig.autofmt_xdate()
 
-        plt.title('{}'.format(self.title))
-        plt.xlabel("Time")
-        plt.ylabel("Power (MW)")
+
+        pass
+        ax.xaxis.set_major_locator(years)
+        # ax.xaxis.set_major_formatter(year_fmt)
+        ax.xaxis.set_minor_locator(months)
+        datemin = df1['Date Time'].min()
+        datemax = df1['Date Time'].max()
+        ax.set_xlim(datemin, datemax)
+        fig.autofmt_xdate()
+
+
+        ax.set_xlabel("Time")
+        ax.set_ylabel("Power (MW)")
         if self.scaled_data:
-            plt.ylabel("Power (0 - 1)")
+             plt.ylabel("Power (0 - 1)")
 
-
-        plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M'))
-        if self.ts_size <= 500:
-            plt.gca().xaxis.set_major_locator(mdates.HourLocator(interval=2))
-        elif self.ts_size <= 1000:
-            plt.gca().xaxis.set_major_locator(mdates.HourLocator(interval=12))
-        else:
-            plt.gca().xaxis.set_major_locator(mdates.DayLocator(interval=1))
-
-        plt.gcf().autofmt_xdate()
         plt.show(block=stop_on_chart_show)
         if logfolder is not None:
             plt.savefig("{}/{}.png".format(logfolder, self.title.replace(' ', '_')))
         del df1
+        plt.close("all")
         return
 
     def autocorr_show(self, logfolder, stop_on_chart_show=False):
@@ -483,18 +539,39 @@ class DemandWidget():
 
         if (not os.path.exists(path_to_serfile)) or (not os.path.isfile(path_to_serfile)) :
             msg = "{} file is not ready".format(path_to_serfile)
-            print(msg)
-            if self.f is not None:
-                self.f.write("\n{}\n".format(msg))
-                raise ValueError(msg)
+            msg2log(self.to_csv.__name__, msg,self.f)
+            raise ValueError(msg)
             return None
 
         msg="DataFrame serialized to file {}".format(path_to_serfile)
-        print(msg)
-        if self.f is not None:
-            self.f.write('\n{}\n'.format(msg))
+        msg2log(self.to_csv.__name__, msg,self.f)
+
 
         return path_to_serfile
+
+    def concat_with_df_from_csv(self, path_to_serfile):
+        df_old=pd.read_csv(path_to_serfile)
+
+        message = f"""
+                                Old DataFrame (Odf) TS size    : {len(df_old)}
+                                Update DataFrame (Udf) TS size : {self.ts_size}
+                                Udf TS numbers                 : {self.n_ts}
+                                Udf TS names                   : {self.names}
+                                Udf Last Time                  : {self.last_time}
+                    """
+        msg2log(self.concat_with_df_from_csv.__name__, message,self.f)
+        df_new_reindex=pd.concat([df_old, self.df], ignore_index=True)
+        self.ts_size = len(df_new_reindex)
+        message = f"""
+                                New DataFrame (Ndf) TS size    : {len(df_new_reindex)}
+                                Ndf TS numbers                 : {self.n_ts}
+                                Ndf TS names                   : {self.names}
+                                Ndf Last Time                  : {self.last_time}
+                            """
+        msg2log(self.concat_with_df_from_csv.__name__, message, self.f)
+
+        return df_new_reindex
+
 
 
 if __name__ == "__main__":

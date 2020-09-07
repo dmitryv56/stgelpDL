@@ -1,6 +1,35 @@
 #!/usr/bin/env python3
+'''
+This module used for allow the Control Plane functionality. It creates the ControlPlane object, checks a mode real time
+or static. The members of ControlPlane class are set according by the mode.
+In static modes like as "training" or "predicting" will able to use Training Plane or Predicting Plane functionality.
+In the auto real time mode the Managment Plane uses together  functionality of the Training Plane and Predicting Plane.
+For this, the member of class rtDescriptor of type dictionary is used for data sharing between Control, Training and
+Predict Plane.
+The internal structures fo this dictionary is following
+    rtDescriptor={
+    'state':{id:<string, name of state>}
+    'csvDataset':<path to dataset csv file>,
+    'modelRepository':<path to repository  where trained model saved>
+    'typeID':<id of datasource received by GET -request>
+    'title':<name of datasource received by GET -request
+    'lastTime':<string, last time  in timeseries>
+    'misc':<string, free text>
+
+    }
+
+The dictionary is serialized in json format. The path to the dictionary  holds in the configuration file (cfg.py) and
+supports in Control Plane object.
+
+
+'''
 import copy
 from predictor.Statmodel import tsARIMA
+from pathlib import Path
+import json
+import os
+from predictor.utility import msg2log
+from pickle import dump, load
 
 
 class ControlPlane():
@@ -35,6 +64,9 @@ class ControlPlane():
     _folder_train_log   = None
     _folder_predict_log = None
     _folder_auto_log    = None
+    _folder_rt_datasets = None
+    _folder_descriptor  = None
+    _file_descriptor    = None
     _seasonaly_period   = 144
     _predict_lag        = 20
     _max_p              = 5
@@ -57,8 +89,11 @@ class ControlPlane():
         self.ft = None
         self.fa = None
         self.state = None
+        self.drtDescriptor = {}
         pass
 
+
+    # getters/setters
     def set_csv_path(self, val):
         type(self)._csv_path = copy.copy(val)
 
@@ -299,6 +334,30 @@ class ControlPlane():
 
     folder_auto_log = property(get_folder_auto_log, set_folder_auto_log)
 
+    def set_folder_rt_datasets(self, val):
+        type(self)._folder_rt_datasets = copy.copy(val)
+
+    def get_folder_rt_datasets(self):
+        return type(self)._folder_rt_datasets
+
+    folder_rt_datasets = property(get_folder_rt_datasets, set_folder_rt_datasets)
+
+    def set_folder_descriptor(self, val):
+        type(self)._folder_descriptor = copy.copy(val)
+
+    def get_folder_descriptor(self):
+        return type(self)._folder_descriptor
+
+    folder_descriptor = property(get_folder_descriptor, set_folder_descriptor)
+
+    def set_file_descriptor(self, val):
+        type(self)._file_descriptor = copy.copy(val)
+
+    def get_file_descriptor(self):
+        return type(self)._file_descriptor
+
+    file_descriptor = property(get_file_descriptor, set_file_descriptor)
+
     def set_seasonaly_period(self, val):
         type(self)._seasonaly_period = val
 
@@ -399,6 +458,56 @@ class ControlPlane():
     """
     common Control Plane methods
     """
+    def save_descriptor(self):
+        folder_descr = Path(self.folder_descriptor)
+        Path(folder_descr).mkdir(parents=True, exist_ok=True)
+
+        file_pickle = Path(folder_descr, self.file_descriptor)
+
+        with open(file_pickle,'wb') as outfile:
+            # json.dump(self.drtDescriptor, outfile)
+            dump(self.drtDescriptor,outfile)
+            msg="Descriptor had already serialized in {}".format(file_pickle)
+            msg2log(self.save_descriptor.__name__, msg, self.fc)
+        with open(file_pickle, 'rb') as infile:
+            new_dict=load(infile)
+            print(new_dict == self.drtDescriptor)
+            pass
+        return
+
+    def load_descriptor(self):
+
+        bRet = False
+        try:
+
+            file_pickle=Path(self.folder_descriptor) / Path(self.file_descriptor)
+            if (not os.path.exists(file_pickle)) or (not os.path.isfile(file_pickle)) :
+                msg = "No saved descriptors"
+                msg2log(self.load_descriptor.__name__, msg, self.fc)
+                return bRet
+
+            with open(file_pickle,'rb') as infile:
+                # self.drtDescriptor =json.load(infile)
+                self.drtDescriptor = load(infile)
+                msg = "Descriptor had been deserialized from {}".format(file_pickle)
+                msg2log(self.load_descriptor.__name__, msg, self.fc)
+                bRet = True
+                self.logDescriptor()
+        except:
+            pass
+        return bRet
+
+    def logDescriptor(self):
+        for k,v in self.drtDescriptor.items():
+            pass
+            if type(v) is dict:
+                for k1,v1 in v:
+                    msg="{} : {} :{}".format(k,k1,v1)
+                    msg2log("",msg,self.f)
+            msg=("{} : {}".format( k,v))
+            msg2log("", msg, self.fc)
+
+        return
 
 
     """

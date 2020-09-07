@@ -9,7 +9,7 @@ import copy
 from pickle import dump, load
 from pathlib import Path
 import sys
-from predictor.utility import exec_time
+from predictor.utility import exec_time, msg2log
 
 class Statmodel(Predictor):
     _param = ()
@@ -69,9 +69,8 @@ class Statmodel(Predictor):
             self.predict = model.predict(self.n_predict, exogenous=None)
             self.model = model
 
-
-        if self.f is not None:
-            self.f.write("\n\n{} was sucessfully fitted\n".format(self.nameModel))
+        msg="\n\n{} was sucessfully fitted\n".format(self.nameModel)
+        msg2log(self.fit_model.__name__, msg, self.f)
 
         return history
 
@@ -92,10 +91,8 @@ class Statmodel(Predictor):
         arima_saved_file = Path(model_folder) / "arima.pkl"
         with open(arima_saved_file, 'rb') as pkl:
             self.model = load( pkl)
-
-        if self.f is not None:
-            self.f.write("Model loaded from {} ".format(model_folder))
-            currDir = Path(model_folder)
+        msg="Model loaded from {} ".format(model_folder)
+        msg2log(self.load_model.__name__, msg, self.f)
 
             # if not sys.platform == "win32":
             #     # WindowsPath is not iterable
@@ -105,16 +102,14 @@ class Statmodel(Predictor):
 
 
     def save_model(self):
-        pass
 
         model_folder = Path(self.path2modelrepository) / self.timeseries_name / self.typeModel / self.nameModel
         Path(model_folder).mkdir(parents=True, exist_ok=True)
         model_saving_file = Path(model_folder) / "arima.pkl"
         with open(model_saving_file, 'wb') as pkl:
             dump(self.model, pkl)
-
-        if self.f is not None:
-            self.f.write("Model saved in {} ".format(model_folder))
+        msg ="Model saved in {} ".format(model_folder)
+        msg2log(self.save_model.__name__, msg, self.f)
 
         return
 
@@ -230,6 +225,7 @@ class tsARIMA(Statmodel):
         return "{} TimeSeries\nARIMA ({},{},{}) Seasonal ARM ({}{},{}) with period ={}".format( \
             self.timeseries_name, self.ar_order,self.d_order, self._ma_order, self.AR_order, self.D_order, \
             self.MA_order, self.period)
+
     @exec_time
     def seasonal_arima(self): #:
         title=self.__str__()
@@ -292,11 +288,18 @@ class tsARIMA(Statmodel):
         plt.plot(x[(len(x) - self.n_predict):], self.predict, c='red')
         plt.show(block=False)
         plt.savefig("Predict_{}_{}.png".format(self.nameModel, self.timeseries_name))
-
+        plt.close("all")
 
         if self.f is not None:
-            self.f.write("{} {}\n".format(self.nameModel, self.model.__str__()))
-            self.f.write('df_model = {} aic = {} aicc = {}\n'.format(self.model.df_model(), self.model.aic(), self.model.aicc()))
+            message=f"""
+                    Name Model    : {self.nameModel}
+                    Accurace Model: {self.model.__str__()}
+                      df_model :   {self.model.df_model()}
+                      aic      :   {self.model.aic()} 
+                      aicc     :   {self.model.aicc()}
+            """
+            msg2log(self.fitted_model_logging.__name__, message, self.f)
+
             prm_names = self.model.arima_res_.param_names
             prms = self.model.arima_res_.params
             self.f.write("ARIMA parameters\n")
@@ -330,11 +333,16 @@ class tsARIMA(Statmodel):
         stepFreq = 1.0 / (N * delta)
         mean=np.mean(self.ts_data)
         std = np.std(self.ts_data)
-        if self.f is not None:
-            self.f.write("Time series\nLength  = {} samples\nDiscretization = {} sec\n".format(N, self.discret))
-            self.f.write("Max. frequency = {} Hz\nFreq. Delta for PSD = {}\n".format(maxFreq, stepFreqPSD))
-            self.f.write("Mean = {}\nStd = {}\n".format(mean, std))
 
+        message = f"""
+                    Time series length     : {N}
+                    Discretization, sec    : {self.discret}
+                    Max.Frequency, Hz      : {maxFreq}
+                    Freq. delta for PSD, Hz: {stepFreqPSD}
+                    Mean value             : {mean}
+                    Std. value             : {std}
+        """
+        msg2log(self.ts_analysis.__name__, message, self.f)
         plt.close("all")
         plt.subplot(211)
         t=np.arange(0, len(self.ts_data),1)
@@ -345,8 +353,10 @@ class tsARIMA(Statmodel):
         plt.show(block=False)
         plt.savefig("SpectralDensity_{}.png".format(self.timeseries_name))
         plt.close("all")
+        return
 
 def predict_sarima(ds,cp, n_predict):
+
     rcpower = ds.df[cp.rcpower_dset].values
     model = pm.auto_arima(rcpower, start_p=1,d=1, start_q=1,max_p=3,max_q=3, max_d=1, seasonal=True, start_P=1, \
                           D=1,start_Q=1,max_P=2,max_D=1, max_order=5, m=144, trace=True,stepwise=True)
@@ -359,9 +369,11 @@ def predict_sarima(ds,cp, n_predict):
     plt.close("all")
     plt.plot(x[:len(x) - n_predict],rcpower, c='blue')
     plt.plot(x[(len(x) - n_predict):], predict, c='red')
-    plt.show()
+    plt.show(block=False)
+    plt.close("all")
 
     return model
+
 def predict_arima(ds,cp, n_predict):
     rcpower = ds.df[cp.rcpower_dset].values
     model = pm.auto_arima(rcpower, start_p=1,start_q=1,max_p=3,max_q=3, seasonal=False, d=1, trace=True,stepwise=True)
@@ -374,9 +386,9 @@ def predict_arima(ds,cp, n_predict):
     plt.close("all")
     plt.plot(x[:len(x) - n_predict],rcpower, c='blue')
     plt.plot(x[(len(x) - n_predict):], predict, c='red')
-    plt.show()
+    plt.show(block=False)
     plt.savefig("Predict_{}.png".format(cp.rcpower_dset))
-
+    plt.close("all")
     with open('arima_param.log','w') as fpar:
         fpar.write('df_model = {} aic = {} aicc = {}'.format( model.df_model(),model.aic(), model.aicc() ))
         prm_names=model.arima_res_.param_names
@@ -418,5 +430,6 @@ def test_arima(ds,cp):
     for i in range(10):
         y=y.append(predict[i])
     plt.plot(y[len(x):], predict, c='red')
-    plt.show()
-    pass
+    plt.show(block=False)
+    plt.close("all")
+    return

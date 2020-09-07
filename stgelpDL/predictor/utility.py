@@ -2,6 +2,9 @@
 
 import numpy as np
 from time import time, perf_counter
+import dateutil.parser
+from datetime import datetime
+from datetime import timedelta
 """
 print to log
 """
@@ -168,7 +171,13 @@ def vector_logging(title, seq, print_weigth, f=None):
 
     return
 
+def incDateStr(inDateTime :str, days:int=0,seconds:int=0,minutes:int=0,hours:int=0,weeks:int=0)->str:
+    tDateTime = dateutil.parser.parse(inDateTime)
+    return (tDateTime+timedelta(days=days,seconds=seconds,minutes=minutes,hours=hours,weeks=weeks)).strftime(cSFMT)
 
+def decDateStr(inDateTime :str, days:int=0,seconds:int=0,minutes:int=0,hours:int=0,weeks:int=0)->str:
+    tDateTime = dateutil.parser.parse(inDateTime)
+    return (tDateTime-timedelta(days=days,seconds=seconds,minutes=minutes,hours=hours,weeks=weeks)).strftime(cSFMT)
 
 # ##############################################charting################################################################
 

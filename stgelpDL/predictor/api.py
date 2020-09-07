@@ -8,7 +8,8 @@ from predictor.Statmodel import tsARIMA
 from predictor.NNmodel import MLP, LSTM, CNN
 
 from pathlib import Path
-
+# import matplotlib
+# matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from pickle import dump, load
@@ -30,6 +31,7 @@ def chart_MAE(name_model, name_time_series, history, n_steps, logfolder, stop_on
     plt.show(block=stop_on_chart_show)
     if logfolder is not None:
         plt.savefig("{}/MAE_{}_{}_{}.png".format(logfolder, name_model, name_time_series, n_steps))
+    plt.close("all")
     return
 
 
@@ -45,6 +47,7 @@ def chart_MSE(name_model, name_time_series, history, n_steps, logfolder, stop_on
     plt.show(block=stop_on_chart_show)
     if logfolder is not None:
         plt.savefig("{}/MSE_{}.png".format(logfolder, name_model, name_time_series, n_steps))
+    plt.close("all")
     return
 
 
@@ -70,8 +73,8 @@ def chart_2series(df, title, Y_label, dt_dset, array_pred, array_act, n_pred, lo
     plt.plot(times, array_pred, label='Y pred')
 
     plt.plot(times, array_act, label='Y act')
-
-    plt.title('{} (Length of series   {})'.format(title, n_pred))
+    title_com='{} (Length of series   {})'%(title, n_pred)
+    plt.title(title_com)
 
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M'))
     plt.gca().xaxis.set_major_locator(mdates.MinuteLocator(interval=10))
@@ -84,7 +87,7 @@ def chart_2series(df, title, Y_label, dt_dset, array_pred, array_act, n_pred, lo
     title.replace(" ", "_")
     if logfolder is not None:
         plt.savefig("{}/{}-{}_samples.png".format(logfolder, title, n_pred))
-
+    plt.close("all")
     return
 
 
@@ -116,7 +119,7 @@ def chart_predict(dict_predict, n_predict, cp, ds, title, Y_label ):
     #
     # plt.plot(times, array_act, label='Y act')
 
-    plt.title('{} (Short Term Predict on {} steps)'.format(title, n_predict))
+    # plt.title(title)
 
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M'))
     plt.gca().xaxis.set_major_locator(mdates.MinuteLocator(interval=cp.discret))
@@ -129,7 +132,7 @@ def chart_predict(dict_predict, n_predict, cp, ds, title, Y_label ):
     title.replace(" ", "_")
     if cp.folder_predict_log is not None:
         plt.savefig("{}/{}-{}_steps.png".format(cp.folder_predict_log, title, n_predict))
-
+    plt.close("all")
     return
 
 
@@ -273,11 +276,11 @@ def TimeSeries2SupervisedLearningData(raw_seq, n_steps, f=None):
     :return:
     """
 
-    chunkarray2log("Data array ", raw_seq, 8, f)
+    chunkarray2log("Data array ", raw_seq, 32, f)
 
     X, y = split_sequence(raw_seq, n_steps)
 
-    svld2log(X, y, 8, f)
+    svld2log(X, y, 32, f)
 
     return X, y
 
@@ -701,7 +704,7 @@ def show_autocorr(y, lag_max, title, logfolder, stop_on_chart_show=True, f=None)
     plt.show(block=stop_on_chart_show)
     if logfolder is not None:
         plt.savefig("{}/autocorrelation_{}.png".format(logfolder, title))
-
+    plt.close("all")
 ########################################################################################################################
 
 

@@ -43,8 +43,8 @@ class Dataset():
 
 
     def __str__(self):
-        s = 'csv-file:' + str(self.csv_path)  +  '\n Date/Time : ' + self.dt_dset + "  Time Series Name : " \
-            + self.rcpower_dset + " discretization: " + str(self.discret)
+        s = 'csv-file:' + str(self.csv_path)  +  '\n Date Time : ' + self.dt_dset + "  Time Series Name : " \
+            + self.rcpower_dset + "\n discretization: " + str(self.discret)
         if self.f is not None:
             self.f.write(s)
         return s

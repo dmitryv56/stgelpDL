@@ -59,10 +59,16 @@ STOP_ON_CHART_SHOW=False
 #Model repository
 if sys.platform == 'win32':
     PATH_REPOSITORY = "f:\\model_Repository"
+    PATH_DATASET_REPOSITORY    = "f:\\dataset_Repository"
+    PATH_DESCRIPTOR_REPOSITORY = "f:\\descriptor_Repository"
 elif sys.platform == 'linux':
     PATH_REPOSITORY = "/home/dmitryv/model_Repository"
+    PATH_DATASET_REPOSITORY = "/home/dmitryv/dataset_Repository"
+    PATH_DESCRIPTOR_REPOSITORY = "/home/dmitryv/descriptor_Repository"
 else:
     PATH_REPOSITORY = "f:\\model_Repository"
+    PATH_DATASET_REPOSITORY = "f:\\dataset_Repository"
+    PATH_DESCRIPTOR_REPOSITORY = "f:\\descriptor_Repository"
 
 ALL_MODELS = {'MLP':[(0, "mlp_1"), (1,"mlp_2")], 'CNN':[(2,'univar_cnn')],\
               'LSTM':[(3,'vanilla_lstm'),(4,'stacked_lstm'), (5,'bidir_lstm')],
@@ -87,7 +93,7 @@ HIDDEN_NEYRONS = 16
 DROPOUT        = 0.2
 
 #ARIMA
-SEASONALY_PERIOD = 6  # hour season , 144 for daily season
+SEASONALY_PERIOD = 144  # hour season , 144 for daily season
 PREDICT_LAG      = 20
 MAX_P            = 5
 MAX_Q            = 5
@@ -95,11 +101,12 @@ MAX_D            = 3
 
 
 #AUTO_PATH
-
+FILE_DESCRIPTOR = "peninsular.pickle"
 SCALED_DATA_FOR_AUTO = False
 START_DATE_FOR_AUTO  = "2020-08-01 00:00:00"
 END_DATE_FOR_AUTO    = "2020-08-31 00:00:00"
 TIME_TRUNC_FOR_AUTO  = 'hour'
 GEO_LIMIT_FOR_AUTO   = None
 GEO_IDS_FOR_AUTO     = None
+
 
