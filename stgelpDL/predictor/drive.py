@@ -215,6 +215,14 @@ class UpdateChecker(UpdateProvider):
     def drive(self,cp: ControlPlane, ds: Dataset)->None:
         pass
         # self._state = randrange(0, 3)
+        message = f"""
+        State-Machine:
+        current tme  : {datetime.now().strftime(cSFMT)}
+        current state: {self.state}
+        description  : {sm_dict[self.state]}
+        Transfer to next state...
+        """
+        msg2log(self.drive.__name__, message, cp.fa)
         self.dct['ControlPlane'] = cp
         self.dct['Dataset']      = ds
 
@@ -231,21 +239,27 @@ class UpdateChecker(UpdateProvider):
 
         #     state machine
         if self.state== SM_CP_CREATE_DATASET:
+            msg2log(self.drive.__name__, '{} :{}\n'.format(self.state, sm_dict[self.state]), cp.fa)
             self._sm_CP_CREATE_DATASET()
 
         elif self.state == SM_TP_MODEL_TRAINING :
+            msg2log(self.drive.__name__, '{} :{}\n'.format(self.state, sm_dict[self.state]), cp.fa)
             self._sm_TP_MODEL_TRAINING()
 
         elif self.state == SM_CP_UPDATE_DATASET:
+            msg2log(self.drive.__name__, '{} :{}\n'.format(self.state, sm_dict[self.state]), cp.fa)
             self._sm_CP_UPDATE_DATASET()
 
         elif self.state == SM_PP_PREDICTING:
+            msg2log(self.drive.__name__, '{} :{}\n'.format(self.state, sm_dict[self.state]), cp.fa)
             self._sm_PP_PREDICTING()
 
         elif self.state == SM_TP_MODEL_UPDATING:
+            msg2log(self.drive.__name__, '{} :{}\n'.format(self.state, sm_dict[self.state]), cp.fa)
             self._sm_TP_MODEL_UPDATING()
 
         elif self.state == SM_CP_DATA_WAITING:
+            msg2log(self.drive.__name__, '{} :{}\n'.format(self.state, sm_dict[self.state]), cp.fa)
             self._sm_CP_DATA_WAITING()
 
         else:
@@ -417,7 +431,7 @@ class ControlPlaneObserver(IObserver):
         start_time = "2020-08-30 00:00:00"
         end_time_t = datetime.now()
         end_time = end_time_t.strftime(cSFMT)
-        start_time_t = end_time_t - td(days=7)
+        start_time_t = end_time_t - td(days=3)
         start_time = start_time_t.strftime(cSFMT)
 
         dmwdg = DemandWidget(scaled_data, start_time, end_time, 'hour', None, None, self.f)
@@ -626,9 +640,9 @@ def drive_auto(cp, ds):
         nrun+=1
         curr_time=datetime.now()
 
-        while  curr_time < start_time + td(minutes=2):
+        while  curr_time < start_time + td(minutes=5):
 
-            deltat = (start_time + td(seconds=10*60) - curr_time)
+            deltat = (start_time + td(seconds=5*60) - curr_time)
             sleep_in_sec =deltat.seconds
             msg="\n\nCurrent time is {} . Wait {} seconds to {}th run of  UpdateChecker run\n".format(
                         curr_time.strftime(cSFMT), sleep_in_sec, nrun)
@@ -709,7 +723,9 @@ def drive_predict(cp, ds):
     :param ds: dataset object
     :return:
     """
-
+    if ds is None or ds.rcpower is None or len(ds.rcpower)==0:
+        msg2log(drive_predict.__name__," The dataset is empty now. The predict step is skipping", cp.fa)
+        return
     ds.data_for_predict = cp.n_steps
     ds.predict_date = None
     predict_history = copy.copy(ds.data_for_predict)
@@ -724,6 +740,8 @@ def drive_predict(cp, ds):
     chart_predict(dict_predict, n_predict, cp, ds, title, cp.rcpower_dset)
 
     tbl_predict(dict_predict, n_predict, cp, ds, title)
+
+    cp.forecast_number_step=cp.forecast_number_step+1
 
     return
 
