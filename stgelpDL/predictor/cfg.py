@@ -93,7 +93,7 @@ HIDDEN_NEYRONS = 16
 DROPOUT        = 0.2
 
 #ARIMA
-SEASONALY_PERIOD = 144  # hour season , 144 for daily season
+SEASONALY_PERIOD = 6  # hour season , 144 for daily season
 PREDICT_LAG      = 20
 MAX_P            = 5
 MAX_Q            = 5

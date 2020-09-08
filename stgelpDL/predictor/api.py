@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-
+import sys
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
@@ -112,9 +112,19 @@ def chart_predict(dict_predict, n_predict, cp, ds, title, Y_label ):
     times = mdates.drange( (ds.df[ds.dt_dset][len(ds.df[ds.dt_dset]) - 1] + timedelta( minutes = cp.discret )).to_pydatetime(),
                            (ds.df[ds.dt_dset][len(ds.df[ds.dt_dset]) - 1] + timedelta( minutes = cp.discret * (n_predict+1) )).to_pydatetime(),
                            timedelta(minutes=cp.discret))
-    for k,vector in dict_predict.items():
-        plt.plot(times, vector, label=k)
-
+    try:
+        for k,vector in dict_predict.items():
+            plt.plot(times, vector, label=k)
+    except ValueError:
+        msg="\nOoops! That was not valid value."
+        msg2log(chart_predict.__name__, msg,cp.fp)
+        plt.close("all")
+        return
+    except:
+        msg = "\nOoops! Unexpected error: {}".format(sys.exc_info()[0])
+        msg2log(chart_predict.__name__, msg, cp.fp)
+        plt.close("all")
+        return
     # plt.plot(times, array_pred, label='Y pred')
     #
     # plt.plot(times, array_act, label='Y act')
@@ -131,7 +141,7 @@ def chart_predict(dict_predict, n_predict, cp, ds, title, Y_label ):
     plt.show(block=cp.stop_on_chart_show)
     title.replace(" ", "_")
     if cp.folder_predict_log is not None:
-        plt.savefig("{}/{}-{}_steps.png".format(cp.folder_predict_log, title, n_predict))
+        plt.savefig("{}/{}-{}_steps_{}.png".format(cp.folder_forecast, title, n_predict, cp.forecast_number_step))
     plt.close("all")
     return
 
@@ -167,32 +177,33 @@ def tbl_predict(dict_predict, n_predict,cp, ds, title):
         j += 1
     #   print
 
-    ds.predict_date = None                              # set predict date on the last sample into dataset
+    ds.predict_date = ds.df[ds.dt_dset].max()                            # set predict date on the last sample into dataset
     dt=ds.predict_date + timedelta(minutes=cp.discret)  # first predict date/time
-    date_time = dt.strftime("%d-%m-%Y:%H-%M")
+    date_time = dt.strftime("%Y-%m-%d %H:%M")
 
     print(str(title).center(80))
 
-    if cp.fp is not None:
-        cp.fp.write('\n')
-        cp.fp.write(str(title).center(80))
-        cp.fp.write('\n')
-        cp.fp.write("Date Time".ljust(18))
+    if cp.ff is not None:
+        cp.ff.write('\n\n')
+        cp.ff.write('Predict step {}\n\n'.format(cp.forecast_number_step))
+        cp.ff.write(str(title).center(80))
+        cp.ff.write('\n')
+        cp.ff.write("Date Time".ljust(18))
         print("Date Time".ljust(18))
         for elem in range(len(head_list)):
-            cp.fp.write(head_list[elem].center(18))
+            cp.ff.write(head_list[elem].center(18))
             print(head_list[elem].center(18))
-        cp.fp.write('\n')
+        cp.ff.write('\n')
 
         for i in range(atemp.shape[0]):
-            cp.fp.write(date_time.ljust(18))
+            cp.ff.write(date_time.ljust(18))
             print(date_time.ljust(18))
             for j in range(atemp.shape[1]):
-                cp.fp.write("{0:18.3f}".format(atemp[i][j]))
+                cp.ff.write("{0:18.3f}".format(atemp[i][j]))
                 print("{0:18.3f}".format(atemp[i][j]))
-            cp.fp.write('\n')
+            cp.ff.write('\n')
             dt = dt + timedelta(minutes=cp.discret)
-            date_time = dt.strftime("%d-%m-%Y:%H-%M")
+            date_time = dt.strftime("%Y-%m-%d %H:%M")
 
     return
 

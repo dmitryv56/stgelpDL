@@ -64,6 +64,7 @@ class ControlPlane():
     _folder_train_log   = None
     _folder_predict_log = None
     _folder_auto_log    = None
+    _folder_forecast    = None
     _folder_rt_datasets = None
     _folder_descriptor  = None
     _file_descriptor    = None
@@ -81,6 +82,8 @@ class ControlPlane():
     _geo_ids_4_auto     = None
     _last_time_auto     = None
 
+    _forecast_number_step = 0
+
 
     def __init__(self):
         # log file handlers
@@ -88,6 +91,7 @@ class ControlPlane():
         self.fp = None
         self.ft = None
         self.fa = None
+        self.ff = None
         self.state = None
         self.drtDescriptor = {}
         pass
@@ -334,6 +338,14 @@ class ControlPlane():
 
     folder_auto_log = property(get_folder_auto_log, set_folder_auto_log)
 
+    def set_folder_forecast(self, val):
+        type(self)._folder_forecast = copy.copy(val)
+
+    def get_folder_forecast(self):
+        return type(self)._folder_forecast
+
+    folder_forecast = property(get_folder_forecast, set_folder_forecast)
+
     def set_folder_rt_datasets(self, val):
         type(self)._folder_rt_datasets = copy.copy(val)
 
@@ -454,7 +466,13 @@ class ControlPlane():
 
     last_time_auto = property(get_last_time_auto, set_last_time_auto)
 
+    def set_forecast_number_step(self, val):
+        type(self)._forecast_number_step = val
 
+    def get_forecast_number_step(self):
+        return type(self)._forecast_number_step
+
+    forecast_number_step = property(get_forecast_number_step, set_forecast_number_step)
     """
     common Control Plane methods
     """

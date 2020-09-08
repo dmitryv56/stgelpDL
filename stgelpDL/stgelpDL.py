@@ -59,6 +59,7 @@ def main(argc, argv):
     folder_for_predict_logging      = Path(dir_path) / "Logs" / PREDICT_PATH / date_time
     folder_for_control_logging      = Path(dir_path) / "Logs" / CONTROL_PATH / date_time
     folder_for_auto_logging         = Path(dir_path) / "Logs" / AUTO_PATH / date_time
+    folder_for_forecast             = Path(dir_path) / "Logs" / "Forecast" / date_time
 
     folder_for_rt_datasets          = Path(PATH_DATASET_REPOSITORY)
     folder_for_descriptor_repostory = Path(PATH_DESCRIPTOR_REPOSITORY)
@@ -68,6 +69,7 @@ def main(argc, argv):
     Path(folder_for_predict_logging).mkdir(parents=True, exist_ok=True)
     Path(folder_for_control_logging).mkdir(parents=True, exist_ok=True)
     Path(folder_for_auto_logging).mkdir(parents=True, exist_ok=True)
+    Path(folder_for_forecast).mkdir(parents=True, exist_ok=True)
 
     suffics = ".log"
     sRCPOWER_DSET= RCPOWER_DSET
@@ -82,11 +84,14 @@ def main(argc, argv):
         suffics)
     file_for_auto_logging    = Path(folder_for_auto_logging,    sRCPOWER_DSET + "_" + Path(__file__).stem).with_suffix(
         suffics)
+    file_for_forecast        = Path(folder_for_forecast,        sRCPOWER_DSET + "_" + Path(__file__).stem).with_suffix(
+        suffics)
 
     ft = open(file_for_train_logging,   'w+')
     fp = open(file_for_predict_logging, 'w+')
     fc = open(file_for_control_logging, 'w+')
     fa = open(file_for_auto_logging,    'w+')
+    ff = open(file_for_forecast,        'w+')
 
     cp = ControlPlane()
 
@@ -115,6 +120,7 @@ def main(argc, argv):
         fp.close()
         ft.close()
         fa.close()
+        ff.close()
         exit(1)
 
 
@@ -140,6 +146,7 @@ def main(argc, argv):
     cp.folder_train_log   = folder_for_train_logging
     cp.folder_predict_log = folder_for_predict_logging
     cp.folder_auto_log    = folder_for_auto_logging
+    cp.folder_forecast    = folder_for_forecast
 
     cp.folder_rt_datasets = folder_for_rt_datasets
     cp.folder_descriptor  = folder_for_descriptor_repostory
@@ -150,6 +157,7 @@ def main(argc, argv):
     cp.fp = fp
     cp.ft = ft
     cp.fa = fa
+    cp.ff = ff
 
     cp.seasonaly_period    = SEASONALY_PERIOD
     cp.predict_lag         = PREDICT_LAG
@@ -187,7 +195,7 @@ def main(argc, argv):
     fp.close()
     ft.close()
     fa.close()
-
+    ff.close()
 
     with open("execution_time.log", 'a') as fel:
         fel.write("Time execution logging finished at {}\n\n".format(datetime.now().strftime("%d %m %y %H:%M:%S")))
