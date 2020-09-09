@@ -643,9 +643,9 @@ def drive_auto(cp, ds):
         nrun+=1
         curr_time=datetime.now()
 
-        while  curr_time < start_time + td(minutes=5):
+        while  curr_time < start_time + td(minutes=10):
 
-            deltat = (start_time + td(seconds=5*60) - curr_time)
+            deltat = (start_time + td(seconds=10*60) - curr_time)
             sleep_in_sec =deltat.seconds
             msg="\n\nCurrent time is {} . Wait {} seconds to {}th run of  UpdateChecker run\n".format(
                         curr_time.strftime(cSFMT), sleep_in_sec, nrun)
