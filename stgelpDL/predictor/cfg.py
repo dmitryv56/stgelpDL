@@ -1,7 +1,9 @@
 #!/usr/bin/python3
 
+from os import getcwd
 import sys
 from predictor.drive import drive_auto, drive_train, drive_predict, drive_control
+from pathlib import Path
 """
 Configuration settings that are used in the control, train, predict and management planes.
 
@@ -29,12 +31,15 @@ Date Time,       Imbalance,Imbalance + 0.5 MW
 08.11.2019 20:10,0.3,      0.8
 08.11.2019 20:20,0.1,      0.6 
 """
-if sys.platform == "win32":
-    CSV_PATH = "C:\\Users\\dmitr_000\\.keras\\datasets\\Imbalance_data.csv"
-elif sys.platform == "linux":
-    CSV_PATH = "/home/dmitryv/.keras/datasets/Imbalance_data.csv"
-else:
-    CSV_PATH = "C:\\Users\\dmitr_000\\.keras\\datasets\\Imbalance_data.csv"
+
+CSV_PATH = Path( Path.home() / ".keras" / "datasets" )
+# if sys.platform == "win32":
+#     CSV_PATH = "C:\\Users\\dmitr_000\\.keras\\datasets\\Imbalance_data.csv"
+#     CSV_PATH = os.path.join(os.environ['USERPROFILE'])
+# elif sys.platform == "linux":
+#     CSV_PATH = "/home/dmitryv/.keras/datasets/Imbalance_data.csv"
+# else:
+#     CSV_PATH = "C:\\Users\\dmitr_000\\.keras\\datasets\\Imbalance_data.csv"
 # Header names and discrtization in minutes
 DT_DSET      = "Date Time"
 RCPOWER_DSET = "Imbalance"
@@ -55,21 +60,24 @@ VAL_CUT_OFF  = 1000 * DISCRET
 LOG_FILE_NAME = RCPOWER_DSET
 # Matplotlib.pyplot is used for charting
 STOP_ON_CHART_SHOW=False
-
-#Model repository
+#Models, descriptor, datasets( for auto_plane)  repository
 if sys.platform == 'win32':
-    PATH_REPOSITORY = "f:\\model_Repository"
-    PATH_DATASET_REPOSITORY    = "f:\\dataset_Repository"
-    PATH_DESCRIPTOR_REPOSITORY = "f:\\descriptor_Repository"
+    PATH_REPOSITORY            = Path( Path( Path(getcwd()).drive) / '/' / "model_Repository")
+    PATH_DATASET_REPOSITORY    = Path(Path( Path(getcwd()).drive) / '/' / "dataset_Repository")
+    PATH_DESCRIPTOR_REPOSITORY = Path(Path( Path(getcwd()).drive) / '/' / "descriptor_Repository")
 elif sys.platform == 'linux':
-    PATH_REPOSITORY = "/home/dmitryv/model_Repository"
-    PATH_DATASET_REPOSITORY = "/home/dmitryv/dataset_Repository"
-    PATH_DESCRIPTOR_REPOSITORY = "/home/dmitryv/descriptor_Repository"
+    PATH_REPOSITORY            = Path( Path.home() / "model_Repository" )
+    PATH_DATASET_REPOSITORY    = Path( Path.home() / "dataset_Repository" )
+    PATH_DESCRIPTOR_REPOSITORY = Path( Path.home() / "descriptor_Repository" )
 else:
-    PATH_REPOSITORY = "f:\\model_Repository"
-    PATH_DATASET_REPOSITORY = "f:\\dataset_Repository"
-    PATH_DESCRIPTOR_REPOSITORY = "f:\\descriptor_Repository"
+    PATH_REPOSITORY            = Path( Path( Path(getcwd()).drive) / '/' / "model_Repository")
+    PATH_DATASET_REPOSITORY    = Path(Path( Path(getcwd()).drive) / '/' / "dataset_Repository")
+    PATH_DESCRIPTOR_REPOSITORY = Path(Path( Path(getcwd()).drive) / '/' / "descriptor_Repository")
 
+    print('{} \n{} \n{}'.format(PATH_REPOSITORY,PATH_DATASET_REPOSITORY,PATH_DESCRIPTOR_REPOSITORY))
+    Path.mkdir(PATH_DATASET_REPOSITORY,    parents=True, exist_ok=True)
+    Path.mkdir(PATH_DESCRIPTOR_REPOSITORY, parents=True, exist_ok=True)
+exit()
 ALL_MODELS = {'MLP':[(0, "mlp_1"), (1,"mlp_2")], 'CNN':[(2,'univar_cnn')],\
               'LSTM':[(3,'vanilla_lstm'),(4,'stacked_lstm'), (5,'bidir_lstm')],
                 'tsARIMA':[(6,'seasonal_arima'),(7,'best_arima')]}
