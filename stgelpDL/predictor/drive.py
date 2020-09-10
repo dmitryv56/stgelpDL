@@ -599,7 +599,7 @@ class PredictPlaneObserver(IObserver):
         self.predict_index+=1
         cp.drtDescriptor['state'] = SM_CP_UPDATE_DATASET  # next state
         cp.drtDescriptor['musc'] = sm_dict[SM_CP_UPDATE_DATASET]
-        if self.predict_index>=self.predict_index_max:
+        if self.predict_index_max % self.predict_index == 0:
             cp.drtDescriptor['state'] = SM_TP_MODEL_UPDATING  # next state
             cp.drtDescriptor['musc'] = sm_dict[SM_TP_MODEL_UPDATING]
 
