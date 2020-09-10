@@ -469,13 +469,12 @@ class ControlPlaneObserver(IObserver):
 
         if dmwdg.ts_size> 0:
             df_new = dmwdg.concat_with_df_from_csv( cp.drtDescriptor["csvDataset"] )
-            bak_csv_str0 =str(cp.drtDescriptor["csvDataset"]).replace('.csv', '.' +
-                            cp.drtDescriptor['lastTime'].replace(' ','_') +'.bak')
-            bak_csv_str1 = bak_csv_str0.replace(':','_')
-            bak_csv_str = bak_csv_str1.replace('+', '_')
+            bak_csv_str  =str(cp.drtDescriptor["csvDataset"]).replace('.csv',  "_" +
+                            DemandWidget.ISO8601toDateTime(cp.drtDescriptor['lastTime']).strftime("%Y_%m_%d_%H_%M")
+                                                                      + '.bak')
             bak_csv_file=Path(bak_csv_str)
-
-            copyfile(Path(cp.drtDescriptor["csvDataset"]), bak_csv_file)
+            # Path(cp.drtDescriptor["csvDataset"]).copy(bak_csv_file)
+            copyfile(str(Path(cp.drtDescriptor["csvDataset"])), str(bak_csv_file))
 
             df_new.to_csv(Path(cp.drtDescriptor["csvDataset"]))
             dmwdg.df=df_new

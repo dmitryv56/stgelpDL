@@ -129,8 +129,8 @@ def main(argc, argv):
     cp.discret            = DISCRET
     cp.test_cut_off       = TEST_CUT_OFF
     cp.val_cut_off        = VAL_CUT_OFF
-    cp.path_repository    = PATH_REPOSITORY
-    cp.path_descriptor    = PATH_DESCRIPTOR_REPOSITORY
+    cp.path_repository    = str(PATH_REPOSITORY)
+    cp.path_descriptor    = str(PATH_DESCRIPTOR_REPOSITORY)
     cp.all_models         = ALL_MODELS
     cp.epochs             = EPOCHS
     cp.n_steps            = N_STEPS
