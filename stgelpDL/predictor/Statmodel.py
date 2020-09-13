@@ -9,7 +9,7 @@ import copy
 from pickle import dump, load
 from pathlib import Path
 import sys
-from predictor.utility import exec_time, msg2log
+from predictor.utility import exec_time, msg2log, PlotPrintManager,psd_logging
 
 class Statmodel(Predictor):
     _param = ()
@@ -282,13 +282,25 @@ class tsARIMA(Statmodel):
         for i in range(len(x)):
             x[i] = i
 
-        plt.close("all")
-        plt.title = title
-        plt.plot(x[:len(x) - self.n_predict], self.ts_data, c='blue')
-        plt.plot(x[(len(x) - self.n_predict):], self.predict, c='red')
+        plt.style.use('seaborn-darkgrid')
+        palette = plt.get_cmap('Set1')
+        fig, ax = plt.subplots()
+
+        ax.plot(x[:len(x) - self.n_predict],   self.ts_data, marker='', color=palette(0), label="Time series values")
+        ax.plot(x[(len(x) - self.n_predict):], self.predict, marker='', color=palette(1), label="Predict values")
+        plt.legend(loc=2, ncol=2)
+        ax.set_title(title)
+
+        # plt.title = title
+        # plt.plot(x[:len(x) - self.n_predict], self.ts_data, c='blue')
+        # plt.plot(x[(len(x) - self.n_predict):], self.predict, c='red')
         plt.show(block=False)
-        plt.savefig("Predict_{}_{}.png".format(self.nameModel, self.timeseries_name))
-        plt.close("all")
+        if PlotPrintManager.isNeedDestroyOpenPlots(): plt.close("all")
+
+        filePng=Path(PlotPrintManager.get_PredictLoggingFolder())/ ("Predict_{}_{}.png".format(self.nameModel, self.timeseries_name))
+
+        plt.savefig(filePng)
+
 
         if self.f is not None:
             message=f"""
@@ -314,25 +326,60 @@ class tsARIMA(Statmodel):
     @exec_time
     def ts_analysis(self):
 
-        pass
+        message = ""
         max_d = 5
         max_D = 2
-        d = pm.arima.ndiffs(self.ts_data, 0.05, 'kpss', max_d)
-        print("d={}".format(d))
-        # p_order[1]=d
+        try:
+            d = pm.arima.ndiffs(self.ts_data, 0.05, 'kpss', max_d)
+            print("d={}".format(d))
+            # p_order[1]=d
+        except:
+            pass
+        try:
+            D = pm.arima.nsdiffs(self.ts_data, self.period, max_D, 'ocsb')
+            print("D={}".format(D))
+        except ValueError:
+            message = f"""
+                        Oops!! That was no valid value..
+                        Error : {sys.exc_info()[0]}
+            """
 
-        D = pm.arima.nsdiffs(self.ts_data, self.period, max_D, 'ocsb')
-        print("D={}".format(D))
+        except:
+            message = f"""
+                                    Oops!! Unexpected error...
+                                    Error : {sys.exc_info()[0]}
+                        """
 
-        delta = self.discret
+        finally:
+            msg2log(self.ts_analysis.__name__, message, self.f)
+            return
+
+
+        delta = self.discret*60  # in sec
         N=len(self.ts_data)
-        NFFT = 512
-        Fs=1/self.discret
+        NFFT = 256
+        Fs=1/(self.discret *60)
         maxFreq= 1.0/(2*delta)
         stepFreqPSD = 1.0/(NFFT*delta)
         stepFreq = 1.0 / (N * delta)
-        mean=np.mean(self.ts_data)
-        std = np.std(self.ts_data)
+        try:
+            mean=np.mean(self.ts_data)
+            std = np.std(self.ts_data)
+        except ValueError:
+            message = f"""
+                            Oops!! That was no valid value..
+                            Error : {sys.exc_info()[0]}
+            """
+
+        except:
+            message = f"""
+                            Oops!! Unexpected error...
+                            Error : {sys.exc_info()[0]}
+            """
+
+        finally:
+            msg2log(self.ts_analysis.__name__, message, self.f)
+            return
 
         message = f"""
                     Time series length     : {N}
@@ -341,18 +388,43 @@ class tsARIMA(Statmodel):
                     Freq. delta for PSD, Hz: {stepFreqPSD}
                     Mean value             : {mean}
                     Std. value             : {std}
-        """
+            """
         msg2log(self.ts_analysis.__name__, message, self.f)
-        plt.close("all")
+
+        for i in range(len(self.ts_data)):
+            self.ts_data[i]=(self.ts_data[i]-mean)/std
+
         plt.subplot(211)
         t=np.arange(0, len(self.ts_data),1)
         plt.plot(t, self.ts_data)
         plt.subplot(212)
-        Pxx,freqs, line = plt.psd(self.ts_data,NFFT, Fs, return_line=True)
+        try:
+            Pxx,freqs, line = plt.psd(self.ts_data,NFFT, Fs, return_line=True)
+        except ValueError:
+            message = f"""
+                            Oops!! That was no valid value..
+                            Error : {sys.exc_info()[0]}
+            """
+
+        except:
+            message = f"""
+                            Oops!! Unexpected error...
+                            Error : {sys.exc_info()[0]}
+            """
+
+        finally:
+            msg2log(self.ts_analysis.__name__, message, self.f)
+            return
 
         plt.show(block=False)
-        plt.savefig("SpectralDensity_{}.png".format(self.timeseries_name))
-        plt.close("all")
+
+
+        filePng = Path(PlotPrintManager.get_ControlLoggingFolder()) / (
+            "SpectralDensity_{}.png".format(self.timeseries_name))
+
+        plt.savefig(filePng)
+        if PlotPrintManager.isNeedDestroyOpenPlots(): plt.close("all")
+        psd_logging('Power Spectral Density', freqs, Pxx)
         return
 
 def predict_sarima(ds,cp, n_predict):
@@ -366,11 +438,12 @@ def predict_sarima(ds,cp, n_predict):
     for i in range(len(x)):
         x[i]=i
 
-    plt.close("all")
+
     plt.plot(x[:len(x) - n_predict],rcpower, c='blue')
     plt.plot(x[(len(x) - n_predict):], predict, c='red')
     plt.show(block=False)
-    plt.close("all")
+    if PlotPrintManager.isNeedDestroyOpenPlots(): plt.close("all")
+
 
     return model
 
@@ -383,12 +456,25 @@ def predict_arima(ds,cp, n_predict):
     for i in range(len(x)):
         x[i]=i
 
-    plt.close("all")
+
+    plt.style.use('seaborn-darkgrid')
+    palette = plt.get_cmap('Set1')
+    fig, ax = plt.subplots()
+
+    ax.plot(x[:len(x) - n_predict],   rcpower, marker='',color=palette(0), label="Time series values")
+    ax.plot(x[(len(x) - n_predict):], predict, marker='',color=palette(0), label="Predict values")
+    plt.legend(loc=2, ncol=2)
+
+
     plt.plot(x[:len(x) - n_predict],rcpower, c='blue')
     plt.plot(x[(len(x) - n_predict):], predict, c='red')
     plt.show(block=False)
-    plt.savefig("Predict_{}.png".format(cp.rcpower_dset))
-    plt.close("all")
+    if PlotPrintManager.isNeedDestroyOpenPlots(): plt.close("all")
+
+    filePng = Path(PlotPrintManager.get_PredictLoggingFolder()) / (
+        "Predict_{}.png".format(cp.rcpower_dset))
+    plt.savefig(filePng)
+
     with open('arima_param.log','w') as fpar:
         fpar.write('df_model = {} aic = {} aicc = {}'.format( model.df_model(),model.aic(), model.aicc() ))
         prm_names=model.arima_res_.param_names
@@ -400,6 +486,9 @@ def predict_arima(ds,cp, n_predict):
         for i in range(len(predict)):
             fpar.write('{} {}'.format(i, predict[i]))
     return model
+
+
+
 
 
 
@@ -423,7 +512,8 @@ def test_arima(ds,cp):
     #visualization of forecast
 
     x=np.arange(ds.rcpower.shape[0])
-    plt.close("all")
+    if PlotPrintManager.isNeedDestroyOpenPlots():
+        plt.close("all")
     plt.plot(x[:len(x)-32], train, c='blue')
     plt.plot(x[(len(x) - 32):], forecast, c='green')
     y=x
@@ -431,5 +521,6 @@ def test_arima(ds,cp):
         y=y.append(predict[i])
     plt.plot(y[len(x):], predict, c='red')
     plt.show(block=False)
-    plt.close("all")
+    if PlotPrintManager.isNeedDestroyOpenPlots():
+        plt.close("all")
     return

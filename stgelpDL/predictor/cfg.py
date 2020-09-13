@@ -79,8 +79,12 @@ else:
     Path.mkdir(PATH_DESCRIPTOR_REPOSITORY, parents=True, exist_ok=True)
 
 ALL_MODELS = {'MLP':[(0, "mlp_1"), (1,"mlp_2")], 'CNN':[(2,'univar_cnn')],\
-              'LSTM':[(3,'vanilla_lstm'),(4,'stacked_lstm'), (5,'bidir_lstm')],
-                'tsARIMA':[(6,'seasonal_arima'),(7,'best_arima')]}
+              'LSTM':[(3,'vanilla_lstm'),(4,'stacked_lstm'), (5,'bidir_lstm')],\
+              'tsARIMA':[(6,'best_arima')]}   #,(7,'best_arima')]}
+
+
+
+
 
 # ALL_MODELS = {'tsARIMA':[(6,'seasonal_arima'),(7,'best_arima')]}
 

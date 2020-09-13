@@ -22,7 +22,7 @@ from predictor.cfg import GEO_LIMIT_FOR_AUTO , GEO_IDS_FOR_AUTO,FILE_DESCRIPTOR
 from predictor.control import ControlPlane
 from predictor.api import prepareDataset
 
-from predictor.utility import msg2log, exec_time
+from predictor.utility import msg2log, exec_time, PlotPrintManager
 
 
 
@@ -70,6 +70,8 @@ def main(argc, argv):
     Path(folder_for_control_logging).mkdir(parents=True, exist_ok=True)
     Path(folder_for_auto_logging).mkdir(parents=True, exist_ok=True)
     Path(folder_for_forecast).mkdir(parents=True, exist_ok=True)
+
+    PlotPrintManager.set_Logfolders(folder_for_control_logging,folder_for_predict_logging)
 
     suffics = ".log"
     sRCPOWER_DSET= RCPOWER_DSET

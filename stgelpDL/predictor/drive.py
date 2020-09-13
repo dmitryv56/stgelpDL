@@ -7,7 +7,7 @@ This module
 import copy
 from predictor.api import d_models_assembly, fit_models, save_modeles_in_repository,  get_list_trained_models
 from predictor.api import predict_model, chart_predict, tbl_predict
-from predictor.utility import exec_time, msg2log
+from predictor.utility import exec_time, msg2log,PlotPrintManager
 from predictor.demandwidget import DemandWidget
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta as td
@@ -104,9 +104,11 @@ class UpdateProvider(ISubject):
             5->2
     """
 
-    _state: int = None
-    _observers = []
-    _changed   = False
+    _state: int                 = None
+    _observers                  = []
+    _changed                    = False
+    _notification_received: int = 0
+    _start: int                 = 1
 
     def __init__(self, f):
         _observers = []
@@ -131,6 +133,20 @@ class UpdateProvider(ISubject):
         return type(self)._changed
     changed = property(get_changed, set_changed)
 
+    def set_notification_received(self,val):
+        type(self)._notification_received=val
+
+    def get_notification_received(self):
+        return type(self)._notification_received
+    notification_received = property(get_notification_received, set_notification_received)
+
+    def set_start(self,val):
+        type(self)._start=val
+
+    def get_start(self):
+        return type(self)._start
+    start = property(get_start, set_start)
+
     def attach(self,observer)->None:
         msg ='{} UpdateProvider: attached an observer {}'.format(datetime.now().strftime(cSFMT),observer.__str__())
         self._observers.append(observer)
@@ -153,13 +169,15 @@ class UpdateProvider(ISubject):
     def notify(self, dct: object)-> None:
         msg = '{} UpdateProvider: notifying observers..'.format(datetime.now().strftime(cSFMT))
         msg2log(self.notify.__name__,msg, self.f)
-
+        self.notification_received =0
 
         for observer in self._observers:
             observer.update(self, dct)
             msg = '{} UpdateProvider: notifying observers.. The observer {} has notification'.format(
                 datetime.now().strftime(cSFMT), observer.__str__())
             msg2log(self.notify.__name__, msg, self.f)
+            if self.notification_received> 0:
+                break
 
         return
 
@@ -179,6 +197,7 @@ class UpdateChecker(UpdateProvider):
     def _sm_CP_CREATE_DATASET(self):
         pass
         self.notify(self.dct)
+        PlotPrintManager.isNeedPrintDataset()
 
     def _sm_TP_MODEL_TRAINING(self):
         self.notify(self.dct)
@@ -210,32 +229,101 @@ class UpdateChecker(UpdateProvider):
         self.notify(self.dct)
 
     def _sm_CP_DATA_WAITING(self):
-        pass
+        self.state=SM_CP_UPDATE_DATASET
 
-    def drive(self,cp: ControlPlane, ds: Dataset)->None:
-        pass
+    # def drive(self,cp: ControlPlane, ds: Dataset)->None:
+    def drive(self) -> None:
+        cp = self.dct['ControlPlane']
+        ds = self.dct['Dataset']
+
         # self._state = randrange(0, 3)
         message = f"""
         State-Machine:
-        current tme  : {datetime.now().strftime(cSFMT)}
-        current state: {self.state}
-        description  : {sm_dict[self.state]}
+        Current time  : {datetime.now().strftime(cSFMT)}
+        Current state: {self.state}
+        Description  : {sm_dict[self.state]}
         Transfer to next state...
         """
         msg2log(self.drive.__name__, message, cp.fa)
-        self.dct['ControlPlane'] = cp
-        self.dct['Dataset']      = ds
+
 
         statusDescriptor = self.getDescriptor(cp)
-        if statusDescriptor<0:
+
+        if statusDescriptor!=0:
             cp.drtDescriptor={}
             cp.drtDescriptor['state'] = SM_CP_CREATE_DATASET
             self.state = cp.drtDescriptor['state']
+            self.start == 0
+        else:
+            if self.start == 1:
+                self.state=cp.drtDescriptor['state'] # previous state
 
-        self.state=cp.drtDescriptor['state']
+            if self.state == SM_CP_CREATE_DATASET and self.start == 1:
+                # check file csv
+                if os.path.exists(cp.drtDescriptor['csvDataset']) and os.path.isfile(cp.drtDescriptor['csvDataset']):
+                    self.state = SM_TP_MODEL_TRAINING
+
+                else:
+                    self.state=SM_CP_CREATE_DATASET
+                    message = f"""
+                                Dataset is not found...
+                                State-machine transitions to  : {self.state}
+                                Description                   : {sm_dict[self.state]}
+                                The descriptor will be re-written
+                    """
+
+            elif self.state == SM_CP_UPDATE_DATASET and self.start == 1:     # for other state state-machine will transition to state Update dataset
+                self.state = SM_PP_PREDICTING
+            elif self.state == SM_TP_MODEL_TRAINING and self.start == 1:
+                self.state = SM_PP_PREDICTING
+            elif self.state == SM_CP_DATA_WAITING   and self.start == 1:
+                self.state = SM_CP_UPDATE_DATASET
+            elif self.state == SM_TP_MODEL_UPDATING and self.start ==1:
+                self.state = SM_CP_UPDATE_DATASET
+            elif self.state == SM_PP_PREDICTING     and self.start ==1:
+                self.state = SM_CP_UPDATE_DATASET
+
+
+            message = f"""
+                                        Previous state                         : {self.state}
+                                        The following info received from saved descriptor
+                                        Description                            : {sm_dict[self.state]}
+                                        Dataset csv-file                       : {cp.drtDescriptor['csvDataset']}
+                                        Dataset typeID                         : {cp.drtDescriptor['typeID']}
+                                        Dataset title                          : {cp.drtDescriptor['title']}
+                                        Last date in dataset                   : {cp.drtDescriptor['lastTime']}
+                                        State                                  : {cp.drtDescriptor['state']}
+                                        Miscelanos                             : {cp.drtDescriptor['misc']}
+
+                                        State-machine transitions to           : {self.state}
+                                        Description                            : {sm_dict[self.state]}
+
+
+
+                            """
+
+            msg2log(self.drive.__name__, message, self.f)
+        #
+        self.start = 0
         sdtn = datetime.now().strftime(cSFMT)
-        msg='{}: State -Machine: {}\n'.format(sdtn,sm_dict[self.state])
-        msg2log(self.drive.__name__, msg,self.f)
+
+        message = f"""
+                    Current time   : {sdtn}
+                    Starting       : {sm_dict[self.state]}
+
+        """
+        msg2log(self.drive.__name__, message,self.f)
+
+
+        if self.state !=SM_CP_CREATE_DATASET:
+            if self.dct["Dataset"] is None or self.dct["Dataset"].df is None:
+                self.state =SM_CP_CREATE_DATASET
+                message =f"""
+                    The Dataset is empty.
+                    Is need to re-start the state-machine
+                    
+                """
+                msg2log(self.drive.__name__, message, self.f)
 
         #     state machine
         if self.state== SM_CP_CREATE_DATASET:
@@ -365,64 +453,122 @@ class ControlPlaneObserver(IObserver):
         self.wait_index = 0
         self.wait_max_index = 2
 
+
+
     def update(self,subject,dct)->None:
         msg = '{} {} : Reached to the event.'.format(datetime.now().strftime(cSFMT), self.__str__())
         msg2log(self.update.__name__, msg, self.f)
         if subject.state == SM_CP_CREATE_DATASET:
+            subject.notification_received +=1
             self.createDataset(dct)
             self.updateControlPlane(dct)
             cp=dct['ControlPlane']
             dmwdg=dct['DataFrame']
-            ds=dct['Dataset']
+
             cp.drtDescriptor["csvDataset"] = cp.csv_path
             cp.drtDescriptor['typeID'] = dmwdg.type_id
             cp.drtDescriptor['title'] = dmwdg.title
             cp.drtDescriptor['lastTime'] = dmwdg.last_time
             cp.drtDescriptor['state'] = SM_CP_CREATE_DATASET
             cp.drtDescriptor['misc'] = sm_dict[SM_CP_CREATE_DATASET]
+            cp.save_descriptor()
 
             cp.state = SM_TP_MODEL_TRAINING
-            cp.save_descriptor()
+
             dct['ControlPlane'] = cp
 
             subject.state = SM_TP_MODEL_TRAINING
 
+            message=f"""
+                Finished state        : {cp.drtDescriptor['state']}
+                State descriptor      : {sm_dict[cp.drtDescriptor['state']]}
+                Next state            : {subject.state} 
+                Next state descriptor : {sm_dict[subject.state]}
+            """
+            msg2log(self.update.__name__, message, self.f)
+            return
+
+
         elif subject.state == SM_CP_UPDATE_DATASET:
+            subject.notification_received += 1
             status = self.updateDataset( dct)
-            cp = dct['ControlPlane']
-            cp.drtDescriptor['modelRepository'] = Path(cp.path_repository) / Path(cp.rcpower_dset)
-            cp.drtDescriptor['state'] = SM_CP_UPDATE_DATASET
-            cp.drtDescriptor['misc'] = sm_dict[SM_CP_UPDATE_DATASET]
+
+            cp    = dct['ControlPlane']
+            cp.drtDescriptor["csvDataset"] = cp.csv_path
+            cp.drtDescriptor['state']      = SM_CP_UPDATE_DATASET
+            cp.drtDescriptor['misc']       = sm_dict[SM_CP_UPDATE_DATASET]
+            dct['ControlPlane'] = cp
+
 
             if status == 0:
-                self.wait_index = 0
-                dmwdg = dct['DataFrame']
+                self.wait_index              = 0
                 self.updateControlPlane(dct)
-                cp.drtDescriptor['lastTime'] = dmwdg.last_time
-                cp.state = SM_PP_PREDICTING
-                subject.state = SM_PP_PREDICTING
-            else:
-                cp.state = SM_CP_DATA_WAITING
-                subject.state = SM_CP_DATA_WAITING
+                dmwdg                        = dct['DataFrame']
+                cp                           = dct['ControlPlane']
 
-            dct['ControlPlane'] = cp
-            cp.save_descriptor()
+                cp.drtDescriptor['lastTime'] = dmwdg.last_time
+                cp.state                     = SM_PP_PREDICTING
+                subject.state                = SM_PP_PREDICTING
+                cp.save_descriptor()
+                dct['DataFrame']             = dmwdg
+                dct['ControlPlane'] = cp
+            else:
+                cp            = dct['ControlPlane']
+
+                cp.state      = SM_CP_DATA_WAITING
+                subject.state = SM_CP_DATA_WAITING
+                cp.save_descriptor()
+                dct['ControlPlane'] = cp
+
+            message = f"""
+                            Finished state        : {cp.drtDescriptor['state']}
+                            State descriptor      : {sm_dict[cp.drtDescriptor['state']]}
+                            Next state            : {subject.state} 
+                            Next state descriptor : {sm_dict[subject.state]}
+                        """
+            msg2log(self.update.__name__, message, self.f)
+            return
+
 
         elif subject.state ==  SM_CP_DATA_WAITING:
-            cp = dct['ControlPlane']
+            subject.notification_received += 1
+            cp                        = dct['ControlPlane']
+            cp.drtDescriptor['state'] = SM_CP_DATA_WAITING
+            cp.drtDescriptor['misc']  = sm_dict[SM_CP_DATA_WAITING]
             sleep(cp.discret * 30)
             self.wait_index+=1
             if self.wait_index > self.wait_max_index:
                 msg="Can not get an update data for time series after {} attempts.\n".format(self.wait_max_index)
                 msg2log(self.update.__name__, msg,self.f)
+                cp.drtDescriptor['state'] =SM_INVALID_STATE
+                cp.drtDescriptor['misc']  = sm_dict[SM_INVALID_STATE]
                 subject.state=SM_INVALID_STATE
+                message = f"""
+                                          Finished state        : {cp.drtDescriptor['state']}
+                                          State descriptor      : {sm_dict[cp.drtDescriptor['state']]}
+                                          Next state            : {subject.state} 
+                                          Next state descriptor : {sm_dict[subject.state]}
+
+                                          State-machine is stopping....
+                           """
+                msg2log(self.update.__name__, message, self.f)
+                cp.save_descriptor()
+                dct['ControlPlane'] = cp
+
                 return
-
-
+            cp.save_descriptor()
             subject.state=SM_CP_UPDATE_DATASET
+            message = f"""
+                           Finished state        : {cp.drtDescriptor['state']}
+                           State descriptor      : {sm_dict[cp.drtDescriptor['state']]}
+                           Next state            : {subject.state} 
+                           Next state descriptor : {sm_dict[subject.state]}
+            """
+            msg2log(self.update.__name__, message, self.f)
+            dct['ControlPlane'] = cp
+            return
 
 
-        # subject.setChanged()
         return
 
     def createDataset(self,dct):
@@ -487,9 +633,9 @@ class ControlPlaneObserver(IObserver):
 
     def updateControlPlane(self,dct):
 
-        dmwdg=dct['DataFrame']
-        cp = dct['ControlPlane']
-        ds=dct['Dataset']
+        dmwdg = dct['DataFrame']
+        cp    = dct['ControlPlane']
+        ds    = dct['Dataset']
 
         cp.dt_dset = dmwdg.names[0]
         cp.rcpower_dset = dmwdg.names[1]
@@ -508,9 +654,12 @@ class ControlPlaneObserver(IObserver):
         msg ="Dataset (csv-file) created"
         msg2log(self.updateControlPlane.__name__,msg, self.f)
         prepareDataset(cp, ds, cp.fc)
-        dct["Dataset"]=ds
+
         cp.ts_analysis(ds)
 
+        dct["Dataset"]      = ds
+        dct['ControlPlane'] = cp
+        dct['DataFrame']    = dmwdg
         return
 
 class TrainPlaneObserver(IObserver):
@@ -523,34 +672,49 @@ class TrainPlaneObserver(IObserver):
     def update(self, subject, dct) -> None:
         msg = '{} {} : Reached to the event. The training models is carried out'.format(
             datetime.now().strftime(cSFMT), self.__str__())
-        if subject._state == SM_TP_MODEL_TRAINING:
+
+
+        if subject.state == SM_TP_MODEL_TRAINING:
+            subject.notification_received += 1
             msg2log(self.update.__name__, msg, self.f)
             self.TrainModels( dct)
 
-        if  subject._state ==SM_TP_MODEL_UPDATING:
+        if  subject.state ==SM_TP_MODEL_UPDATING:
+            subject.notification_received += 1
             msg2log(self.update.__name__, msg, self.f)
             self.UpdateModels( dct)
 
-        subject._state = 2
-        subject.setChanged()
+        subject.state = SM_PP_PREDICTING
+        cp = dct['ControlPlane']
+        message = f"""
+                              Finished state        : {cp.drtDescriptor['state']}
+                              State descriptor      : {sm_dict[cp.drtDescriptor['state']]}
+                              Next state            : {subject.state} 
+                              Next state descriptor : {sm_dict[subject.state]}
+                        """
+        msg2log(self.update.__name__, message, self.f)
+        dct['ControlPlane'] = cp
+        return
 
     def TrainModels(self,dct)->None:
         # dmwdg = dct['DataFrame']
-        cp = dct['ControlPlane']
-        ds = dct['Dataset']
-        msg ='\nThe deep learning started...\n\n'
+        cp  = dct['ControlPlane']
+        ds  = dct['Dataset']
+        msg ='\nThe deep learning (DL) and statistical time series (STS) estimation started...\n\n'
         msg2log(self.TrainModels.__name__,msg, self.f)
 
         drive_train(cp, ds)
         cp.drtDescriptor['modelRepository'] = Path(cp.path_repository) / Path(cp.rcpower_dset)
-        cp.drtDescriptor['state'] = SM_PP_PREDICTING  # next state
-        cp.drtDescriptor['misc'] = sm_dict[SM_PP_PREDICTING]
+        cp.drtDescriptor['state'] = SM_TP_MODEL_TRAINING  # current state
+        cp.drtDescriptor['misc']  = sm_dict[SM_TP_MODEL_TRAINING]
 
 
         cp.save_descriptor()
-        msg = "\nThe deep learning finished.\n\n"
+        msg = "\nThe DL and STS finished.\n\n"
         msg2log(self.TrainModels.__name__, msg, self.f)
-        dct['ControlPlane']=cp
+        dct['ControlPlane'] = cp
+        dct['Dataset']      = ds
+        return
 
     def UpdateModels(self,dct)->None:
         cp = dct['ControlPlane']
@@ -560,13 +724,15 @@ class TrainPlaneObserver(IObserver):
 
         drive_train(cp, ds)
         cp.drtDescriptor['modelRepository'] = Path(cp.path_repository) / Path(cp.rcpower_dset)
-        cp.drtDescriptor['state'] = SM_PP_PREDICTING  # next state
-        cp.drtDescriptor['misc'] = sm_dict[SM_PP_PREDICTING]
+        cp.drtDescriptor['state'] = SM_TP_MODEL_UPDATING  # current state
+        cp.drtDescriptor['misc']  = sm_dict[SM_TP_MODEL_UPDATING]
 
         cp.save_descriptor()
         msg = "\nDP and STS model re-estimation finished.\n\n"
         msg2log(self.TrainModels.__name__, msg, self.f)
         dct['ControlPlane'] = cp
+        dct['Dataset'] = ds
+        return
 
 
 class PredictPlaneObserver(IObserver):
@@ -581,12 +747,28 @@ class PredictPlaneObserver(IObserver):
     def update(self, subject, dct) -> None:
         msg = '{} {} : Reached to the event. The predict by models   is carried out'.format(
             datetime.now().strftime(cSFMT), self.__str__())
-        if subject._state == 2:
+        if subject.state == SM_PP_PREDICTING:
+            subject.notification_received += 1
             msg2log(self.update.__name__, msg, self.f)
             self.PredictByModels(dct)
+        else:
+           msg2log(self.update.__name__,"Inconsistent state on predicting, we continue to update dataset", self.f)
 
-        subject._state = 3
-        subject.setChanged()
+        subject.state = SM_CP_UPDATE_DATASET
+
+        if self.predict_index % self.predict_index_max == 0:
+            subject.state =  SM_TP_MODEL_UPDATING  # next state
+
+        cp = dct['ControlPlane']
+        message = f"""
+                                      Finished state        : {cp.drtDescriptor['state']}
+                                      State descriptor      : {sm_dict[cp.drtDescriptor['state']]}
+                                      Next state            : {subject.state} 
+                                      Next state descriptor : {sm_dict[subject.state]}
+                                """
+        msg2log(self.update.__name__, message, self.f)
+        dct['ControlPlane'] = cp
+        return
 
     def PredictByModels(self,dct)->None:
         pass
@@ -596,15 +778,14 @@ class PredictPlaneObserver(IObserver):
         msg2log(self.PredictByModels.__name__, '\nThe prediction started...\n', self.f)
 
         drive_predict(cp, ds)
-        self.predict_index+=1
-        cp.drtDescriptor['state'] = SM_CP_UPDATE_DATASET  # next state
-        cp.drtDescriptor['musc'] = sm_dict[SM_CP_UPDATE_DATASET]
-        if self.predict_index_max % self.predict_index == 0:
-            cp.drtDescriptor['state'] = SM_TP_MODEL_UPDATING  # next state
-            cp.drtDescriptor['musc'] = sm_dict[SM_TP_MODEL_UPDATING]
+        self.predict_index += 1
+        cp.drtDescriptor['state'] = SM_PP_PREDICTING
+        cp.drtDescriptor['misc'] = sm_dict[SM_PP_PREDICTING]
 
         cp.save_descriptor()
         msg2log(self.PredictByModels.__name__, '\nThe prediction finished.\n', self.f)
+        dct['ControlPlane'] = cp
+        dct['Dataset']      = ds
         return
 
 @exec_time
@@ -636,27 +817,50 @@ def drive_auto(cp, ds):
     msg="\nFirst time to run UpdateChecker {}\n".format(start_time.strftime(cSFMT))
     msg2log(drive_auto.__name__, msg, cp.fa)
 
+    subject.dct["ControlPlane"]=cp
+    subject.dct["dataset"]     =ds
+
+
     nrun = 1
+    next_run_time = start_time + td(minutes=cp.discret)
     while 1:
-        subject.drive(cp,ds)
+        # subject.drive(cp,ds)
+        subject.drive()
         nrun+=1
         curr_time=datetime.now()
 
-        while  curr_time < start_time + td(minutes=10):
+        while  curr_time < next_run_time:
 
-            deltat = (start_time + td(seconds=10*60) - curr_time)
+            deltat = next_run_time - curr_time
             sleep_in_sec =deltat.seconds
-            msg="\n\nCurrent time is {} . Wait {} seconds to {}th run of  UpdateChecker run\n".format(
-                        curr_time.strftime(cSFMT), sleep_in_sec, nrun)
-            msg2log(drive_auto.__name__, msg, cp.fa)
+            # some transitions are immediately carried out
+            if subject.state ==SM_TP_MODEL_TRAINING or subject.state == SM_PP_PREDICTING or subject.state == SM_TP_MODEL_UPDATING:
+                sleep_in_sec = 0
+                next_run_time=curr_time
+
+            message=f"""
+                Current time                         : {curr_time.strftime(cSFMT)}
+                Code current state                   : {subject.state}
+                Current state                        : {sm_dict[subject.state]}
+                Next state-machine transition number : {nrun}
+                Wait till next transition, sec       : {sleep_in_sec}
+
+            """
+            if sleep_in_sec > 0:
+                msg2log(drive_auto.__name__, message, cp.fa)
 
             sleep(sleep_in_sec)
             curr_time = datetime.now()
             continue
-        start_time = curr_time
-        msg="\n\nNext time to run UpdateChecker {}\n".format(start_time.strftime(cSFMT))
-        msg2log(drive_auto.__name__, msg, cp.fa)
 
+        next_run_time = next_run_time + td(minutes=cp.discret)
+        message=f"""
+            
+            Current time :  {curr_time.strftime(cSFMT)}
+            State-machine should be run at : {next_run_time.strftime(cSFMT)}
+
+        """
+        msg2log(drive_auto.__name__, message, cp.fa)
         continue
 
     subject.detach(observer_a)
@@ -744,6 +948,14 @@ def drive_predict(cp, ds):
     tbl_predict(dict_predict, n_predict, cp, ds, title)
 
     cp.forecast_number_step=cp.forecast_number_step+1
+
+
+    if cp.predictDF is None:
+        cp.createPredictDF( dict_predict, cp.getPredictDate(ds) )
+    else:
+        cp.updatePreductDF( dict_predict, cp.getPredictDate(ds), cp.getlastReceivedData(ds) )
+
+    cp.logPredictDF()
 
     return
 

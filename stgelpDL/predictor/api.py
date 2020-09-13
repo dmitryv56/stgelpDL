@@ -16,42 +16,58 @@ from pickle import dump, load
 import copy
 
 from datetime import timedelta
-from predictor.utility import msg2log, chunkarray2log, svld2log, vector_logging, shift,exec_time
+from predictor.utility import msg2log, chunkarray2log, svld2log, vector_logging, shift,exec_time, PlotPrintManager
+from time import sleep
 
-
-def chart_MAE(name_model, name_time_series, history, n_steps, logfolder, stop_on_chart_show=True):
+def chart_MAE(name_model, name_time_series, history, n_steps, logfolder, stop_on_chart_show=False):
     # Plot history: MAE
-    plt.close("all")
-    plt.plot(history.history['loss'], label='MAE (training data)')
-    plt.plot(history.history['val_loss'], label='MAE (validation data)')
-    plt.title('Mean Absolute Error {} {} (Time Steps = {})'.format(name_model, name_time_series, n_steps))
-    plt.ylabel('MAE value')
-    plt.xlabel('No. epoch')
-    plt.legend(loc="upper left")
+
+
+    plt.style.use('seaborn-darkgrid')
+    palette = plt.get_cmap('Set1')
+    fig, ax = plt.subplots()
+
+    ax.plot(history.history['loss'], marker='', label='MAE (training data)', color=palette(0))
+    ax.plot(history.history['val_loss'], marker='', label='MAE (validation data)', color=palette(1))
+
+    plt.legend(loc=2, ncol=2)
+    ax.set_title('Mean Absolute Error{} {} (Time Steps = {})'.format(name_model, name_time_series, n_steps))
+    ax.set_xlabel("No. epoch")
+    ax.set_ylabel("MAE value")
     plt.show(block=stop_on_chart_show)
+
+
     if logfolder is not None:
         plt.savefig("{}/MAE_{}_{}_{}.png".format(logfolder, name_model, name_time_series, n_steps))
-    plt.close("all")
+    if PlotPrintManager.isNeedDestroyOpenPlots(): plt.close("all")
     return
 
 
-def chart_MSE(name_model, name_time_series, history, n_steps, logfolder, stop_on_chart_show=True):
+def chart_MSE(name_model, name_time_series, history, n_steps, logfolder, stop_on_chart_show=False):
     # Plot history: MSE
-    plt.close("all")
-    plt.plot(history.history['mean_squared_error'], label='MSE (training data)')
-    plt.plot(history.history['val_mean_squared_error'], label='MSE (validation data)')
-    plt.title('MSE {} {} (Time Steps = {})'.format(name_model, name_time_series,n_steps))
-    plt.ylabel('MSE value')
-    plt.xlabel('No. epoch')
-    plt.legend(loc="upper left")
+
+
+
+    plt.style.use('seaborn-darkgrid')
+    palette = plt.get_cmap('Set1')
+    fig, ax = plt.subplots()
+
+    ax.plot(history.history['mean_squared_error'],     marker='', label='MSE (training data)',   color=palette(0))
+    ax.plot(history.history['val_mean_squared_error'], marker='', label='MSE (validation data)', color=palette(1))
+    plt.legend(loc=2, ncol=2)
+    ax.set_title('Mean Square Error  {} {} (Time Steps = {})'.format(name_model, name_time_series, n_steps))
+    ax.set_xlabel("No. epoch")
+    ax.set_ylabel("MSE value")
     plt.show(block=stop_on_chart_show)
+
+
     if logfolder is not None:
         plt.savefig("{}/MSE_{}.png".format(logfolder, name_model, name_time_series, n_steps))
-    plt.close("all")
+    if PlotPrintManager.isNeedDestroyOpenPlots(): plt.close("all")
     return
 
 
-def chart_2series(df, title, Y_label, dt_dset, array_pred, array_act, n_pred, logfolder, stop_on_chart_show=True):
+def chart_2series(df, title, Y_label, dt_dset, array_pred, array_act, n_pred, logfolder, stop_on_chart_show=False):
     """
 
     :param df: - pandas dataset that contains of time series
@@ -65,7 +81,7 @@ def chart_2series(df, title, Y_label, dt_dset, array_pred, array_act, n_pred, lo
     :param stop_on_chart_show: True if stop on the chart show and wait User' action
     :return:
     """
-    plt.close("all")
+
     times = mdates.drange(df[dt_dset][len(df[dt_dset]) - n_pred].to_pydatetime(),
                           df[dt_dset][len(df[dt_dset]) - 1].to_pydatetime(),
                           timedelta(minutes=10))  # m.b import timedate as td; td.timedelta(minutes=10)
@@ -84,10 +100,12 @@ def chart_2series(df, title, Y_label, dt_dset, array_pred, array_act, n_pred, lo
     plt.legend()
     plt.gcf().autofmt_xdate()
     plt.show(block=False)
+
+
     title.replace(" ", "_")
     if logfolder is not None:
         plt.savefig("{}/{}-{}_samples.png".format(logfolder, title, n_pred))
-    plt.close("all")
+    if PlotPrintManager.isNeedDestroyOpenPlots(): plt.close("all")
     return
 
 
@@ -102,7 +120,7 @@ def chart_predict(dict_predict, n_predict, cp, ds, title, Y_label ):
     :param Y_label:
     :return:
     """
-    plt.close("all")
+
     # times = mdates.drange(df[dt_dset][len(df[dt_dset]) - n_pred].to_pydatetime(),
     #                       df[dt_dset][len(df[dt_dset]) - 1].to_pydatetime(),
     #                       timedelta(minutes=10))  # m.b import timedate as td; td.timedelta(minutes=10)
@@ -112,16 +130,29 @@ def chart_predict(dict_predict, n_predict, cp, ds, title, Y_label ):
     times = mdates.drange( (ds.df[ds.dt_dset][len(ds.df[ds.dt_dset]) - 1] + timedelta( minutes = cp.discret )).to_pydatetime(),
                            (ds.df[ds.dt_dset][len(ds.df[ds.dt_dset]) - 1] + timedelta( minutes = cp.discret * (n_predict+1) )).to_pydatetime(),
                            timedelta(minutes=cp.discret))
+    ndelta =  len(times)-n_predict
+
+    msg="\nlen(times)={} n_predict={}\n".format(len(times),n_predict)
+    msg2log(chart_predict.__name__, msg, None)
+
     try:
         for k,vector in dict_predict.items():
-            plt.plot(times, vector, label=k)
+
+            plt.plot(times[ndelta:], vector, label=k)
+
+        # sfile = "predict_{}.png".format(title.replace(' ', '_'))
+        # sFolder = PlotPrintManager.get_PredictLoggingFolder()
+        # filePng = Path(sFolder) / (sfile)
+        # plt.savefig(filePng)
+        # if PlotPrintManager.isNeedDestroyOpenPlots(): plt.close("all")
+
     except ValueError:
-        msg="\nOoops! That was not valid value."
+        msg="\nOoops! That was not valid value\n {}\n{}".format(sys.exc_info()[0],sys.exc_info()[1])
         msg2log(chart_predict.__name__, msg,cp.fp)
         plt.close("all")
         return
     except:
-        msg = "\nOoops! Unexpected error: {}".format(sys.exc_info()[0])
+        msg = "\nOoops! Unexpected error: {}\n{}\n}".format(sys.exc_info()[0],sys.exc_info()[1])
         msg2log(chart_predict.__name__, msg, cp.fp)
         plt.close("all")
         return
@@ -139,10 +170,17 @@ def chart_predict(dict_predict, n_predict, cp, ds, title, Y_label ):
     plt.legend()
     plt.gcf().autofmt_xdate()
     plt.show(block=cp.stop_on_chart_show)
-    title.replace(" ", "_")
-    if cp.folder_predict_log is not None:
-        plt.savefig("{}/{}-{}_steps_{}.png".format(cp.folder_forecast, title, n_predict, cp.forecast_number_step))
-    plt.close("all")
+
+    # title.replace(" ", "_")
+    # if cp.folder_predict_log is not None:
+    #     plt.savefig("{}/{}-{}_steps_{}.png".format(cp.folder_forecast, title, n_predict, cp.forecast_number_step))
+    # if PlotPrintManager.isNeedDestroyOpenPlots(): plt.close("all")
+
+    sfile = "predict_{}.png".format(title.replace(' ', '_'))
+    sFolder = PlotPrintManager.get_PredictLoggingFolder()
+    filePng = Path(sFolder) / (sfile)
+    plt.savefig(filePng)
+    if PlotPrintManager.isNeedDestroyOpenPlots(): plt.close("all")
     return
 
 
@@ -181,6 +219,7 @@ def tbl_predict(dict_predict, n_predict,cp, ds, title):
     dt=ds.predict_date + timedelta(minutes=cp.discret)  # first predict date/time
     date_time = dt.strftime("%Y-%m-%d %H:%M")
 
+    print('Predict step {}\n\n'.format(cp.forecast_number_step))
     print(str(title).center(80))
 
     if cp.ff is not None:
@@ -188,30 +227,33 @@ def tbl_predict(dict_predict, n_predict,cp, ds, title):
         cp.ff.write('Predict step {}\n\n'.format(cp.forecast_number_step))
         cp.ff.write(str(title).center(80))
         cp.ff.write('\n')
-        cp.ff.write("Date Time".ljust(18))
-        print("Date Time".ljust(18))
+        sprt="Date Time".ljust(18)
+        cp.ff.write(sprt)
+        s=sprt
         for elem in range(len(head_list)):
-            cp.ff.write(head_list[elem].center(18))
-            print(head_list[elem].center(18))
+            sprt = head_list[elem].center(18)
+            s = s + sprt
+            cp.ff.write(sprt)
+
         cp.ff.write('\n')
+        print('{}\n'.format(s))
+
 
         for i in range(atemp.shape[0]):
-            cp.ff.write(date_time.ljust(18))
-            print(date_time.ljust(18))
+
+            sprt = date_time.ljust(18)
+            cp.ff.write(sprt)
+            s = sprt
             for j in range(atemp.shape[1]):
-                cp.ff.write("{0:18.3f}".format(atemp[i][j]))
-                print("{0:18.3f}".format(atemp[i][j]))
+                sprt = "{0:18.3f}".format(atemp[i][j])
+                cp.ff.write(sprt)
+                s = s + sprt
             cp.ff.write('\n')
+            print(s)
             dt = dt + timedelta(minutes=cp.discret)
             date_time = dt.strftime("%Y-%m-%d %H:%M")
 
     return
-
-
-
-
-
-
 
 ########################################################################################################################
 """
@@ -694,10 +736,10 @@ def autocorr_firstDiffSeasonDiff(x, lags, f=None):
     return np.array(corr)
 
 
-def show_autocorr(y, lag_max, title, logfolder, stop_on_chart_show=True, f=None):
+def show_autocorr(y, lag_max, title, logfolder, stop_on_chart_show=False, f=None):
     y = np.array(y).astype('float')
     lags = range(lag_max)
-    plt.close("all")
+
     fig, ax = plt.subplots()
     fig.suptitle(title, fontsize=16)
 
@@ -713,9 +755,15 @@ def show_autocorr(y, lag_max, title, logfolder, stop_on_chart_show=True, f=None)
     ax.set_ylabel('Correlation Coefficient')
     ax.legend()
     plt.show(block=stop_on_chart_show)
-    if logfolder is not None:
-        plt.savefig("{}/autocorrelation_{}.png".format(logfolder, title))
-    plt.close("all")
+
+
+    filePng = Path(PlotPrintManager.get_ControlLoggingFolder()) / (
+        "autocorrelation_{}.png".format(title))
+    plt.savefig(filePng)
+    if PlotPrintManager.isNeedDestroyOpenPlots(): plt.close("all")
+
+    return
+
 ########################################################################################################################
 
 

@@ -5,11 +5,13 @@ from time import time, perf_counter
 import dateutil.parser
 from datetime import datetime
 from datetime import timedelta
+from pathlib import Path
 """
 print to log
 """
 # constants
 cSFMT = "%Y-%m-%d %H:%M:%S"
+DEBUG_PRINT_ = None
 
 
 """
@@ -53,8 +55,10 @@ def tsSubset2log(dt_dset, rcpower_dset, df_train, df_val=None, df_test=None, f=N
     if f is not None:
         f.write("\nTrain dataset\n")
         f.write('Train dates: {} to {}\n\n'.format(df_train[dt_dset].min(), df_train[dt_dset].max()))
-        for i in range(len(df_train)):
-            f.write('{} {}\n'.format(df_train[dt_dset][i], df_train[rcpower_dset][i]))
+
+        if PlotPrintManager.isNeedPrintDataset():
+            for i in range(len(df_train)):
+                f.write('{} {}\n'.format(df_train[dt_dset][i], df_train[rcpower_dset][i]))
 
     if df_val is not None:
 
@@ -63,8 +67,9 @@ def tsSubset2log(dt_dset, rcpower_dset, df_train, df_val=None, df_test=None, f=N
             f.write("\nValidation dataset\n")
             f.write(
                 'Validation  dates: {} to {}\n\n'.format(df_val[dt_dset].min(), df_val[dt_dset].max()))
-            for i in range(len(df_train), len(df_train) + len(df_val)):
-                f.write('{} {}\n'.format(df_val[dt_dset][i], df_val[rcpower_dset][i]))
+            if PlotPrintManager.isNeedPrintDataset():
+                for i in range(len(df_train), len(df_train) + len(df_val)):
+                    f.write('{} {}\n'.format(df_val[dt_dset][i], df_val[rcpower_dset][i]))
 
     if df_test is not None:
 
@@ -80,6 +85,9 @@ def tsSubset2log(dt_dset, rcpower_dset, df_train, df_val=None, df_test=None, f=N
 
 def chunkarray2log(title, nparray, width=8, f=None):
     # scaled train data
+
+    if not PlotPrintManager.isNeedPrintDataset():
+        return
     if f is not None:
 
         f.write("\n{}\n".format(title))
@@ -106,6 +114,8 @@ def svld2log(X, y, print_weight, f=None):
     :param f:
     :return:
     """
+    if not PlotPrintManager.isNeedPrintDataset():
+        return
 
     if (f is None):
         return
@@ -171,6 +181,20 @@ def vector_logging(title, seq, print_weigth, f=None):
 
     return
 
+def psd_logging(title,freq,psd):
+
+    sfile = "{}.log".format(title.replace(' ', '_'))
+    sFolder = PlotPrintManager.get_ControlLoggingFolder()
+    filePrint = Path(sFolder) / (sfile)
+    stemplate = "{:>5d}  {:>7.7f} {:>15.2f}\n"
+    with open(filePrint, 'w+') as fpsd:
+        fpsd.write('\n Index  Frequency(Hz) Psd \n')
+        for i in range (len(psd)):
+            fpsd.write(stemplate.format(i,freq[i],psd[i]))
+        fpsd.write('\n')
+    return
+
+
 def incDateStr(inDateTime :str, days:int=0,seconds:int=0,minutes:int=0,hours:int=0,weeks:int=0)->str:
     tDateTime = dateutil.parser.parse(inDateTime)
     return (tDateTime+timedelta(days=days,seconds=seconds,minutes=minutes,hours=hours,weeks=weeks)).strftime(cSFMT)
@@ -194,6 +218,7 @@ def shift(arr, num, fill_value=np.nan):
         shift_arr[:] = arr
     return shift_arr
 
+
 """
 Decorator exec_time
 """
@@ -215,4 +240,72 @@ def exec_time(function):
 
         return ret_value
     return timed
+
+
+
+
+class  PlotPrintManager():
+    _number_of_plots =0
+    _max_number_of_plots=1
+    _ds_printed = 0
+    _folder_for_control_logging =None
+    _folder_for_predict_logging = None
+
+    @staticmethod
+    def set_Logfolders(control_logging, predict_logging):
+        PlotPrintManager._folder_for_control_logging = control_logging
+        PlotPrintManager._folder_for_predict_logging = predict_logging
+
+    @staticmethod
+    def get_ControlLoggingFolder():
+        return PlotPrintManager._folder_for_control_logging
+
+    @staticmethod
+    def get_PredictLoggingFolder():
+        return PlotPrintManager._folder_for_predict_logging
+
+
+    @staticmethod
+    def get_numberPlots():
+        return PlotPrintManager._number_of_plots
+
+    @staticmethod
+    def get_maxnumberPlots():
+        return PlotPrintManager._max_number_of_plots
+    """
+    In auto mode  the opened plot windows seriously affect the consumed resources. to avoid proram damage, the plots are
+    closed and the charts are saved to png-files.
+    In order to print all and show plots, is need to set DEBUP_PRINT_ = 1
+       
+    """
+    @staticmethod
+    def isNeedDestroyOpenPlots():
+
+        # bDestroy=False
+
+        # PlotPrintManager._number_of_plots += 1
+        # PlotPrintManager._number_of_plots = PlotPrintManager._number_of_plots % PlotPrintManager._max_number_of_plots
+        # if PlotPrintManager._number_of_plots == 0:
+        #     bDestroy=True
+
+        bDestroy= True
+        if DEBUG_PRINT_ :
+            bDestroy = False
+        return bDestroy
+
+    @staticmethod
+    def isNeedPrintDataset():
+        bPrint = True
+        if DEBUG_PRINT_ :
+            return bPrint
+        PlotPrintManager._ds_printed +=1
+
+        if PlotPrintManager._ds_printed>0:
+            pPrint = False
+        return bPrint
+
+
+
+
+
 

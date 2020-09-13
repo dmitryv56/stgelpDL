@@ -28,8 +28,11 @@ from predictor.Statmodel import tsARIMA
 from pathlib import Path
 import json
 import os
-from predictor.utility import msg2log
+from predictor.utility import msg2log, cSFMT
 from pickle import dump, load
+import pandas as pd
+from datetime import datetime, timedelta
+from shutil import copyfile
 
 
 class ControlPlane():
@@ -84,17 +87,37 @@ class ControlPlane():
 
     _forecast_number_step = 0
 
+    # statis members
+    _number_of_plots     = 0
+    _max_number_of_plots = 5
+
 
     def __init__(self):
         # log file handlers
-        self.fc = None
-        self.fp = None
-        self.ft = None
-        self.fa = None
-        self.ff = None
-        self.state = None
+        self.fc            = None
+        self.fp            = None
+        self.ft            = None
+        self.fa            = None
+        self.ff            = None
+
+        self.state         = None
         self.drtDescriptor = {}
-        pass
+        self.predictDF     = None
+
+
+    @staticmethod
+    def get_numberPlots():
+        return ControlPlane._number_of_plots
+
+    @staticmethod
+    def get_maxnumberPlots():
+        return ControlPlane._max_number_of_plots
+
+    @staticmethod
+    def inc_numberPlots():
+        ControlPlane._number_of_plots +=1
+        return
+
 
 
     # getters/setters
@@ -540,5 +563,88 @@ class ControlPlane():
         arima.timeseries_name = self.rcpower_dset
         arima.control_arima()
         arima.ts_analysis()
+
+        return
+
+    """
+    ControlPlane metods for predict dataFrame
+    """
+
+    def createPredictDF(self, predict_dict, predict_date):
+
+
+        self.predictDF = self._createPredictDF(predict_dict, predict_date)
+
+        message =f"""
+        The final predict report started to be generated...
+        It has following columns: {self.predictDF.columns}
+        """
+        msg2log(self.createPredictDF.__name__, message, self.fa)
+        return
+
+    def _createPredictDF(self, predict_dict, predict_date):
+        aux_dict = {}
+        aux_dict[self.dt_dset]= [predict_date]
+        aux_dict[self.rcpower_dset]= [None]
+
+        for k, v in predict_dict.items():
+            aux_dict[k] = [v[0]]
+
+        df = pd.DataFrame(data=aux_dict)
+
+        return df
+
+    def updatePreductDF(self, predict_dict, predict_date, received_value):
+        pass
+        df = self._createPredictDF(predict_dict, predict_date)
+
+        df.at[len(df)-1, self.rcpower_dset]=received_value
+
+        df1 = self.predictDF.append(df, ignore_index=True)
+
+        self.pandasDF=df1.copy(deep=True)
+
+        message = f"""
+               The final predict report was updated.
+               Number of the predicted rows: {len(self.predictDF[self.dst_dset])}
+               The columns are following: {self.predictDF.columns}
+               """
+        msg2log(self.updatePreductDF.__name__, message, self.fa)
+
+        return
+
+    def getPredictDate(self,ds):
+
+
+        date_time = ds.predict_date.strftime(cSFMT)
+        return date_time
+
+    def getlastReceivedData(self,ds):
+        last_len = len(ds.df[self.rcpower_dset])
+
+        value = ds.df[self.rcpower_dset][last_len-1]
+        return value
+
+    def logPredictDF(self):
+
+        suffics      = '.log'
+        suffics_bak  = '.bak'
+        predictDFfile= 'PredictionFan'
+        file_for_forecast = Path(self.folder_forecast, predictDFfile).with_suffix(suffics)
+
+
+        if os.path.exists(str(file_for_forecast)) :
+            predictDFbak = predictDFfile + "_" + str(len(self.predictDF[self.dt_dset]))
+            file_bak = Path(self.folder_forecast, predictDFbak).with_suffix(suffics_bak)
+            copyfile(str(file_for_forecast), str(file_bak))
+
+        self.predictDF.to_csv(file_for_forecast)
+
+        message =f"""
+        The fan of predictions saved to: {file_for_forecast} 
+        Number of predictions          : {len(self.predictDF[self.rcpower_dset])}
+        """
+
+        msg2log(self.logPredictDF.__name__, message, self.fa)
 
         return

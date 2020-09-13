@@ -30,8 +30,8 @@ from datetime import timedelta
 import matplotlib.dates as mdates
 from collections import OrderedDict
 from predictor.api import show_autocorr
-from predictor.utility import cSFMT,incDateStr,decDateStr,msg2log
-
+from predictor.utility import cSFMT,incDateStr,decDateStr,msg2log, PlotPrintManager
+from pathlib import Path
 
 
 """
@@ -479,8 +479,8 @@ class DemandWidget(DataAdapter):
     # url_demanda = 'https://apidatos.ree.es/en/datos/demanda/demanda-tiempo-real?'
     # url = 'https://apidatos.ree.es/en/datos/demanda/demanda-tiempo-real?start_date=2020-08-23T00:00
     # &end_date=2020-08-23T02:00&time_trunc=hour&geo_trunc=electric_system&geo_limit=canarias&geo_ids=8742'
-    def plot_ts(self, logfolder, stop_on_chart_show=True):
-        plt.close("all")
+    def plot_ts(self, logfolder, stop_on_chart_show=False):
+
         plt.style.use('seaborn-darkgrid')
         palette = plt.get_cmap('Set1')
         fig,ax=plt.subplots()
@@ -496,8 +496,6 @@ class DemandWidget(DataAdapter):
         ax.set_title('{}'.format(self.title))
         fig.autofmt_xdate()
 
-
-        pass
         ax.xaxis.set_major_locator(years)
         # ax.xaxis.set_major_formatter(year_fmt)
         ax.xaxis.set_minor_locator(months)
@@ -506,17 +504,22 @@ class DemandWidget(DataAdapter):
         ax.set_xlim(datemin, datemax)
         fig.autofmt_xdate()
 
-
         ax.set_xlabel("Time")
         ax.set_ylabel("Power (MW)")
         if self.scaled_data:
              plt.ylabel("Power (0 - 1)")
 
         plt.show(block=stop_on_chart_show)
-        if logfolder is not None:
-            plt.savefig("{}/{}.png".format(logfolder, self.title.replace(' ', '_')))
+
+
+        sfile = "{}.png".format(self.title.replace(' ', '_'))
+        sFolder =PlotPrintManager.get_ControlLoggingFolder()
+        filePng = Path(sFolder) / (sfile)
+
+        plt.savefig(filePng)
+        if PlotPrintManager.isNeedDestroyOpenPlots(): plt.close("all")
         del df1
-        plt.close("all")
+
         return
 
     def autocorr_show(self, logfolder, stop_on_chart_show=False):
