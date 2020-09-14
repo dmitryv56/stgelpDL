@@ -593,20 +593,26 @@ class ControlPlane():
         df = pd.DataFrame(data=aux_dict)
 
         return df
-
+    """
+    This updatePreductDF creates temporarily DF -object with new forcasted values. The actual 'self.rcpower_dset' value 
+    is currently unknown.
+    Previuos 'self.rcpower_dset' value already known and it is inserted into 'self.predictDF'.
+    The temporarily DF is appended to main predicted DF.
+    The current predicted DF has a missing 'self.rcpower_dset; value in the last row    
+    """
     def updatePreductDF(self, predict_dict, predict_date, received_value):
-        pass
-        df = self._createPredictDF(predict_dict, predict_date)
 
-        df.at[len(df)-1, self.rcpower_dset]=received_value
+        df = self._createPredictDF(predict_dict, predict_date)
+        self.predictDF.at[len(self.predictDF)-1, self.rcpower_dset] =received_value
+
 
         df1 = self.predictDF.append(df, ignore_index=True)
 
-        self.pandasDF=df1.copy(deep=True)
+        self.predictDF = df1.copy(deep=True)
 
         message = f"""
                The final predict report was updated.
-               Number of the predicted rows: {len(self.predictDF[self.dst_dset])}
+               Number of the predicted rows: {len(self.predictDF[self.dt_dset])}
                The columns are following: {self.predictDF.columns}
                """
         msg2log(self.updatePreductDF.__name__, message, self.fa)
