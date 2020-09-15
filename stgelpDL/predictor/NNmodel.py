@@ -9,8 +9,8 @@ from tensorflow.keras.layers import Bidirectional,TimeDistributed,Flatten
 from tensorflow.keras.layers import Conv1D
 from tensorflow.keras.layers import MaxPooling1D
 from tensorflow.keras import metrics, models
-from predictor.predictor import Predictor
-from predictor.utility import msg2log,exec_time
+from predictor import Predictor
+from utility import msg2log,exec_time
 import copy
 
 

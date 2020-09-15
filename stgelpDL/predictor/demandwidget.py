@@ -1,10 +1,11 @@
 #!/usr/bin/python3
-'''
-This module used for real time a dataset creating. Now we have limited access to  RED Electrica De Espana
+r""" This module 'demandwidget' allows the Control Plane functionality.
+The module contains a base class DataAdapter  and derived class DemandWidget are used for real time a dataset creating.
+Now we have limited access to  RED Electrica De Espana
             https://www.https://www.ree.es/en/datos/todate
-via REData Information access API that provides a simple REST service to allow third parties to access the baсkend data
-used in REData application. By using this API , we can be able to retrieve data fom the REData widgets and use tn for
-the short term prediction by using Deep Learning and Statistcal models.
+through REData Information access API that provides a simple REST service to allow third parties to access the baсkend
+data used in REData application. By using this API , we can be able to retrieve data fom the REData widgets and use tn
+for the short term prediction by using Deep Learning and Statistcal models.
 The use of this service is simply. Onle GET requests are allowed since he purpose of this API is provide data related
 to REData app. Each widget is set up bye series indicators time series) which provide data related to particular
 category. The detailed form of the URI can be found on the site
@@ -16,38 +17,26 @@ it as csv-file.
 We plan , if possible,if exists information access to backend data another electrical grids, to add other classes  in
 this module which will be retrieve the time series in the real time.
 
-'''
+"""
 import os
 import time
 import requests
 import json
 import pandas as pd
 import dateutil.parser
-#import matplotlib
-#matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from datetime import timedelta
 import matplotlib.dates as mdates
 from collections import OrderedDict
-from predictor.api import show_autocorr
-from predictor.utility import cSFMT,incDateStr,decDateStr,msg2log, PlotPrintManager
+from api import show_autocorr
+from utility import cSFMT,incDateStr,decDateStr,msg2log, PlotPrintManager
 from pathlib import Path
 
-
-"""
- This class reads in real time the data about electrical load from  https://www.ree.es/en/apidatos  site (RED Electrics 
- de Espana).
- The paramereized GET-request is sent ,the requested widget in json-format is  received.
- This widget is parsed and DataFrame object is created.
- The example of full GET request is below
-
- GET https://apidatos.ree.es/en/datos/demanda/demanda-tiempo-real?start_date=2020-08-28T00:00&end_date=2020-08-28T18:00
-     &time_trunc=hour
-
- So the class name is DemandWidget.
-
-"""
 class DataAdapter():
+    r""" The base class DataAdapter.
+    Now we work only with one DemandWidget data adapter.
+
+    """
 
     def __init__(self, f = None):
         self.f = f
@@ -55,16 +44,17 @@ class DataAdapter():
 
 
 class DemandWidget(DataAdapter):
-    '''
+    r"""
     This class reads in real time the electrical load backend data from
          https://www.ree.es/en/apidatos  site (RED Electrics  de Espana).
-    The paramereized GET-request is sent ,the requested widget in json-format is  received.
+    It sends the paramereized GET-request to REData API interface ,receives the requested widget in json-format .
     This widget is parsed and DataFrame object is created.
-    The example of full GET request is below
+    The example of full GET request is below.
 
         GET https://apidatos.ree.es/en/datos/demanda/demanda-tiempo-real?start_date=2020-08-28T00:00
         &end_date=2020-08-28T18:00&time_trunc=hour
-    '''
+    """
+
     _start_date = None
     _end_date = None
     _time_trunc = None
@@ -76,6 +66,18 @@ class DemandWidget(DataAdapter):
     _scaled_data =False
 
     def __init__(self, scaled__data,start__date, end__date, time__trunc, geo__limit, geo__ids, f=None):
+        r"""
+
+
+        :param scaled__data:
+        :param start__date:
+        :param end__date:
+        :param time__trunc:
+        :param geo__limit:
+        :param geo__ids:
+        :param f:
+        """
+
         self.scaled_data = scaled__data
         self.f = f
         self.start_date = start__date
@@ -109,30 +111,31 @@ class DemandWidget(DataAdapter):
 
     @staticmethod
     def ISO8601toDateTime(ISO8601str):
-        '''
+        r"""
         The python date/datetime is object while ISO8601 string likes as
         '2020-08-28T16:45:01.000+02:00'. This static method converts the datetime string to datatime object.
 
 
         :param ISO8601str:
         :return: datetime object
-        '''
+        """
 
         return dateutil.parser.parse(ISO8601str)
 
     @staticmethod
     def PyStrtoISO8601(pystr):
-        """
+        r"""
         The python date/time string likes as '2020-08-28 16:45:01' while ISO8601 string likes as
         '2020-08-28T16:45:01.000+02:00'. This static method converts the PyString datetime to ISO-8061 string.
 
         :param pystr: string in pytho fomat, i.e. '2020-08-28 16:45:01'
         :return: should be '2020-08-28T16:45:01.000+02:00'
         """
+
         ourdatetime = pystr.strftime('%Y-%m-%d %H:%M:%S')
         return ourdatetime.isoformat()
 
-    # getter/setter
+    """ getter/setter """
     def set_start_date(self, val):
         type(self)._start_date = val
 
@@ -205,9 +208,9 @@ class DemandWidget(DataAdapter):
 
     scaled_data = property(get_scaled_data, set_scaled_data)
 
-    # methods
+    """ methods """
     def set_url(self):
-        """
+        r"""
         This method forms the url for GET-request. the site is
         https://apidatos.ree.es/en/datos/demanda/demanda-tiempo-real?
 
@@ -241,7 +244,7 @@ class DemandWidget(DataAdapter):
 
 
     def getDemandRT(self, requested_widget = None ):
-        """
+        r"""
         This method sends parameterized GET-request to 'https://apidatos.ree.es/en/datos/demanda/demanda-tiempo-real '
         site, parses received widget in json-format and creates DataFrame object for received time series.
         The recived request is an object comprises two dictionares 'data' and 'included' .
@@ -260,6 +263,11 @@ class DemandWidget(DataAdapter):
         parses received json-widget and  creates DataFrame object.
            'GET' request like as
            'start_date=2020-08-23T00:00&end_date=2020-08-23T02:00&time_trunc=hour&geo_trunc=electric_system&geo_limit=canarias&geo_ids=8742'
+
+        Examples of URL
+          url_demanda = 'https://apidatos.ree.es/en/datos/demanda/demanda-tiempo-real?'
+          url = 'https://apidatos.ree.es/en/datos/demanda/demanda-tiempo-real?start_date=2020-08-23T00:00
+                 &end_date=2020-08-23T02:00&time_trunc=hour&geo_trunc=electric_system&geo_limit=canarias&geo_ids=8742'
 
         :param requested_widget if  self.scaled_data else None
         :return: requesyed_widget
@@ -303,18 +311,6 @@ class DemandWidget(DataAdapter):
 
         self.df = pd.DataFrame(columns=[self.names[0], self.names[1], self.names[2], self.names[3]])
 
-        # for i in range(self.ts_size):
-        #     self.df = self.df.append({names[0]: requested_widget['included'][0]['attributes']['values'][i]['datetime'],
-        #                               names[1]: requested_widget['included'][0]['attributes']['values'][i]['value'],
-        #                               names[2]: requested_widget['included'][0]['attributes']['values'][i][
-        #                                   'percentage'],
-        #                               names[3]: requested_widget['included'][1]['attributes']['values'][i]['value'],
-        #                               names[4]: requested_widget['included'][1]['attributes']['values'][i][
-        #                                   'percentage'],
-        #                               names[5]: requested_widget['included'][2]['attributes']['values'][i]['value'],
-        #                               names[6]: requested_widget['included'][2]['attributes']['values'][i][
-        #                                   'percentage']},
-        #                              ignore_index=True)
         if self.scaled_data:
             for i in range(self.ts_size):
                 self.df = self.df.append(
@@ -336,18 +332,11 @@ class DemandWidget(DataAdapter):
                      },
                     ignore_index=True)
 
-        # for i in range(self.ts_size):
-        #     dt_obj = DemandWidget.ISO8601toDateTime(self.df[self.names[0]][i])
-        #     self.df[self.names[0]][i] = dt_obj
-
-
         self.last_time = self.df[self.names[0]].max()
-        # pd.set_option('display.max_rows', None)
         print(self.df)
 
         if self.f is not None:
             self.logDF()
-
         return requested_widget
 
     def logErrorResponse(self, r):
@@ -364,7 +353,6 @@ class DemandWidget(DataAdapter):
 
                     """
         msg2log(self.logErrorResponse.__name__, message, self.f)
-
         return
 
     def logRequestedWidgetHeader(self, requested_widget):
@@ -374,6 +362,7 @@ class DemandWidget(DataAdapter):
         :param requested_widget:
         :return:
         """
+
         self.title   = requested_widget['data']['attributes']['title']
         self.one_word_title=self.title.replace(' ','_')
         self.type_id = {requested_widget['data']['type']}
@@ -389,7 +378,6 @@ class DemandWidget(DataAdapter):
                    Title       : {self.title}
                """
         msg2log(self.logRequestedWidgetHeader.__name__, message, self.f)
-
         return
 
     def logRequestedWidgetTimeSeries(self, requested_widget):
@@ -427,7 +415,7 @@ class DemandWidget(DataAdapter):
 
             self.names.append(requested_widget['included'][i]['attributes']['title'])
 
-        # compare time series sizes
+        """  compare time series sizes """
         sizes_equal = True
         ts_size = ts_sizes[0]
         for i in range(n_ts - 1):
@@ -445,8 +433,11 @@ class DemandWidget(DataAdapter):
         return sizes_equal, ts_size, ts_sizes
 
     def logDF(self):
+        """
 
-        pass
+        :return:
+        """
+
         if self.f is None:
             return
         if self.scaled_data:
@@ -476,11 +467,13 @@ class DemandWidget(DataAdapter):
 
         return
 
-    # url_demanda = 'https://apidatos.ree.es/en/datos/demanda/demanda-tiempo-real?'
-    # url = 'https://apidatos.ree.es/en/datos/demanda/demanda-tiempo-real?start_date=2020-08-23T00:00
-    # &end_date=2020-08-23T02:00&time_trunc=hour&geo_trunc=electric_system&geo_limit=canarias&geo_ids=8742'
     def plot_ts(self, logfolder, stop_on_chart_show=False):
+        """
 
+        :param logfolder:
+        :param stop_on_chart_show:
+        :return:
+        """
         plt.style.use('seaborn-darkgrid')
         palette = plt.get_cmap('Set1')
         fig,ax=plt.subplots()
@@ -523,16 +516,24 @@ class DemandWidget(DataAdapter):
         return
 
     def autocorr_show(self, logfolder, stop_on_chart_show=False):
-        pass
+        """
+
+        :param logfolder:
+        :param stop_on_chart_show:
+        :return:
+        """
 
         x = self.df[self.names[1]].values
         show_autocorr(x, (int)(len(x) / 4), self.title, logfolder, stop_on_chart_show, self.f)
-
         return
 
     def to_csv(self,path_to_serfile):
+        """
 
-        self.df.to_csv(path_to_serfile)
+        :param path_to_serfile:
+        :return:
+        """
+        self.df.to_csv(path_to_serfile, index=False)
         nloops=0
         while not os.path.exists(path_to_serfile):
             time.sleep(1)
@@ -548,11 +549,15 @@ class DemandWidget(DataAdapter):
 
         msg="DataFrame serialized to file {}".format(path_to_serfile)
         msg2log(self.to_csv.__name__, msg,self.f)
-
-
         return path_to_serfile
 
     def concat_with_df_from_csv(self, path_to_serfile):
+        """
+
+        :param path_to_serfile:
+        :return:
+        """
+
         df_old=pd.read_csv(path_to_serfile)
 
         message = f"""
@@ -574,8 +579,6 @@ class DemandWidget(DataAdapter):
         msg2log(self.concat_with_df_from_csv.__name__, message, self.f)
 
         return df_new_reindex
-
-
 
 if __name__ == "__main__":
     with open("abc.log", 'w') as flog:

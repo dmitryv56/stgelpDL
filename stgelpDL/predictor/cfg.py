@@ -2,7 +2,7 @@
 
 from os import getcwd
 import sys
-from predictor.drive import drive_auto, drive_train, drive_predict, drive_control
+from drive import drive_auto, drive_train, drive_predict, drive_control
 from pathlib import Path
 """
 Configuration settings that are used in the control, train, predict and management planes.

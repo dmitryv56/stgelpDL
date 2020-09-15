@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-from predictor.predictor import Predictor
+from predictor import Predictor
 import pmdarima as pm
 from pmdarima.model_selection import train_test_split
 import numpy as np
@@ -9,7 +9,7 @@ import copy
 from pickle import dump, load
 from pathlib import Path
 import sys
-from predictor.utility import exec_time, msg2log, PlotPrintManager,psd_logging
+from utility import exec_time, msg2log, PlotPrintManager,psd_logging
 
 class Statmodel(Predictor):
     _param = ()

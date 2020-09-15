@@ -5,8 +5,8 @@ import pandas as pd
 from datetime import timedelta
 import copy
 
-from predictor.utility import tsBoundaries2log, tsSubset2log, dataset_properties2log,exec_time
-from predictor.api import get_scaler4train, scale_sequence, TimeSeries2SupervisedLearningData
+from utility import tsBoundaries2log, tsSubset2log, dataset_properties2log,exec_time
+from api import get_scaler4train, scale_sequence, TimeSeries2SupervisedLearningData
 
 class Dataset():
 

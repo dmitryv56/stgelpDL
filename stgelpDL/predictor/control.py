@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-'''
+r"""
 This module used for allow the Control Plane functionality. It creates the ControlPlane object, checks a mode real time
 or static. The members of ControlPlane class are set according by the mode.
 In static modes like as "training" or "predicting" will able to use Training Plane or Predicting Plane functionality.
@@ -20,15 +20,14 @@ The internal structures fo this dictionary is following
 
 The dictionary is serialized in json format. The path to the dictionary  holds in the configuration file (cfg.py) and
 supports in Control Plane object.
+"""
 
-
-'''
 import copy
-from predictor.Statmodel import tsARIMA
+from Statmodel import tsARIMA
 from pathlib import Path
 import json
 import os
-from predictor.utility import msg2log, cSFMT
+from utility import msg2log, cSFMT
 from pickle import dump, load
 import pandas as pd
 from datetime import datetime, timedelta
@@ -36,6 +35,32 @@ from shutil import copyfile
 
 
 class ControlPlane():
+    r""" A class used to realize the control plane functionality of the short term predicting.
+
+    This functionality comprises the  set of configuration parameters for datasets, logs, used modeles.
+    Most class members are accessed through getters/setters.
+    The class contains a static members and static methods in order to control the amount of simultaneously open
+    matplotlib' plots.
+
+    Atributes
+    ---------
+    The all members of the class are shown below in the body of class.
+
+    Methods
+    -------
+    createPredictDF( predict_dict, predict_date)
+        Creates a dataset comprises a fan of predictions for point of time.
+    updatePreductDF( predict_dict, predict_date, received_value)
+        Adds the prediction fan for next point of time.
+    ts_analysis(Dataset: ds )
+        Performs primary statistical analysis for time series.
+    save_descriptor()
+        Serializes a state-machine descriptor.
+
+    load_descriptor()
+        Deserializes the state-machine descriptor.
+
+    """
 
     _csv_path = None
     _modes = None
@@ -87,13 +112,16 @@ class ControlPlane():
 
     _forecast_number_step = 0
 
-    # statis members
+    # static members
     _number_of_plots     = 0
     _max_number_of_plots = 5
 
 
     def __init__(self):
-        # log file handlers
+        """
+
+        """
+
         self.fc            = None
         self.fp            = None
         self.ft            = None
@@ -118,9 +146,8 @@ class ControlPlane():
         ControlPlane._number_of_plots +=1
         return
 
-
-
     # getters/setters
+
     def set_csv_path(self, val):
         type(self)._csv_path = copy.copy(val)
 
@@ -496,9 +523,8 @@ class ControlPlane():
         return type(self)._forecast_number_step
 
     forecast_number_step = property(get_forecast_number_step, set_forecast_number_step)
-    """
-    common Control Plane methods
-    """
+
+    """     common Control Plane methods    """
     def save_descriptor(self):
         folder_descr = Path(self.folder_descriptor)
         Path(folder_descr).mkdir(parents=True, exist_ok=True)
@@ -566,12 +592,14 @@ class ControlPlane():
 
         return
 
-    """
-    ControlPlane metods for predict dataFrame
-    """
 
     def createPredictDF(self, predict_dict, predict_date):
+        """
 
+        :param predict_dict:
+        :param predict_date:
+        :return:
+        """
 
         self.predictDF = self._createPredictDF(predict_dict, predict_date)
 
@@ -583,6 +611,12 @@ class ControlPlane():
         return
 
     def _createPredictDF(self, predict_dict, predict_date):
+        """
+
+        :param predict_dict:
+        :param predict_date:
+        :return:
+        """
         aux_dict = {}
         aux_dict[self.dt_dset]= [predict_date]
         aux_dict[self.rcpower_dset]= [None]
@@ -593,15 +627,20 @@ class ControlPlane():
         df = pd.DataFrame(data=aux_dict)
 
         return df
-    """
-    This updatePreductDF creates temporarily DF -object with new forcasted values. The actual 'self.rcpower_dset' value 
-    is currently unknown.
-    Previuos 'self.rcpower_dset' value already known and it is inserted into 'self.predictDF'.
-    The temporarily DF is appended to main predicted DF.
-    The current predicted DF has a missing 'self.rcpower_dset; value in the last row    
-    """
-    def updatePreductDF(self, predict_dict, predict_date, received_value):
 
+    def updatePreductDF(self, predict_dict, predict_date, received_value):
+        r"""
+        This updatePreductDF creates temporarily DF -object with new forcasted values. The actual 'self.rcpower_dset'
+        value is currently unknown.
+        Previuos 'self.rcpower_dset' value already known and it is inserted into 'self.predictDF'.
+        The temporarily DF is appended to main predicted DF.
+        The current predicted DF has a missing 'self.rcpower_dset; value in the last row
+
+        :param predict_dict:
+        :param predict_date:
+        :param received_value:
+        :return:
+        """
         df = self._createPredictDF(predict_dict, predict_date)
         self.predictDF.at[len(self.predictDF)-1, self.rcpower_dset] =received_value
 
@@ -621,13 +660,12 @@ class ControlPlane():
 
     def getPredictDate(self,ds):
 
-
         date_time = ds.predict_date.strftime(cSFMT)
         return date_time
 
     def getlastReceivedData(self,ds):
-        last_len = len(ds.df[self.rcpower_dset])
 
+        last_len = len(ds.df[self.rcpower_dset])
         value = ds.df[self.rcpower_dset][last_len-1]
         return value
 
@@ -644,7 +682,7 @@ class ControlPlane():
             file_bak = Path(self.folder_forecast, predictDFbak).with_suffix(suffics_bak)
             copyfile(str(file_for_forecast), str(file_bak))
 
-        self.predictDF.to_csv(file_for_forecast)
+        self.predictDF.to_csv(file_for_forecast, index=False)
 
         message =f"""
         The fan of predictions saved to: {file_for_forecast} 

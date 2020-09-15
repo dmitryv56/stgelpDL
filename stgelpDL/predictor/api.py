@@ -4,8 +4,8 @@ import sys
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
-from predictor.Statmodel import tsARIMA
-from predictor.NNmodel import MLP, LSTM, CNN
+from Statmodel import tsARIMA
+from NNmodel import MLP, LSTM, CNN
 
 from pathlib import Path
 # import matplotlib
@@ -16,7 +16,7 @@ from pickle import dump, load
 import copy
 
 from datetime import timedelta
-from predictor.utility import msg2log, chunkarray2log, svld2log, vector_logging, shift,exec_time, PlotPrintManager
+from utility import msg2log, chunkarray2log, svld2log, vector_logging, shift,exec_time, PlotPrintManager
 from time import sleep
 
 def chart_MAE(name_model, name_time_series, history, n_steps, logfolder, stop_on_chart_show=False):
