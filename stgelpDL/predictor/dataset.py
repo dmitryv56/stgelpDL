@@ -55,7 +55,8 @@ class Dataset():
         return type(self)._data_for_predict
 
     def set_data_for_predict(self, n_len):
-        type(self)._data_for_predict = copy.copy(self.rcpower[:n_len])
+        type(self)._data_for_predict = copy.copy(self.rcpower[len(self.rcpower) - n_len:])
+
     data_for_predict = property(get_data_for_predict, set_data_for_predict)
 
     def set_predict_date(self, date_time = None):

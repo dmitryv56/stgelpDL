@@ -5,21 +5,19 @@ This module
 '''
 
 import copy
-from predictor.api import d_models_assembly, fit_models, save_modeles_in_repository,  get_list_trained_models
-from predictor.api import predict_model, chart_predict, tbl_predict
-from predictor.utility import exec_time, msg2log,PlotPrintManager
-from predictor.demandwidget import DemandWidget
+from api import d_models_assembly, fit_models, save_modeles_in_repository,  get_list_trained_models, predict_model, \
+                chart_predict, tbl_predict, prepareDataset
+from utility import exec_time, msg2log,PlotPrintManager,cSFMT,incDateStr,decDateStr
+from demandwidget import DemandWidget
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta as td
 from time import sleep
-from predictor.utility import cSFMT,incDateStr,decDateStr
-from predictor.control import ControlPlane
-
-from predictor.dataset import Dataset
+from control import ControlPlane
+from dataset import Dataset
 import os
 from pathlib import Path
 from shutil import copyfile
-from predictor.api import prepareDataset
+
 
 
 '''
@@ -622,7 +620,7 @@ class ControlPlaneObserver(IObserver):
             # Path(cp.drtDescriptor["csvDataset"]).copy(bak_csv_file)
             copyfile(str(Path(cp.drtDescriptor["csvDataset"])), str(bak_csv_file))
 
-            df_new.to_csv(Path(cp.drtDescriptor["csvDataset"]))
+            df_new.to_csv(Path(cp.drtDescriptor["csvDataset"]),index=False)
             dmwdg.df=df_new
             dmwdg.ts_size=len(df_new)
             dct['DataFrame']=dmwdg
