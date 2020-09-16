@@ -502,7 +502,7 @@ class DemandWidget(DataAdapter):
         if self.scaled_data:
              plt.ylabel("Power (0 - 1)")
 
-        plt.show(block=stop_on_chart_show)
+        #plt.show(block=stop_on_chart_show)
 
 
         sfile = "{}.png".format(self.title.replace(' ', '_'))

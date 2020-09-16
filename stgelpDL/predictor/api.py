@@ -34,7 +34,7 @@ def chart_MAE(name_model, name_time_series, history, n_steps, logfolder, stop_on
     ax.set_title('Mean Absolute Error{} {} (Time Steps = {})'.format(name_model, name_time_series, n_steps))
     ax.set_xlabel("No. epoch")
     ax.set_ylabel("MAE value")
-    plt.show(block=stop_on_chart_show)
+    #plt.show(block=stop_on_chart_show)
 
 
     if logfolder is not None:
@@ -58,7 +58,7 @@ def chart_MSE(name_model, name_time_series, history, n_steps, logfolder, stop_on
     ax.set_title('Mean Square Error  {} {} (Time Steps = {})'.format(name_model, name_time_series, n_steps))
     ax.set_xlabel("No. epoch")
     ax.set_ylabel("MSE value")
-    plt.show(block=stop_on_chart_show)
+    #plt.show(block=stop_on_chart_show)
 
 
     if logfolder is not None:
@@ -99,7 +99,7 @@ def chart_2series(df, title, Y_label, dt_dset, array_pred, array_act, n_pred, lo
 
     plt.legend()
     plt.gcf().autofmt_xdate()
-    plt.show(block=False)
+    #plt.show(block=False)
 
 
     title.replace(" ", "_")
@@ -169,7 +169,7 @@ def chart_predict(dict_predict, n_predict, cp, ds, title, Y_label ):
 
     plt.legend()
     plt.gcf().autofmt_xdate()
-    plt.show(block=cp.stop_on_chart_show)
+    #plt.show(block=cp.stop_on_chart_show)
 
     # title.replace(" ", "_")
     # if cp.folder_predict_log is not None:
@@ -410,14 +410,13 @@ def d_models_assembly(d_models, keyType, valueList, cp, ds):
             curr_model.param = (cp.n_steps, cp.n_features)
         elif keyType == "tsARIMA":
             curr_model = tsARIMA(name_model, keyType, cp.n_steps, cp.epochs, cp.fc)
+            #reverse_arr=ds.df[cp.rcpower_dset].values[::-1]
             if name_model == 'seasonal_arima':
-                curr_model.param =(1, 1, 1,  1, 1, 1, cp.seasonaly_period, cp.predict_lag, cp.discret * 60, \
-                                   ds.df[cp.rcpower_dset].values)
-
+                curr_model.param = (
+                1, 1, 1, 1, 1, 1, cp.seasonaly_period, cp.predict_lag, cp.discret * 60, ds.df[cp.rcpower_dset].values)
             elif name_model == 'best_arima':
-                curr_model.param =(1, 1, 1,  cp.max_p, cp.max_q, cp.max_d, cp.predict_lag, cp.discret * 60, \
-                                   ds.df[cp.rcpower_dset].values)
-
+                curr_model.param = (
+                1, 1, 1, cp.max_p, cp.max_q, cp.max_d, cp.predict_lag, cp.discret * 60, ds.df[cp.rcpower_dset].values)
             else:
                 smsg = "Undefined name of ARIMA {}\n It is not supported by STGELDP!".format(keyType)
                 print(smsg)
@@ -446,7 +445,13 @@ def d_models_assembly(d_models, keyType, valueList, cp, ds):
 
 @exec_time
 def fit_models(d_models,  cp, ds):
-    pass
+    r""" A method fits NN models and STS models.
+
+    :param d_models:
+    :param cp:
+    :param ds:
+    :return:
+    """
     histories = {}
     for k, v in d_models.items():
         curr_model = v
@@ -619,13 +624,13 @@ def predict_model(dict_model,  cp, ds, n_predict = 1):
             curr_model = LSTM( key, model_type, cp.n_steps, cp.epochs, cp.fp)
         elif model_type == "tsARIMA":
             curr_model = tsARIMA(key, model_type, cp.n_steps, cp.epochs, cp.fc)
+            # reverse_arr=ds.df[cp.rcpower_dset].values[::-1]
             if key == 'seasonal_arima':
-                curr_model.param = (1, 1, 1, 1, 1, 1, cp.seasonaly_period, cp.predict_lag, cp.discret * 60, \
-                                    ds.df[cp.rcpower_dset].values)
-
+                curr_model.param = (
+                1, 1, 1, 1, 1, 1, cp.seasonaly_period, cp.predict_lag, cp.discret * 60, ds.df[cp.rcpower_dset].values)
             elif key == 'best_arima':
-                curr_model.param = (1, 1, 1, cp.max_p, cp.max_q, cp.max_d, cp.predict_lag, cp.discret * 60, \
-                                    ds.df[cp.rcpower_dset].values)
+                curr_model.param = (
+                1, 1, 1, cp.max_p, cp.max_q, cp.max_d, cp.predict_lag, cp.discret * 60, ds.df[cp.rcpower_dset].values)
 
             else:
                 smsg = "Undefined name of ARIMA {}\n It is not supported by STGELDP!".format(key)
@@ -754,7 +759,7 @@ def show_autocorr(y, lag_max, title, logfolder, stop_on_chart_show=False, f=None
     ax.set_xlabel('lag')
     ax.set_ylabel('Correlation Coefficient')
     ax.legend()
-    plt.show(block=stop_on_chart_show)
+    #plt.show(block=stop_on_chart_show)
 
 
     filePng = Path(PlotPrintManager.get_ControlLoggingFolder()) / (

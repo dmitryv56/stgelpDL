@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 import numpy as np
-from time import time, perf_counter
+from time import time, perf_counter, sleep
 import dateutil.parser
 from datetime import datetime
 from datetime import timedelta
@@ -287,7 +287,7 @@ class  PlotPrintManager():
         # PlotPrintManager._number_of_plots = PlotPrintManager._number_of_plots % PlotPrintManager._max_number_of_plots
         # if PlotPrintManager._number_of_plots == 0:
         #     bDestroy=True
-
+        sleep(2)
         bDestroy= True
         if DEBUG_PRINT_ :
             bDestroy = False

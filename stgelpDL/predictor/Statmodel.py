@@ -222,34 +222,37 @@ class tsARIMA(Statmodel):
     param = property(get_param, set_param)
 
     def __str__(self):
-        return "{} TimeSeries\nARIMA ({},{},{}) Seasonal ARM ({}{},{}) with period ={}".format( \
+        return "{} TimeSeries\nARIMA ({},{},{}) Seasonal ARM ({},{},{}) with period ={}".format( \
             self.timeseries_name, self.ar_order,self.d_order, self._ma_order, self.AR_order, self.D_order, \
             self.MA_order, self.period)
 
     @exec_time
-    def seasonal_arima(self): #:
-        title=self.__str__()
-        # rcpower = ds.df[cp.rcpower_dset].values
+    def seasonal_arima(self):
+        """
+
+        :return:
+        """
+        title=self.nameModel
 
         self.ar_order,self.d_order,self.ma_order, self.P_order, self.D_order, self.MA_order, self.period, \
         self.n_predict, self.discret, self.ts_data,  = self.param
-
 
         p_order=np.array([self.ar_order,self.d_order,self.ma_order])
         P_order = np.array([self.AR_order, self.D_order, self.MA_order, self.period])
         model = pm.arima.ARIMA( p_order,P_order)
         self.model = model
 
-
         return model
 
     @exec_time
-    def best_arima(self): #:
-        title=self.__str__()
-        # rcpower = ds.df[cp.rcpower_dset].values
+    def best_arima(self):
+        """
 
-        start_p_, start_d_, start_q_, max_p_,  max_d_, max_q_, self.n_predict ,\
-            self.discret, self.ts_data = self.param
+        :return:
+        """
+        title=self.nameModel
+
+        start_p_, start_d_, start_q_, max_p_,  max_d_, max_q_, self.n_predict ,self.discret, self.ts_data = self.param
 
         return None
 
@@ -262,14 +265,29 @@ class tsARIMA(Statmodel):
             self.period, self.discret, self.ts_data = self.param
         ################################################################################3
 
-        # model = pm.auto_arima(self.ts_data, exogenous=None, start_p=start_p_, d=start_d_, start_q=start_q_, \
-        #                       max_p=max_p_, max_d=max_d_, max_q=max_q_, seasonal=False, trace=True, \
-        #                       error_action='ignore', suppress_warnings=True, stepwise=True)
-        #
-        # self.model = model
-        # model.summary()
-        # self.predict = model.predict(  self.n_predict, exogenous=None)
-        #
+        model = pm.auto_arima(self.ts_data, exogenous=None, start_p=start_p_, d=start_d_, start_q=start_q_, \
+                              max_p=max_p_, max_d=max_d_, max_q=max_q_, seasonal=False, trace=True, \
+                              error_action='ignore', suppress_warnings=True, stepwise=True)
+
+        self.model = model
+        model.summary()
+        self.predict = model.predict(  self.n_predict, exogenous=None)
+
+        self.nameModel = 'control_arima'
+        start_p_, start_d_, start_q_, max_p_, max_d_, max_q_, self.n_predict, \
+        self.period, self.discret, self.ts_data = self.param
+        self.ts_data=self.ts_data[:-1]
+        ################################################################################3
+
+        model = pm.auto_arima(self.ts_data, exogenous=None, start_p=start_p_, d=start_d_, start_q=start_q_, \
+                              max_p=max_p_, max_d=max_d_, max_q=max_q_, seasonal=False, trace=True, \
+                              error_action='ignore', suppress_warnings=True, stepwise=True)
+
+        self.model = model
+        model.summary()
+        predict1 = model.predict(self.n_predict, exogenous=None)
+        arima_dict=model.to_dict()
+        print(arima_dict)
         # self.save_model()
 
         return None
@@ -294,13 +312,13 @@ class tsARIMA(Statmodel):
         # plt.title = title
         # plt.plot(x[:len(x) - self.n_predict], self.ts_data, c='blue')
         # plt.plot(x[(len(x) - self.n_predict):], self.predict, c='red')
-        plt.show(block=False)
-        if PlotPrintManager.isNeedDestroyOpenPlots(): plt.close("all")
+        #plt.show(block=False)
+
 
         filePng=Path(PlotPrintManager.get_PredictLoggingFolder())/ ("Predict_{}_{}.png".format(self.nameModel, self.timeseries_name))
 
         plt.savefig(filePng)
-
+        if PlotPrintManager.isNeedDestroyOpenPlots(): plt.close("all")
 
         if self.f is not None:
             message=f"""
@@ -352,7 +370,7 @@ class tsARIMA(Statmodel):
 
         finally:
             msg2log(self.ts_analysis.__name__, message, self.f)
-            return
+
 
 
         delta = self.discret*60  # in sec
@@ -379,7 +397,7 @@ class tsARIMA(Statmodel):
 
         finally:
             msg2log(self.ts_analysis.__name__, message, self.f)
-            return
+
 
         message = f"""
                     Time series length     : {N}
@@ -414,9 +432,9 @@ class tsARIMA(Statmodel):
 
         finally:
             msg2log(self.ts_analysis.__name__, message, self.f)
-            return
 
-        plt.show(block=False)
+
+        #plt.show(block=False)
 
 
         filePng = Path(PlotPrintManager.get_ControlLoggingFolder()) / (
@@ -441,7 +459,7 @@ def predict_sarima(ds,cp, n_predict):
 
     plt.plot(x[:len(x) - n_predict],rcpower, c='blue')
     plt.plot(x[(len(x) - n_predict):], predict, c='red')
-    plt.show(block=False)
+    #plt.show(block=False)
     if PlotPrintManager.isNeedDestroyOpenPlots(): plt.close("all")
 
 
@@ -468,7 +486,7 @@ def predict_arima(ds,cp, n_predict):
 
     plt.plot(x[:len(x) - n_predict],rcpower, c='blue')
     plt.plot(x[(len(x) - n_predict):], predict, c='red')
-    plt.show(block=False)
+    #plt.show(block=False)
     if PlotPrintManager.isNeedDestroyOpenPlots(): plt.close("all")
 
     filePng = Path(PlotPrintManager.get_PredictLoggingFolder()) / (
@@ -520,7 +538,7 @@ def test_arima(ds,cp):
     for i in range(10):
         y=y.append(predict[i])
     plt.plot(y[len(x):], predict, c='red')
-    plt.show(block=False)
+    #plt.show(block=False)
     if PlotPrintManager.isNeedDestroyOpenPlots():
         plt.close("all")
     return
