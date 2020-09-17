@@ -1,11 +1,15 @@
 #!/usr/bin/python3
+""" Utiliy.py
 
+
+"""
 import numpy as np
 from time import time, perf_counter, sleep
 import dateutil.parser
 from datetime import datetime
 from datetime import timedelta
 from pathlib import Path
+import sys
 """
 print to log
 """
@@ -192,6 +196,49 @@ def psd_logging(title,freq,psd):
         for i in range (len(psd)):
             fpsd.write(stemplate.format(i,freq[i],psd[i]))
         fpsd.write('\n')
+    return
+
+def logDictArima(dct,indent = 0,f=None):
+    """ This function recursive  puts theARIMA-model dictionary.
+
+    :param dct:   object <ARIMA-model>.to_dict()
+    :param indent: indent for prints
+    :param f:
+    :return:
+    """
+
+    deltaindent = 4
+    try:
+        if isinstance(dct,(int,float,bool,str)):
+            s = ' {}'.format(str(dct).rjust(indent))
+            msg2log(None,s,f)
+            return
+        elif isinstance(dct,(list,np.ndarray)):
+            for i in range(len(dct)):
+                if i%8 == 0:
+                    msg2log(None,'\n',f)
+                logDictArima(dct[i], indent + int(deltaindent/2), f)
+
+            msg2log(None,'\n',f)
+            return
+        elif isinstance(dct, tuple):
+            logDictArima(list(dct), indent , f)
+        elif isinstance(dct,dict):
+            for k,v in dct.items():
+                s='\n{}:'.format(str(k).rjust(indent))
+                msg2log(None,s,f)
+                logDictArima(v, indent+deltaindent, f)
+            msg2log(None, '\n', f)
+            return
+        else:
+            msg2log(None, type(dct),f)
+    except:
+        message=f"""
+                Oops! Unexpected error!
+                Error : {sys.exc_info()[0]}
+                (continue) : {sys.exc_info()[1]}
+        """
+
     return
 
 

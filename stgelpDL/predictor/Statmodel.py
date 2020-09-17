@@ -9,7 +9,7 @@ import copy
 from pickle import dump, load
 from pathlib import Path
 import sys
-from utility import exec_time, msg2log, PlotPrintManager,psd_logging
+from utility import exec_time, msg2log, PlotPrintManager,psd_logging,logDictArima
 
 class Statmodel(Predictor):
     _param = ()
@@ -68,7 +68,8 @@ class Statmodel(Predictor):
                                   error_action='ignore', suppress_warnings=True, stepwise=True)
             self.predict = model.predict(self.n_predict, exogenous=None)
             self.model = model
-
+        dct = self.model.to_dict()
+        logDictArima(dct, 0, self.f)
         msg="\n\n{} was sucessfully fitted\n".format(self.nameModel)
         msg2log(self.fit_model.__name__, msg, self.f)
 
@@ -240,6 +241,7 @@ class tsARIMA(Statmodel):
         p_order=np.array([self.ar_order,self.d_order,self.ma_order])
         P_order = np.array([self.AR_order, self.D_order, self.MA_order, self.period])
         model = pm.arima.ARIMA( p_order,P_order)
+
         self.model = model
 
         return model
@@ -257,37 +259,46 @@ class tsARIMA(Statmodel):
         return None
 
     @exec_time
-    def control_arima(self): #:
+    def control_arima(self):
+        """ This method performs the ARIMA(p,d,q) and ARIMA(p,d,q)xARIMA(P,D,Q)[S] estimation/
+        These estimated models are forfuture using/
+
+        :return:
+        """
         title=self.__str__()
-        # rcpower = ds.df[cp.rcpower_dset].values
+
         self.nameModel = 'control_arima'
         start_p_, start_d_, start_q_, max_p_,  max_d_, max_q_, self.n_predict ,\
             self.period, self.discret, self.ts_data = self.param
         ################################################################################3
 
         model = pm.auto_arima(self.ts_data, exogenous=None, start_p=start_p_, d=start_d_, start_q=start_q_, \
-                              max_p=max_p_, max_d=max_d_, max_q=max_q_, seasonal=False, trace=True, \
+                              max_p=max_p_, max_d=max_d_, max_q=max_q_, max_order=10,seasonal=False, trace=True, \
                               error_action='ignore', suppress_warnings=True, stepwise=True)
 
         self.model = model
         model.summary()
-        self.predict = model.predict(  self.n_predict, exogenous=None)
 
-        self.nameModel = 'control_arima'
+        self.predict = model.predict(  self.n_predict, exogenous=None)
+        arima_dict = model.to_dict()
+        logDictArima(arima_dict, 0, self.f)
+
+        self.nameModel = 'control_seasonal_arima'
         start_p_, start_d_, start_q_, max_p_, max_d_, max_q_, self.n_predict, \
         self.period, self.discret, self.ts_data = self.param
-        self.ts_data=self.ts_data[:-1]
-        ################################################################################3
+        #self.ts_data=self.ts_data[:-1]
+
 
         model = pm.auto_arima(self.ts_data, exogenous=None, start_p=start_p_, d=start_d_, start_q=start_q_, \
-                              max_p=max_p_, max_d=max_d_, max_q=max_q_, seasonal=False, trace=True, \
+                              max_p=max_p_, max_d=max_d_, max_q=max_q_, max_order=10,seasonal=True, m=self.period,trace=True, \
                               error_action='ignore', suppress_warnings=True, stepwise=True)
 
         self.model = model
         model.summary()
         predict1 = model.predict(self.n_predict, exogenous=None)
-        arima_dict=model.to_dict()
-        print(arima_dict)
+
+        arima_seas_dict=model.to_dict()
+        logDictArima(arima_seas_dict,0,self.f)
         # self.save_model()
 
         return None
@@ -450,6 +461,7 @@ def predict_sarima(ds,cp, n_predict):
     rcpower = ds.df[cp.rcpower_dset].values
     model = pm.auto_arima(rcpower, start_p=1,d=1, start_q=1,max_p=3,max_q=3, max_d=1, seasonal=True, start_P=1, \
                           D=1,start_Q=1,max_P=2,max_D=1, max_order=5, m=144, trace=True,stepwise=True)
+
     predict = model.fit_predict(rcpower, None, n_predict)
     # for charting
     x=np.zeros((len(rcpower) + n_predict))
