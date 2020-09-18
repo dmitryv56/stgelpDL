@@ -17,8 +17,8 @@ from cfg import AUTO_PATH, TRAIN_PATH, PREDICT_PATH, CONTROL_PATH, MODES, ACTUAL
                 PATH_DATASET_REPOSITORY,PATH_DESCRIPTOR_REPOSITORY, ALL_MODELS, \
                 EPOCHS, N_STEPS, N_FEATURES, UNITS, FILTERS, KERNEL_SIZE, POOL_SIZE, HIDDEN_NEYRONS, DROPOUT,\
                 SEASONALY_PERIOD, PREDICT_LAG, MAX_P, MAX_Q, MAX_D, \
-                SCALED_DATA_FOR_AUTO,START_DATE_FOR_AUTO,END_DATE_FOR_AUTO ,TIME_TRUNC_FOR_AUTO, \
-                GEO_LIMIT_FOR_AUTO , GEO_IDS_FOR_AUTO,FILE_DESCRIPTOR
+                SCALED_DATA_FOR_AUTO,START_DATE_FOR_AUTO,END_DATE_FOR_AUTO ,TIME_TRUNC_FOR_AUTO, GEO_LIMIT_FOR_AUTO , \
+                GEO_IDS_FOR_AUTO,FILE_DESCRIPTOR, MODE_IMBALANCE, IMBALANCE_NAME, PROGRAMMED_NAME, DEMAND_NAME
 from control import ControlPlane
 from api import prepareDataset
 
@@ -166,6 +166,9 @@ def main(argc, argv):
     cp.max_p               = MAX_P
     cp.max_q               = MAX_Q
     cp.max_d               = MAX_D
+
+    ControlPlane.set_modeImbalance(MODE_IMBALANCE)
+    ControlPlane.set_modeImbalanceNames( (IMBALANCE_NAME,PROGRAMMED_NAME,DEMAND_NAME))
 
      # for debug
     # cp.actual_mode = cp.train_path

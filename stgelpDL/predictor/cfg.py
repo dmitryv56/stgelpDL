@@ -121,4 +121,11 @@ TIME_TRUNC_FOR_AUTO  = 'hour'
 GEO_LIMIT_FOR_AUTO   = None
 GEO_IDS_FOR_AUTO     = None
 
+""" set imbalance mode"""
+MODE_IMBALANCE   = 1
+IMBALANCE_NAME  = "ProgrammedMinusReal"
+PROGRAMMED_NAME = "Programmed_demand"
+DEMAND_NAME     = "Real_demand"
+
+
 

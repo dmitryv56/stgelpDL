@@ -586,6 +586,12 @@ class ControlPlaneObserver(IObserver):
         requested_widget = dmwdg.getDemandRT(None)
         print("Requested widget has type {}".format(type(requested_widget)))
 
+        if ControlPlane.get_modeImbalance():
+            (imbalance_dset, programmed_dst, demand_dset)=ControlPlane.get_modeImbalanceNames()
+            cp=dct['ControlPlane']
+            cp.rcpower_dset=imbalance_dset
+            dct['ControlPlane'] = cp
+
         dmwdg.plot_ts(os.getcwd(), False)
         dmwdg.autocorr_show(os.getcwd(), False)
 
@@ -610,6 +616,11 @@ class ControlPlaneObserver(IObserver):
         requested_widget = dmwdg.getDemandRT(None)
         if requested_widget is None:
             nRet = -1
+
+        if ControlPlane.get_modeImbalance():
+            (imbalance_dset, programmed_dst, demand_dset)=ControlPlane.get_modeImbalanceNames()
+
+            cp.rcpower_dset=imbalance_dset
 
         if dmwdg.ts_size> 0:
             df_new = dmwdg.concat_with_df_from_csv( cp.drtDescriptor["csvDataset"] )
@@ -638,7 +649,10 @@ class ControlPlaneObserver(IObserver):
         ds    = dct['Dataset']
 
         cp.dt_dset = dmwdg.names[0]
-        cp.rcpower_dset = dmwdg.names[1]
+        if ControlPlane.get_modeImbalance():
+            cp.rcpower_dset = dmwdg.names[4]
+        else:
+            cp.rcpower_dset = dmwdg.names[1]
         suffics = ".csv"
 
         # file_csv = Path(cp.folder_control_log, cp.rcpower_dset + "_" +

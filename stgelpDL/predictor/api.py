@@ -771,7 +771,20 @@ def show_autocorr(y, lag_max, title, logfolder, stop_on_chart_show=False, f=None
 
 ########################################################################################################################
 
+def createDeltaList(df1, df2):
+    """
 
+    :param df1:
+    :param df2:
+    :return:
+    """
+
+    delta = []
+    if len(df2)>0:
+        for i in range(len(df2)):
+            delta.append(df1[i] - df2[i])
+
+    return delta
 
 
 if __name__ == "__main__":

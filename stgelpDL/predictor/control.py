@@ -112,9 +112,17 @@ class ControlPlane():
 
     _forecast_number_step = 0
 
-    # static members
+
+
+
+    """ static members """
     _number_of_plots     = 0
     _max_number_of_plots = 5
+
+    _mode_imbalance = 0
+    _imbalace_name = None
+    _programmed_name = None
+    _demand_name = None
 
 
     def __init__(self):
@@ -145,6 +153,24 @@ class ControlPlane():
     def inc_numberPlots():
         ControlPlane._number_of_plots +=1
         return
+
+    @staticmethod
+    def set_modeImbalance(val):
+        ControlPlane._mode_imbalance=val
+    @staticmethod
+    def get_modeImbalance():
+        return ControlPlane._mode_imbalance
+
+    @staticmethod
+    def set_modeImbalanceNames(val):
+        (ControlPlane._imbalace_name, ControlPlane._programmed_name , ControlPlane._demand_name) = val
+    @staticmethod
+    def get_modeImbalanceNames():
+        return  (ControlPlane._imbalace_name, ControlPlane._programmed_name , ControlPlane._demand_name)
+
+
+
+
 
     # getters/setters
 
@@ -523,6 +549,7 @@ class ControlPlane():
         return type(self)._forecast_number_step
 
     forecast_number_step = property(get_forecast_number_step, set_forecast_number_step)
+
 
     """     common Control Plane methods    """
     def save_descriptor(self):

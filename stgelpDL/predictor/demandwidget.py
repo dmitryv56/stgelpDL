@@ -28,9 +28,10 @@ import matplotlib.pyplot as plt
 from datetime import timedelta
 import matplotlib.dates as mdates
 from collections import OrderedDict
-from api import show_autocorr
+from api import show_autocorr,createDeltaList
 from utility import cSFMT,incDateStr,decDateStr,msg2log, PlotPrintManager
 from pathlib import Path
+from control import ControlPlane
 
 class DataAdapter():
     r""" The base class DataAdapter.
@@ -309,6 +310,11 @@ class DemandWidget(DataAdapter):
         self.names[2] = self.names[2].replace(' ', '_')
         self.names[3] = self.names[3].replace(' ', '_')
 
+        (imbalance_dset,programmed_dset, demand_dset) = ControlPlane.get_modeImbalanceNames()
+        mode_imbalance =ControlPlane.get_modeImbalance()
+        if mode_imbalance:
+            self.names.append(imbalance_dset)
+
         self.df = pd.DataFrame(columns=[self.names[0], self.names[1], self.names[2], self.names[3]])
 
         if self.scaled_data:
@@ -334,6 +340,12 @@ class DemandWidget(DataAdapter):
 
         self.last_time = self.df[self.names[0]].max()
         print(self.df)
+
+        if mode_imbalance:
+
+            deltaList=createDeltaList(self.df[programmed_dset], self.df[demand_dset])
+            self.df[self.names[4]]=deltaList
+
 
         if self.f is not None:
             self.logDF()
@@ -440,13 +452,19 @@ class DemandWidget(DataAdapter):
 
         if self.f is None:
             return
+        stemplate = "{:<5s} {:<20s} "
         if self.scaled_data:
             self.f.write("{0:^60s}\n".format(self.title))
-            stemplate = "{:<5s} {:<20s} {:>15.5f} {:>15.5f} {:>15.5f}\n"
+            for i in range(1,len(self.names)):
+                stemplate = stemplate + "{:>15.5f} "
+
+            # stemplate = "{:<5s} {:<20s} {:>15.5f} {:>15.5f} {:>15.5f}\n"
         else:
             self.f.write("{0:^60s} (MW)\n".format(self.title))
-            stemplate = "{:<5s} {:<20s} {:>15d} {:>15d} {:>15d}\n"
-
+            for i in range(1,len(self.names)):
+                stemplate = stemplate + "{:>15d} "
+            # stemplate = "{:<5s} {:<20s} {:>15d} {:>15d} {:>15d}\n"
+        stemplate = stemplate + "\n"
         print_dict = OrderedDict()
         print_dict["####"] = '{0:<5s}'
 
@@ -461,9 +479,14 @@ class DemandWidget(DataAdapter):
         self.f.write('\n')
 
         for i in range(self.ts_size):
-            self.f.write(
-                stemplate.format(str(i), self.df.values[i][0], self.df.values[i][1], self.df.values[i][2],
-                                 self.df.values[i][3] ))
+            if ControlPlane.get_modeImbalance():
+                self.f.write(
+                    stemplate.format(str(i), self.df.values[i][0], self.df.values[i][1], self.df.values[i][2],
+                                     self.df.values[i][3], self.df.values[i][4]))
+            else:
+                self.f.write(
+                    stemplate.format(str(i), self.df.values[i][0], self.df.values[i][1], self.df.values[i][2],
+                                     self.df.values[i][3] ))
 
         return
 
@@ -522,8 +545,10 @@ class DemandWidget(DataAdapter):
         :param stop_on_chart_show:
         :return:
         """
-
-        x = self.df[self.names[1]].values
+        if ControlPlane.get_modeImbalance():
+            x = self.df[self.names[4]].values
+        else:
+            x = self.df[self.names[1]].values
         show_autocorr(x, (int)(len(x) / 4), self.title, logfolder, stop_on_chart_show, self.f)
         return
 

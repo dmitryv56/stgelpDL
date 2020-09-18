@@ -6,7 +6,7 @@ from datetime import timedelta
 import copy
 
 from utility import tsBoundaries2log, tsSubset2log, dataset_properties2log,exec_time
-from api import get_scaler4train, scale_sequence, TimeSeries2SupervisedLearningData
+from api import get_scaler4train, scale_sequence, TimeSeries2SupervisedLearningData,createDeltaList
 
 class Dataset():
 
@@ -111,6 +111,7 @@ class Dataset():
         self.df.head(10)
         title ='Number of rows and columns after removing missing values'
         tsBoundaries2log(title, self.df, self.dt_dset, self.rcpower_dset, self.f)
+
 
         return
     """
