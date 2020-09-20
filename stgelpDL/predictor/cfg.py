@@ -51,8 +51,11 @@ DISCRET      = 10
 # The time cutoffs for the formation of the validation  and test sequence in the format of the parameter passed
 # to the timedelta() like as 'days=<value>' or 'hours=<value>' or 'minutes=<value>'
 # We use 'minute' resolution
-TEST_CUT_OFF = 48 * DISCRET
-VAL_CUT_OFF  = 1000 * DISCRET
+TEST_CUT_OFF = 6 * DISCRET
+VAL_CUT_OFF  = 500 * DISCRET
+
+
+
 
 
 # Logging & Charting
@@ -90,7 +93,7 @@ ALL_MODELS = {'MLP':[(0, "mlp_1"), (1,"mlp_2")], 'CNN':[(2,'univar_cnn')],\
 
 #training model
 EPOCHS     = 100
-N_STEPS    = 32
+N_STEPS    = 64
 N_FEATURES = 1
 
 # specifical set for for differ types on Neural Nets
@@ -111,8 +114,11 @@ MAX_P            = 5
 MAX_Q            = 5
 MAX_D            = 3
 
+""" Samples/ Time Series """
+TS_DURATION_DAYS = 7 # days
+SEGMENT_SIZE     = 1024
 
-#AUTO_PATH
+"""AUTO_PATH """
 FILE_DESCRIPTOR = "peninsular.pickle"
 SCALED_DATA_FOR_AUTO = False
 START_DATE_FOR_AUTO  = "2020-08-01 00:00:00"

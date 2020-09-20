@@ -575,7 +575,7 @@ class ControlPlaneObserver(IObserver):
         start_time = "2020-08-30 00:00:00"
         end_time_t = datetime.now()
         end_time = end_time_t.strftime(cSFMT)
-        start_time_t = end_time_t - td(days=3)
+        start_time_t = end_time_t - td(days=ControlPlane.get_ts_duration_days())
         start_time = start_time_t.strftime(cSFMT)
 
         dmwdg = DemandWidget(scaled_data, start_time, end_time, 'hour', None, None, self.f)
@@ -632,6 +632,18 @@ class ControlPlaneObserver(IObserver):
             bak_csv_file=Path(bak_csv_str)
             # Path(cp.drtDescriptor["csvDataset"]).copy(bak_csv_file)
             copyfile(str(Path(cp.drtDescriptor["csvDataset"])), str(bak_csv_file))
+            message =f"""
+                     Dataset aging...
+                     Size of updated dataset : {len(df_new)}
+            """
+            msg2log(self.updateDataset.__name__, message,self.f)
+
+            df_new.drop(df_new.index[:len(dmwdg.df)], inplace=True)   # aging mechanizm:  drop len(dmwdg.df) first rows in dataset
+            message = f"""
+                                Dataset has been aged.
+                                Size of the dataset : {len(df_new)}
+                       """
+            msg2log(self.updateDataset.__name__, message, self.f)
 
             df_new.to_csv(Path(cp.drtDescriptor["csvDataset"]),index=False)
             dmwdg.df=df_new
@@ -882,20 +894,18 @@ def drive_auto(cp, ds):
 
     subject.detach(observer_b)
     subject.detach(observer_c)
-
     return
 
-"""
-1.check list of modeles
-2.create models from template
-3.update model parameters (n_steps)
-4.compile models
-5.train modeles 
-6. save modeles 
-"""
 @exec_time
 def drive_train(cp, ds):
-    """
+    """ This function performs the following actions when training the model on the given dataset:
+         -checks the list of used models;
+         -creates the models from templates;
+         -updates the model parameters like as n_steps and others;
+         -compiles models;
+         -performs fitting models on given training and evaluating datasets;
+         -saves trained models in the repository/
+
     :param cp:  ControlPlane object
     :param ds:  dataset object
     :return:
@@ -908,8 +918,6 @@ def drive_train(cp, ds):
         # LSTM->[(3, 'vanilla_lstm'), (4, 'stacked_lstm'), (5, 'bidir_lstm'), (6, 'cnn_lstm')]
 
         status = d_models_assembly(d_models, keyType, valueList, cp, ds )
-
-
     print(d_models)
 
     if cp.fc is not None:
@@ -917,27 +925,18 @@ def drive_train(cp, ds):
         for k, v in d_models.items():
             cp.fc.write("{} - > {}\n".format(k, v))
 
-
-    #  fit
     histories = fit_models(d_models, cp, ds)
 
-    # save modeles
     save_modeles_in_repository(d_models, cp)
-
     return
 
-
-"""
-1. check if model exists
-2. check if history for forecat exists (dataset)
-3. load models
-4. predict
-5. predict analysis
-
-"""
 @exec_time
 def drive_predict(cp, ds):
-    """
+    """ This function performs the out-of-sample one-step forecast:
+        -checks existing models ( in repository);
+        -loads models;
+        -predicts on given numbe periods for foreast;
+        -logs the predict results.
 
     :param cp: ControlPlane object
     :param ds: dataset object

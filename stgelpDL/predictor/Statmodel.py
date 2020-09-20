@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 from predictor import Predictor
+
 import pmdarima as pm
 from pmdarima.model_selection import train_test_split
 import numpy as np
@@ -55,24 +56,36 @@ class Statmodel(Predictor):
     @exec_time
     def fit_model(self):
         history =[]
-        pass
+
+
         if self.nameModel=='seasonal_arima':
-            self.predict = self.model.fit_predict(self.ts_data, None, self.n_predict)
+            try:
+                self.predict = self.model.fit_predict(self.ts_data, None, self.n_predict)
+            except:
+                message = f"""
+                                Oops!! Unexpected error when seasonal ARIMA was estimated...
+                                Error       : {sys.exc_info()[0]}
+                                Description : {sys.exc_info()[1]}
+                """
+
+                msg2log(self.fit_model.__name__, message, self.f)
         elif self.nameModel == 'best_arima':
 
             start_p_, start_d_, start_q_, max_p_, max_d_, max_q_, self.n_predict, \
             self.discret, self.ts_data = self.param
-
+            if max_p_<start_p_: max_p_=start_p_
+            if max_d_<start_d_: max_d_=start_d_
+            if max_q_<start_q_: max_q_=start_q_
             model = pm.auto_arima(self.ts_data, exogenous=None, start_p=start_p_, d=start_d_, start_q=start_q_, \
                                   max_p=max_p_, max_d=max_d_, max_q=max_q_, seasonal=False, trace=True, \
                                   error_action='ignore', suppress_warnings=True, stepwise=True)
             self.predict = model.predict(self.n_predict, exogenous=None)
             self.model = model
+
+        msg="\n{} was sucessfully fitted".format(self.nameModel)
+        msg2log(self.fit_model.__name__, msg, self.f)
         dct = self.model.to_dict()
         logDictArima(dct, 0, self.f)
-        msg="\n\n{} was sucessfully fitted\n".format(self.nameModel)
-        msg2log(self.fit_model.__name__, msg, self.f)
-
         return history
 
     @exec_time
@@ -128,10 +141,38 @@ class tsARIMA(Statmodel):
     _ts_data   = None
     _param     = None
 
+     # static member
+    _p_ARIMA = 0
+    _d_ARIMA = 0
+    _q_ARIMA = 0
+    _P_ARIMA = 0
+    _D_ARIMA = 0
+    _Q_ARIMA = 0
+    _p_arima = 0
+    _d_arima = 0
+    _q_arima = 0
+
     def __init__(self,nameM, typeM, n_steps, n_epochs, f=None):
         self.predict=None
         super().__init__(nameM, typeM, n_steps, n_epochs, f)
         pass
+
+    @staticmethod
+    def set_SARIMA(val):
+        (tsARIMA._p_ARIMA, tsARIMA._d_ARIMA, tsARIMA._q_ARIMA, tsARIMA._P_ARIMA,tsARIMA._D_ARIMA,tsARIMA._Q_ARIMA) = val
+
+    @staticmethod
+    def get_SARIMA():
+        return (tsARIMA._p_ARIMA, tsARIMA._d_ARIMA, tsARIMA._q_ARIMA, tsARIMA._P_ARIMA,tsARIMA._D_ARIMA,
+                tsARIMA._Q_ARIMA)
+
+    @staticmethod
+    def set_ARIMA(val):
+        (tsARIMA._p_arima, tsARIMA._d_arima, tsARIMA._q_arima) = val
+
+    @staticmethod
+    def get_ARIMA():
+        return (tsARIMA._p_arima, tsARIMA._d_arima, tsARIMA._q_arima)
 
     # getter/setter
     def set_ar_order(self,val):
@@ -278,9 +319,10 @@ class tsARIMA(Statmodel):
 
         self.model = model
         model.summary()
-
+        tsARIMA.set_ARIMA(model.order)
         self.predict = model.predict(  self.n_predict, exogenous=None)
         arima_dict = model.to_dict()
+        msg2log(self.control_arima.__name__,"\n\nlogDictArima\n\n", self.f)
         logDictArima(arima_dict, 0, self.f)
 
         self.nameModel = 'control_seasonal_arima'
@@ -292,12 +334,16 @@ class tsARIMA(Statmodel):
         model = pm.auto_arima(self.ts_data, exogenous=None, start_p=start_p_, d=start_d_, start_q=start_q_, \
                               max_p=max_p_, max_d=max_d_, max_q=max_q_, max_order=10,seasonal=True, m=self.period,trace=True, \
                               error_action='ignore', suppress_warnings=True, stepwise=True)
-
+        (p,d,q) =model.order
+        (P,D,Q,SS)= model.seasonal_order
+        val =(p,d,q,P,D,Q)
+        tsARIMA.set_SARIMA(val)
         self.model = model
         model.summary()
         predict1 = model.predict(self.n_predict, exogenous=None)
 
         arima_seas_dict=model.to_dict()
+        msg2log(self.control_arima.__name__, "\n\nlogDictArima\n\n", self.f)
         logDictArima(arima_seas_dict,0,self.f)
         # self.save_model()
 
@@ -353,7 +399,14 @@ class tsARIMA(Statmodel):
         return
 
     @exec_time
-    def ts_analysis(self):
+    def ts_analysis(self,NFFT):
+        """
+
+        :param NFFT: -segment size for FFT belongs to {16,32,64,  ..., 2^M}, M<12
+        :return:
+        """
+        if NFFT>2048:
+            NFFT=2048
 
         message = ""
         max_d = 5
@@ -386,8 +439,8 @@ class tsARIMA(Statmodel):
 
         delta = self.discret*60  # in sec
         N=len(self.ts_data)
-        NFFT = 256
-        Fs=1/(self.discret *60)
+
+        Fs=1.0/delta
         maxFreq= 1.0/(2*delta)
         stepFreqPSD = 1.0/(NFFT*delta)
         stepFreq = 1.0 / (N * delta)

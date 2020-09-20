@@ -35,55 +35,51 @@ def tsBoundaries2log(title, df, dt_dset, rcpower_dset, f=None):
     :param f:
     :return:
     """
-    # For example,title ='Number of rows and columns after removing missing values'
-    print('\n{}: {}'.format(title, df.shape))
-    print('The time series length: {}\n'.format(len(df[dt_dset])))
-    print('The time series starts from: {}\n'.format(df[dt_dset].min()))
-    print('The time series ends on: {}\n\n'.format(df[dt_dset].max()))
-    print('The minimal value of the time series: {}\n\n'.format(df[rcpower_dset].min()))
-    print('The maximum value of the time series: {}\n\n'.format(df[rcpower_dset].max()))
-    if f is not None:
-        f.write('\n{}: {}\n'.format(title, df.shape))
-        f.write('The time series length: {}\n'.format(len(df[dt_dset])))
-        f.write('The time series starts from: {}\n'.format(df[dt_dset].min()))
-        f.write('The time series ends on: {}\n'.format(df[dt_dset].max()))
-        f.write('The minimal value of the time series: {}\n'.format(df[rcpower_dset].min()))
-        f.write('The maximum value of the time series: {}\n\n'.format(df[rcpower_dset].max()))
+    message = f"""
+            Time series (TS) title : {title}
+            TS shape : {df.shape}
+
+            TS length : {len(df[dt_dset])}
+            TS starts at : {df[dt_dset].min()}
+            TS ends at   : {df[dt_dset].max()}
+            TS minimal value : {df[rcpower_dset].min()}
+            TS maximal value : {df[rcpower_dset].max()}
+
+    """
+    msg2log(tsBoundaries2log.__name__, message,f)
 
     return
 
-
 def tsSubset2log(dt_dset, rcpower_dset, df_train, df_val=None, df_test=None, f=None):
     pass
-    print('Train dates: {} to {}'.format(df_train[dt_dset].min(), df_train[dt_dset].max()))
-    if f is not None:
-        f.write("\nTrain dataset\n")
-        f.write('Train dates: {} to {}\n\n'.format(df_train[dt_dset].min(), df_train[dt_dset].max()))
+    msg ='    Train dataset\nTrain dates: {} to {}'.format(df_train[dt_dset].min(), df_train[dt_dset].max())
+    msg2log(tsSubset2log.__name__, msg,f)
 
-        if PlotPrintManager.isNeedPrintDataset():
-            for i in range(len(df_train)):
-                f.write('{} {}\n'.format(df_train[dt_dset][i], df_train[rcpower_dset][i]))
+    if PlotPrintManager.isNeedPrintDataset():
+        for i in range(len(df_train)):
+            msg ='{} {}'.format(df_train[dt_dset][i], df_train[rcpower_dset][i])
+            msg2log(" ", msg,f)
 
     if df_val is not None:
 
-        print('Validation dates: {} to {}'.format(df_val[dt_dset].min(), df_val[dt_dset].max()))
-        if f is not None:
-            f.write("\nValidation dataset\n")
-            f.write(
-                'Validation  dates: {} to {}\n\n'.format(df_val[dt_dset].min(), df_val[dt_dset].max()))
-            if PlotPrintManager.isNeedPrintDataset():
-                for i in range(len(df_train), len(df_train) + len(df_val)):
-                    f.write('{} {}\n'.format(df_val[dt_dset][i], df_val[rcpower_dset][i]))
+        msg ='\n    Validation dataset\nValidation dates: {} to {}'.format(df_val[dt_dset].min(), df_val[dt_dset].max())
+        msg2log(tsSubset2log.__name__, msg, f)
+
+        if PlotPrintManager.isNeedPrintDataset():
+            for i in range(len(df_train), len(df_train) + len(df_val)):
+                msg = '{} {}'.format(df_val[dt_dset][i], df_val[rcpower_dset][i])
+                msg2log(" ", msg, f)
 
     if df_test is not None:
 
-        print('Test dates: {} to {}'.format(df_test[dt_dset].min(), df_test[dt_dset].max()))
-        f.write("\nTest dataset\n")
-        f.write('Test  dates: {} to {}\n\n'.format(df_test[dt_dset].min(), df_test[dt_dset].max()))
+        msg = '\n     Test dataset\nTest dates: {} to {}'.format(df_test[dt_dset].min(), df_test[dt_dset].max())
+        msg2log(tsSubset2log.__name__, msg, f)
+
         start = len(df_train) if df_val is None else len(df_train) + len(df_val)
         stop = len(df_train) + len(df_test) if df_val is None else len(df_train) + len(df_val) + len(df_test)
         for i in range(start, stop):
-            f.write('{} {}\n'.format(df_test[dt_dset][i], df_test[rcpower_dset][i]))
+            msg = '{} {}\n'.format(df_test[dt_dset][i], df_test[rcpower_dset][i])
+            msg2log(" ", msg, f)
     return
 
 
@@ -145,21 +141,27 @@ def svld2log(X, y, print_weight, f=None):
 def dataset_properties2log(csv_path, dt_dset, rcpower_dset, discret, test_cut_off, val_cut_off, n_steps, n_features, \
                            n_epochs, f=None):
     pass
-    if f is not None:
-        f.write(
-            "====================================================================================================")
-        f.write("\nDataset Properties\ncsv_path: {}\ndt_dset: {}\nrcpower_dset: {}\ndiscret: {}\n".format(csv_path,
-                                                                                                          dt_dset,
-                                                                                                          rcpower_dset,
-                                                                                                          discret))
-        f.write(
-            "\n\nDataset Cut off Properties\ncut of for test sequence: {} minutes\ncut off for validation sequence: {} minutes\n".format(
-                test_cut_off, val_cut_off))
+    message = f"""
+                =======================================================================================================
+                Dataset Properties
+                csv_path                              : {csv_path}
+                dt_dset                               : {dt_dset}
+                rcpower_dset                          : {rcpower_dset}
+                discreet (minutes)                    : {discret}
+                
+                Dataset cut-off properties
+                cut-off test sequence (minutes)       : {test_cut_off}
+                cut-off validation sequence (minutes) : {val_cut_off}
 
-        f.write("\n\nTraining Properties\n time steps: {},\nfeatures: {}\n,epochs: {}\n".format(n_steps, n_features,
-                                                                                                n_epochs))
-        f.write(
-            "====================================================================================================\n\n")
+                Training properties
+                time steps for learning sequence      : {n_steps}
+                features                              : {n_features}
+                epochs                                : {n_epochs}
+                =======================================================================================================
+
+    """
+    msg2log(dataset_properties2log.__name__, message, f)
+
     return
 
 
@@ -211,36 +213,48 @@ def logDictArima(dct,indent = 0,f=None):
     try:
         if isinstance(dct,(int,float,bool,str)):
             s = ' {}'.format(str(dct).rjust(indent))
-            msg2log(None,s,f)
+            msg2logDictArima(indent,s,f)
             return
         elif isinstance(dct,(list,np.ndarray)):
             for i in range(len(dct)):
                 if i%8 == 0:
-                    msg2log(None,'\n',f)
+                    msg2logDictArima(indent,'\n',f)
                 logDictArima(dct[i], indent + int(deltaindent/2), f)
 
-            msg2log(None,'\n',f)
+            msg2logDictArima(indent,'\n',f)
             return
         elif isinstance(dct, tuple):
             logDictArima(list(dct), indent , f)
         elif isinstance(dct,dict):
             for k,v in dct.items():
                 s='\n{}:'.format(str(k).rjust(indent))
-                msg2log(None,s,f)
+                msg2logDictArima(indent,s,f)
                 logDictArima(v, indent+deltaindent, f)
-            msg2log(None, '\n', f)
+            msg2logDictArima(indent,'\n', f)
             return
         else:
-            msg2log(None, type(dct),f)
+            msg2logDictArima(indent,type(dct),f)
     except:
         message=f"""
                 Oops! Unexpected error!
                 Error : {sys.exc_info()[0]}
                 (continue) : {sys.exc_info()[1]}
         """
-
+        msg2log(logDictArima.__name__, message,f)
     return
 
+def msg2logDictArima( indent,msg, f=None):
+    try:
+        st='{' + ':>{}s'.format(indent)  +  '} {}'
+        if f is not None:
+            f.write(st.format(" ", msg))
+    except:
+        message = f"""
+                        Oops! Unexpected error!
+                        Error : {sys.exc_info()[0]}
+                        (continue) : {sys.exc_info()[1]}
+                """
+        msg2log(msg2logDictArima.__name__, message, f)
 
 def incDateStr(inDateTime :str, days:int=0,seconds:int=0,minutes:int=0,hours:int=0,weeks:int=0)->str:
     tDateTime = dateutil.parser.parse(inDateTime)

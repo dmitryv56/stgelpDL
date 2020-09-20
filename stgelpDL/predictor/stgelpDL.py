@@ -18,7 +18,8 @@ from cfg import AUTO_PATH, TRAIN_PATH, PREDICT_PATH, CONTROL_PATH, MODES, ACTUAL
                 EPOCHS, N_STEPS, N_FEATURES, UNITS, FILTERS, KERNEL_SIZE, POOL_SIZE, HIDDEN_NEYRONS, DROPOUT,\
                 SEASONALY_PERIOD, PREDICT_LAG, MAX_P, MAX_Q, MAX_D, \
                 SCALED_DATA_FOR_AUTO,START_DATE_FOR_AUTO,END_DATE_FOR_AUTO ,TIME_TRUNC_FOR_AUTO, GEO_LIMIT_FOR_AUTO , \
-                GEO_IDS_FOR_AUTO,FILE_DESCRIPTOR, MODE_IMBALANCE, IMBALANCE_NAME, PROGRAMMED_NAME, DEMAND_NAME
+                GEO_IDS_FOR_AUTO,FILE_DESCRIPTOR, MODE_IMBALANCE, IMBALANCE_NAME, PROGRAMMED_NAME, DEMAND_NAME, \
+                TS_DURATION_DAYS, SEGMENT_SIZE
 from control import ControlPlane
 from api import prepareDataset
 
@@ -169,7 +170,8 @@ def main(argc, argv):
 
     ControlPlane.set_modeImbalance(MODE_IMBALANCE)
     ControlPlane.set_modeImbalanceNames( (IMBALANCE_NAME,PROGRAMMED_NAME,DEMAND_NAME))
-
+    ControlPlane.set_ts_duration_days(TS_DURATION_DAYS)
+    ControlPlane.set_psd_segment_size(SEGMENT_SIZE)
      # for debug
     # cp.actual_mode = cp.train_path
     # cp.actual_mode = cp.predict_path

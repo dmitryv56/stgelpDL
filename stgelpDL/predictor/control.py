@@ -124,6 +124,10 @@ class ControlPlane():
     _programmed_name = None
     _demand_name = None
 
+    _ts_duration_days = 3
+    _psd_segment_size = 256
+
+
 
     def __init__(self):
         """
@@ -168,9 +172,21 @@ class ControlPlane():
     def get_modeImbalanceNames():
         return  (ControlPlane._imbalace_name, ControlPlane._programmed_name , ControlPlane._demand_name)
 
+    @staticmethod
+    def set_ts_duration_days(val):
+        ControlPlane._ts_duration_days=val
 
+    @staticmethod
+    def get_ts_duration_days():
+        return ControlPlane._ts_duration_days
 
+    @staticmethod
+    def set_psd_segment_size(val):
+        ControlPlane._psd_segment_size = val
 
+    @staticmethod
+    def get_psd_segment_size():
+        return ControlPlane._psd_segment_size
 
     # getters/setters
 
@@ -614,8 +630,11 @@ class ControlPlane():
         arima.param =(0, 0, 0, self.max_p, self.max_d, self.max_q, self.predict_lag, self._seasonaly_period, self.discret, ds.df[self.rcpower_dset].values)
         arima.path2modelrepository = self.path_repository
         arima.timeseries_name = self.rcpower_dset
+
+
+
         arima.control_arima()
-        arima.ts_analysis()
+        arima.ts_analysis( ControlPlane.get_psd_segment_size())
 
         return
 

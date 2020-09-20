@@ -16,7 +16,8 @@ from pickle import dump, load
 import copy
 
 from datetime import timedelta
-from utility import msg2log, chunkarray2log, svld2log, vector_logging, shift,exec_time, PlotPrintManager
+from utility import msg2log, chunkarray2log, svld2log, vector_logging, shift,exec_time, PlotPrintManager, \
+                    dataset_properties2log
 from time import sleep
 
 def chart_MAE(name_model, name_time_series, history, n_steps, logfolder, stop_on_chart_show=False):
@@ -365,9 +366,20 @@ def split_sequence(sequence, n_steps):
 
 
 def prepareDataset(cp, ds, f=None):
-    pass
+    """
+
+    :param cp:
+    :param ds:
+    :param f:
+    :return:
+    """
     str(ds)
+
+    ds.test_cut_off = cp.test_cut_off
+    ds.val_cut_off  = cp.val_cut_off
     ds.dset2arrays(cp.n_steps, cp.n_features, cp.epochs)
+    dataset_properties2log(cp.csv_path, cp.dt_dset, cp.rcpower_dset, cp.discret, cp.test_cut_off, cp.val_cut_off,
+                           cp.n_steps, cp.n_features,cp.epochs, f)
 
     show_autocorr(ds.rcpower, 144, cp.rcpower_dset, cp.folder_control_log, cp.stop_on_chart_show, cp.fc)
 
@@ -412,11 +424,15 @@ def d_models_assembly(d_models, keyType, valueList, cp, ds):
             curr_model = tsARIMA(name_model, keyType, cp.n_steps, cp.epochs, cp.fc)
             #reverse_arr=ds.df[cp.rcpower_dset].values[::-1]
             if name_model == 'seasonal_arima':
+                (p,d,q,P,D,Q) = tsARIMA.get_SARIMA()
                 curr_model.param = (
-                1, 1, 1, 1, 1, 1, cp.seasonaly_period, cp.predict_lag, cp.discret * 60, ds.df[cp.rcpower_dset].values)
+                p,d,q,P,D,Q, cp.seasonaly_period, cp.predict_lag, cp.discret * 60, ds.df[cp.rcpower_dset].values)
             elif name_model == 'best_arima':
+                (cp.max_p,cp.max_d,cp.max_q) = tsARIMA.get_ARIMA()
+
                 curr_model.param = (
-                1, 1, 1, cp.max_p, cp.max_q, cp.max_d, cp.predict_lag, cp.discret * 60, ds.df[cp.rcpower_dset].values)
+                cp.max_p, cp.max_q, cp.max_d, cp.max_p, cp.max_q, cp.max_d, cp.predict_lag, cp.discret * 60,
+                ds.df[cp.rcpower_dset].values)
             else:
                 smsg = "Undefined name of ARIMA {}\n It is not supported by STGELDP!".format(keyType)
                 print(smsg)
