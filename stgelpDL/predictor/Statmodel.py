@@ -10,7 +10,7 @@ import copy
 from pickle import dump, load
 from pathlib import Path
 import sys
-from utility import exec_time, msg2log, PlotPrintManager,psd_logging,logDictArima
+from utility import exec_time, msg2log, PlotPrintManager,psd_logging,logDictArima,vector_logging
 
 class Statmodel(Predictor):
     _param = ()
@@ -55,12 +55,39 @@ class Statmodel(Predictor):
 
     @exec_time
     def fit_model(self):
-        history =[]
+        """
 
+        :return:
+        """
+        history =[]
 
         if self.nameModel=='seasonal_arima':
             try:
-                self.predict = self.model.fit_predict(self.ts_data, None, self.n_predict)
+                # self.predict = self.model.fit_predict(self.ts_data, None, self.n_predict)
+                (p,d,q,P,D,Q)=tsARIMA.get_SARIMA()
+                (start_p_, start_d_, start_q_, start_P_, start_D_, start_Q_,  self.period, self.n_predict,  self.discret,\
+                self.ts_data) = self.param
+
+                (p, d, q, P, D, Q) = tsARIMA.get_SARIMA()
+                if p>-1 and d>-1 and q>-1 and P>-1 and D>-1 and Q>-1:
+                    start_p_ = p
+                    start_d_ = d
+                    start_q_ = q
+                    start_P_ = P
+                    start_D_ = D
+                    start_Q_ = Q
+                # self.ts_data=self.ts_data[:-1]
+
+                model = pm.auto_arima(self.ts_data, exogenous=None,
+                                      start_p=start_p_, d=start_d_, start_q=start_q_,
+                                      max_p=start_p_, max_d=start_d_, max_q=start_q_,
+                                      start_P=start_P_, D=start_D_, start_Q=start_Q_,
+                                      max_P=start_P_, max_D=start_D_, max_Q=start_Q_,
+                                      max_order=10,   seasonal=True, m=self.period,trace=True,
+                                      error_action='ignore', suppress_warnings=True, stepwise=True)
+
+                self.predict = model.predict(self.n_predict, exogenous=None)
+                self.model = model
             except:
                 message = f"""
                                 Oops!! Unexpected error when seasonal ARIMA was estimated...
@@ -70,14 +97,24 @@ class Statmodel(Predictor):
 
                 msg2log(self.fit_model.__name__, message, self.f)
         elif self.nameModel == 'best_arima':
+            (p, d, q) = tsARIMA.get_ARIMA()
+            (start_p_, start_d_, start_q_, max_p_, max_d_, max_q_, self.period, self.n_predict, self.discret,
+             self.ts_data) = self.param
 
-            start_p_, start_d_, start_q_, max_p_, max_d_, max_q_, self.n_predict, \
-            self.discret, self.ts_data = self.param
+            if p>-1 and d>-1 and q> -1 :
+                start_p_ = p
+                start_q_ = q
+                start_d_ = d
+                max_p_   = p
+                max_d_   = d
+                max_q_   = q
             if max_p_<start_p_: max_p_=start_p_
             if max_d_<start_d_: max_d_=start_d_
             if max_q_<start_q_: max_q_=start_q_
-            model = pm.auto_arima(self.ts_data, exogenous=None, start_p=start_p_, d=start_d_, start_q=start_q_, \
-                                  max_p=max_p_, max_d=max_d_, max_q=max_q_, seasonal=False, trace=True, \
+            model = pm.auto_arima(self.ts_data, exogenous=None,
+                                  start_p=start_p_, d=start_d_, start_q=start_q_,
+                                  max_p=max_p_, max_d=max_d_, max_q=max_q_,
+                                  seasonal=False, trace=True, \
                                   error_action='ignore', suppress_warnings=True, stepwise=True)
             self.predict = model.predict(self.n_predict, exogenous=None)
             self.model = model
@@ -90,6 +127,7 @@ class Statmodel(Predictor):
 
     @exec_time
     def predict_n_steps(self, n_predict_number):
+        self.model.arima_res_.data.endog = copy.copy(self.ts_data)
         y=self.model.predict(n_predict_number,exogenous=None)
 
         return y
@@ -142,15 +180,15 @@ class tsARIMA(Statmodel):
     _param     = None
 
      # static member
-    _p_ARIMA = 0
-    _d_ARIMA = 0
-    _q_ARIMA = 0
-    _P_ARIMA = 0
-    _D_ARIMA = 0
-    _Q_ARIMA = 0
-    _p_arima = 0
-    _d_arima = 0
-    _q_arima = 0
+    _p_ARIMA = -1
+    _d_ARIMA = -1
+    _q_ARIMA = -1
+    _P_ARIMA = -1
+    _D_ARIMA = -1
+    _Q_ARIMA = -1
+    _p_arima = -1
+    _d_arima = -1
+    _q_arima = -1
 
     def __init__(self,nameM, typeM, n_steps, n_epochs, f=None):
         self.predict=None
@@ -248,6 +286,7 @@ class tsARIMA(Statmodel):
     discret = property(get_discret, set_discret)
 
     def set_ts_data(self, val):
+        type(self)._ts_data = None
         type(self)._ts_data= copy.copy(val)
 
     def get_ts_data(self):
@@ -295,8 +334,10 @@ class tsARIMA(Statmodel):
         """
         title=self.nameModel
 
-        start_p_, start_d_, start_q_, max_p_,  max_d_, max_q_, self.n_predict ,self.discret, self.ts_data = self.param
-
+        self.ar_order, self.d_order, self.ma_order, max_p_,  max_d_, max_q_, self.period, self.n_predict ,self.discret, self.ts_data = self.param
+        p_order = np.array([self.ar_order, self.d_order, self.ma_order])
+        model = pm.arima.ARIMA(p_order)
+        self.model = model
         return None
 
     @exec_time
@@ -306,46 +347,99 @@ class tsARIMA(Statmodel):
 
         :return:
         """
+
         title=self.__str__()
 
+        (p,d,q)=tsARIMA.get_ARIMA()
+        bAlreadyCreated =1
+        if (p==-1 and d==-1 and q==-1):   # model should be created
+            bAlreadyCreated = 0
+
+
         self.nameModel = 'control_arima'
-        start_p_, start_d_, start_q_, max_p_,  max_d_, max_q_, self.n_predict ,\
-            self.period, self.discret, self.ts_data = self.param
+
+        #initial parameters from Control object settings
+        start_p_, start_d_, start_q_, max_p_, max_d_, max_q_, self.period,self.n_predict,  self.discret, \
+        self.ts_data = self.param
+
+        if bAlreadyCreated:  # ARIMA was created,initial parameters are being got from tsARIMA class static members/
+            start_p_=p
+            start_d_=d
+            start_q_=q
+            max_p_  =p
+            max_d_  =d
+            max_q_  =q
+
+
         ################################################################################3
 
         model = pm.auto_arima(self.ts_data, exogenous=None, start_p=start_p_, d=start_d_, start_q=start_q_, \
-                              max_p=max_p_, max_d=max_d_, max_q=max_q_, max_order=10,seasonal=False, trace=True, \
+                              max_p=max_p_, max_d=max_d_, max_q=max_q_, max_order=16,seasonal=False, trace=True, \
                               error_action='ignore', suppress_warnings=True, stepwise=True)
 
         self.model = model
         model.summary()
-        tsARIMA.set_ARIMA(model.order)
-        self.predict = model.predict(  self.n_predict, exogenous=None)
-        arima_dict = model.to_dict()
-        msg2log(self.control_arima.__name__,"\n\nlogDictArima\n\n", self.f)
-        logDictArima(arima_dict, 0, self.f)
+        predict0 = model.predict(self.n_predict, exogenous=None)
+        if not bAlreadyCreated:
+            tsARIMA.set_ARIMA(model.order)
+            self.predict = model.predict(  self.n_predict, exogenous=None)
+            arima_dict = model.to_dict()
+            msg2log(self.control_arima.__name__,"\n\nlogDictArima\n\n", self.f)
+            logDictArima(arima_dict, 0, self.f)
+        title = 'ARIMA: {} predict values'.format(self.nameModel)
+        vector_logging(title, predict0, 16, self.f)
+
+        (p, d, q, P, D, Q) = tsARIMA.get_SARIMA()
+        bAlreadyCreated =1
+        if (P==-1 and D==-1 and Q==-1 and p==-1 and d==-1 and q==-1):   # model should be created
+            bAlreadyCreated = 0
 
         self.nameModel = 'control_seasonal_arima'
-        start_p_, start_d_, start_q_, max_p_, max_d_, max_q_, self.n_predict, \
-        self.period, self.discret, self.ts_data = self.param
+        # initial parameters from Control object settings
+        start_p_, start_d_, start_q_, max_p_, max_d_, max_q_, self.period,self.n_predict, self.discret, \
+        self.ts_data = self.param
+        # for seasonal part of the model the initial values are added hehre
+        start_P_=0
+        start_D_=0
+        start_Q_=0
+        max_P_  =2
+        max_D_  =1
+        max_Q_  =2
+
+        if bAlreadyCreated: # tsARIMA was created ,initial parameters are being got from tsARIMA class static members.
+            start_p_=p
+            start_d_=d
+            start_q_=q
+            max_p_  =p
+            max_d_  =d
+            max_q_  =q
+            start_P_=P
+            start_D_=D
+            start_Q_=Q
+            max_P_  =P
+            max_D_  =D
+            max_Q_  =Q
+
         #self.ts_data=self.ts_data[:-1]
 
-
-        model = pm.auto_arima(self.ts_data, exogenous=None, start_p=start_p_, d=start_d_, start_q=start_q_, \
-                              max_p=max_p_, max_d=max_d_, max_q=max_q_, max_order=10,seasonal=True, m=self.period,trace=True, \
-                              error_action='ignore', suppress_warnings=True, stepwise=True)
-        (p,d,q) =model.order
-        (P,D,Q,SS)= model.seasonal_order
-        val =(p,d,q,P,D,Q)
-        tsARIMA.set_SARIMA(val)
+        model = pm.auto_arima(self.ts_data, exogenous=None, start_p=start_p_, d=start_d_, start_q=start_q_,
+                              max_p=max_p_, max_d=max_d_, max_q=max_q_, start_P=start_P_, D=start_D_, start_Q=start_Q_,
+                              max_P=max_P_, max_D=max_D_, max_Q=max_Q_, max_order=16,     seasonal=True, m=self.period,
+                              trace=True,   error_action='ignore', suppress_warnings=True,stepwise=True)
         self.model = model
         model.summary()
         predict1 = model.predict(self.n_predict, exogenous=None)
 
-        arima_seas_dict=model.to_dict()
-        msg2log(self.control_arima.__name__, "\n\nlogDictArima\n\n", self.f)
-        logDictArima(arima_seas_dict,0,self.f)
-        # self.save_model()
+        if not bAlreadyCreated:
+            (p,d,q) =model.order
+            (P,D,Q,SS)= model.seasonal_order
+            val =(p,d,q,P,D,Q)
+            tsARIMA.set_SARIMA(val)
+            arima_seas_dict=model.to_dict()
+            msg2log(self.control_arima.__name__, "\n\nlogDictArima\n\n", self.f)
+            logDictArima(arima_seas_dict,0,self.f)
+        title = 'ARIMA: {} predict values'.format(self.nameModel)
+        vector_logging(title, predict1, 16, self.f)
 
         return None
 

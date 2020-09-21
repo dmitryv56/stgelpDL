@@ -6,7 +6,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 from Statmodel import tsARIMA
 from NNmodel import MLP, LSTM, CNN
-
+from control import ControlPlane
 from pathlib import Path
 # import matplotlib
 # matplotlib.use('Agg')
@@ -423,15 +423,22 @@ def d_models_assembly(d_models, keyType, valueList, cp, ds):
         elif keyType == "tsARIMA":
             curr_model = tsARIMA(name_model, keyType, cp.n_steps, cp.epochs, cp.fc)
             #reverse_arr=ds.df[cp.rcpower_dset].values[::-1]
+            # For ARIMA passed certain orders which identifyed by ControlPlane  API
+            status = ControlPlane.isARIMAidentified()
+            if status is not None:
+                ((p,d,q), (p1,d1,q1), (P,D,Q))=status
+            else:
+                p=d=q=p1=d1=q1=P=D=Q=0
+                cp.max_p=cp.max_d=cp.max_q=2
             if name_model == 'seasonal_arima':
-                (p,d,q,P,D,Q) = tsARIMA.get_SARIMA()
-                curr_model.param = (
-                p,d,q,P,D,Q, cp.seasonaly_period, cp.predict_lag, cp.discret * 60, ds.df[cp.rcpower_dset].values)
-            elif name_model == 'best_arima':
-                (cp.max_p,cp.max_d,cp.max_q) = tsARIMA.get_ARIMA()
 
                 curr_model.param = (
-                cp.max_p, cp.max_q, cp.max_d, cp.max_p, cp.max_q, cp.max_d, cp.predict_lag, cp.discret * 60,
+                p1,d1,q1,P,D,Q, cp.seasonaly_period, cp.predict_lag, cp.discret * 60, ds.df[cp.rcpower_dset].values)
+            elif name_model == 'best_arima':
+
+
+                curr_model.param = (
+                p, d, q, cp.max_p, cp.max_d, cp.max_q, cp.seasonaly_period,cp.predict_lag, cp.discret * 60,
                 ds.df[cp.rcpower_dset].values)
             else:
                 smsg = "Undefined name of ARIMA {}\n It is not supported by STGELDP!".format(keyType)
@@ -641,12 +648,19 @@ def predict_model(dict_model,  cp, ds, n_predict = 1):
         elif model_type == "tsARIMA":
             curr_model = tsARIMA(key, model_type, cp.n_steps, cp.epochs, cp.fc)
             # reverse_arr=ds.df[cp.rcpower_dset].values[::-1]
+
+            status = ControlPlane.isARIMAidentified()
+            if status is not None:
+                ((p,d,q),(p1,d1,q1),(P,D,Q))= status
+            else:
+                p=d=q=p1=d1=q1=P=D=Q=0
+                cp.max_p= cp.max_q= cp.max_d =2
             if key == 'seasonal_arima':
                 curr_model.param = (
-                1, 1, 1, 1, 1, 1, cp.seasonaly_period, cp.predict_lag, cp.discret * 60, ds.df[cp.rcpower_dset].values)
+                p, d, q, P, D, Q, cp.seasonaly_period, cp.predict_lag, cp.discret * 60, ds.df[cp.rcpower_dset].values)
             elif key == 'best_arima':
                 curr_model.param = (
-                1, 1, 1, cp.max_p, cp.max_q, cp.max_d, cp.predict_lag, cp.discret * 60, ds.df[cp.rcpower_dset].values)
+                p, d, q, cp.max_p, cp.max_q, cp.max_d, cp.predict_lag, cp.discret * 60, ds.df[cp.rcpower_dset].values)
 
             else:
                 smsg = "Undefined name of ARIMA {}\n It is not supported by STGELDP!".format(key)

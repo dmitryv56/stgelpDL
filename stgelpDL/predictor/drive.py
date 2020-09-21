@@ -14,6 +14,7 @@ from datetime import datetime, timedelta as td
 from time import sleep
 from control import ControlPlane
 from dataset import Dataset
+from Statmodel import tsARIMA
 import os
 from pathlib import Path
 from shutil import copyfile
@@ -784,6 +785,8 @@ class PredictPlaneObserver(IObserver):
 
         if self.predict_index % self.predict_index_max == 0:
             subject.state =  SM_TP_MODEL_UPDATING  # next state
+            tsARIMA.set_ARIMA((-1, -1, -1))
+            tsARIMA.set_SARIMA((-1, -1, -1, -1, -1, -1))
 
         cp = dct['ControlPlane']
         message = f"""

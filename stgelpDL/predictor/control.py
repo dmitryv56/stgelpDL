@@ -96,8 +96,8 @@ class ControlPlane():
     _folder_rt_datasets = None
     _folder_descriptor  = None
     _file_descriptor    = None
-    _seasonaly_period   = 144
-    _predict_lag        = 20
+    _seasonaly_period   = 6
+    _predict_lag        = 4
     _max_p              = 5
     _max_q              = 5
     _max_d              = 5
@@ -624,17 +624,27 @@ class ControlPlane():
     Control Plane method for time series analysis
   
     """
+    @staticmethod
+    def isARIMAidentified():
+        (p, d, q) = tsARIMA.get_ARIMA()
+        (p1, d1, q1, P, D, Q) = tsARIMA.get_SARIMA()
+        if (p>-1 and d>-1 and q>-1 and p1>-1 and d1>-1 and q1>-1 and P>-1 and D>-1 and Q>-1 ):
+            return ((p,d,q), (p1,d1,q1), (P,D,Q))
+        else:
+            return None
+
     def ts_analysis(self,ds ):
-        pass
-        arima = tsARIMA("control_arima", "tsARIMA", 32, 100, self.fc)
-        arima.param =(0, 0, 0, self.max_p, self.max_d, self.max_q, self.predict_lag, self._seasonaly_period, self.discret, ds.df[self.rcpower_dset].values)
-        arima.path2modelrepository = self.path_repository
-        arima.timeseries_name = self.rcpower_dset
+        status = ControlPlane.isARIMAidentified()
+        if status is None:
 
+            arima = tsARIMA("control_arima", "tsARIMA", 32, 100, self.fc)
+            arima.param =(0, 0, 0, self.max_p, self.max_d, self.max_q, self.seasonaly_period, self.predict_lag,
+                      self.discret, ds.df[self.rcpower_dset].values)
+            arima.path2modelrepository = self.path_repository
+            arima.timeseries_name = self.rcpower_dset
 
-
-        arima.control_arima()
-        arima.ts_analysis( ControlPlane.get_psd_segment_size())
+            arima.control_arima()
+            arima.ts_analysis( ControlPlane.get_psd_segment_size())
 
         return
 
