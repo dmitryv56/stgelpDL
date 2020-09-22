@@ -7,7 +7,7 @@ This module
 import copy
 from api import d_models_assembly, fit_models, save_modeles_in_repository,  get_list_trained_models, predict_model, \
                 chart_predict, tbl_predict, prepareDataset
-from utility import exec_time, msg2log,PlotPrintManager,cSFMT,incDateStr,decDateStr
+from utility import exec_time, msg2log,PlotPrintManager,cSFMT,incDateStr,decDateStr,PERIOD_MODEL_RETRAIN
 from demandwidget import DemandWidget
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta as td
@@ -749,6 +749,10 @@ class TrainPlaneObserver(IObserver):
         msg = '\nDP and STS model re-estimation  started ...\n\n'
         msg2log(self.TrainModels.__name__, msg, self.f)
 
+        tsARIMA.set_ARIMA((-1, -1, -1))
+        tsARIMA.set_SARIMA((-1, -1, -1, -1, -1, -1))
+        cp.ts_analysis(ds)
+
         drive_train(cp, ds)
         cp.drtDescriptor['modelRepository'] = Path(cp.path_repository) / Path(cp.rcpower_dset)
         cp.drtDescriptor['state'] = SM_TP_MODEL_UPDATING  # current state
@@ -769,7 +773,7 @@ class PredictPlaneObserver(IObserver):
     def __init__(self, f=None):
         self.f = f
         self.predict_index =0
-        self.predict_index_max = 6
+        self.predict_index_max = PERIOD_MODEL_RETRAIN
 
     def update(self, subject, dct) -> None:
         msg = '{} {} : Reached to the event. The predict by models   is carried out'.format(
@@ -782,13 +786,10 @@ class PredictPlaneObserver(IObserver):
            msg2log(self.update.__name__,"Inconsistent state on predicting, we continue to update dataset", self.f)
 
         subject.state = SM_CP_UPDATE_DATASET
-
+        cp = dct['ControlPlane']
         if self.predict_index % self.predict_index_max == 0:
             subject.state =  SM_TP_MODEL_UPDATING  # next state
-            tsARIMA.set_ARIMA((-1, -1, -1))
-            tsARIMA.set_SARIMA((-1, -1, -1, -1, -1, -1))
 
-        cp = dct['ControlPlane']
         message = f"""
                                       Finished state        : {cp.drtDescriptor['state']}
                                       State descriptor      : {sm_dict[cp.drtDescriptor['state']]}

@@ -13,9 +13,11 @@ import sys
 """
 print to log
 """
-# constants
+""" constants """
 cSFMT = "%Y-%m-%d %H:%M:%S"
 DEBUG_PRINT_ = None
+""" Model training after N dataset updates"""
+PERIOD_MODEL_RETRAIN = 4
 
 
 """

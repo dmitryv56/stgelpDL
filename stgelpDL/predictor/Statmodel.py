@@ -52,9 +52,51 @@ class Statmodel(Predictor):
             pass
 
         return
-
     @exec_time
     def fit_model(self):
+        """
+
+        :return:
+        """
+        history=[]
+        (p,d,q)=tsARIMA.get_ARIMA()
+        (p1,d1,q1,P,D,Q)=tsARIMA.get_SARIMA()
+
+        if self.nameModel == 'seasonal_arima':
+            order =(p1,d1,q1)
+            seasonal_order=(P,D,Q,self.period)
+
+        elif self.nameModel == 'best_arima':
+            order=(p,d,q)
+            seasonal_order = (0,0,0,0)
+        else:
+            pass
+
+        try:
+            model = pm.arima.ARIMA(order, seasonal_order=seasonal_order, out_of_sample_size=self.n_predict, method='nm')
+            model.fit(self.ts_data)
+            self.model = model
+            self.predict =model.oob_preds_
+            title = 'ARIMA: {} predict values after fitting '.format(self.nameModel)
+            vector_logging(title, self.predict, 16, self.f)
+            msg = "\n{} was sucessfully fitted".format(self.nameModel)
+            msg2log(self.fit_model.__name__, msg, self.f)
+            dct = self.model.to_dict()
+            logDictArima(dct, 0, self.f)
+
+        except:
+            message = f"""
+                                            Oops!! Unexpected error when seasonal ARIMA was estimated...
+                                            Error       : {sys.exc_info()[0]}
+                                            Description : {sys.exc_info()[1]}
+                            """
+
+            msg2log(self.fit_model.__name__, message, self.f)
+
+        return history
+
+    @exec_time
+    def fit_model1(self):
         """
 
         :return:
@@ -128,6 +170,7 @@ class Statmodel(Predictor):
     @exec_time
     def predict_n_steps(self, n_predict_number):
         self.model.arima_res_.data.endog = copy.copy(self.ts_data)
+
         y=self.model.predict(n_predict_number,exogenous=None)
 
         return y
