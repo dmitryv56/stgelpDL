@@ -15,7 +15,7 @@ print to log
 """
 """ constants """
 cSFMT = "%Y-%m-%d %H:%M:%S"
-DEBUG_PRINT_ = None
+
 """ Model training after N dataset updates"""
 PERIOD_MODEL_RETRAIN = 4
 
@@ -26,6 +26,16 @@ PERIOD_MODEL_RETRAIN = 4
 tsBoundaries2log prints and logs time series boundaries characterisics (min,max,len)
 """
 
+class OutVerbose():
+    _lvl_verbose = 0
+
+    @staticmethod
+    def set_verbose_level(val):
+        OutVerbose._lvl_verbose=val
+
+    @staticmethod
+    def get_verbose_level():
+        return OutVerbose._lvl_verbose
 
 def tsBoundaries2log(title, df, dt_dset, rcpower_dset, f=None):
     """
@@ -352,19 +362,16 @@ class  PlotPrintManager():
         #     bDestroy=True
         sleep(2)
         bDestroy= True
-        if DEBUG_PRINT_ :
+        if OutVerbose.get_verbose_level()>3 :
             bDestroy = False
         return bDestroy
 
     @staticmethod
     def isNeedPrintDataset():
         bPrint = True
-        if DEBUG_PRINT_ :
-            return bPrint
-        PlotPrintManager._ds_printed +=1
+        if OutVerbose.get_verbose_level()==0 :
+            bPrint =False
 
-        if PlotPrintManager._ds_printed>0:
-            pPrint = False
         return bPrint
 
 

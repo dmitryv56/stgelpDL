@@ -23,7 +23,7 @@ from cfg import AUTO_PATH, TRAIN_PATH, PREDICT_PATH, CONTROL_PATH, MODES, ACTUAL
 from control import ControlPlane
 from api import prepareDataset
 
-from utility import msg2log, exec_time, PlotPrintManager
+from utility import msg2log, exec_time, PlotPrintManager, OutVerbose
 import argparse
 
 
@@ -46,6 +46,29 @@ def drive_STGELPDL(cp):
 
 
 def main(argc, argv):
+    """
+
+    :param argc:
+    :param argv:
+    :return:
+    """
+
+    # command-line parser
+    sDescriptor = 'Short-Term (Green) Energy Load Predictor using Deep Learning and Statistical Time Series methods'
+    parser = argparse.ArgumentParser(description=sDescriptor)
+
+    parser.add_argument('-m', '--mode', dest='cl_mode', action='store', default='auto',
+                        choices=['auto', 'train', 'predict', 'control'],
+                        help='Possible modes of operations of the short-term predictor')
+    parser.add_argument('--verbose','-v',action='count',dest='cl_verbose',default=0 )
+    parser.add_argument('--version', action='version', version='%(prog)s 2.0.1')
+    args = parser.parse_args()
+    print("\n\n\n{}".format(args.cl_mode))
+    OutVerbose.set_verbose_level(args.cl_verbose)
+
+    #command-line parser
+
+
 
 
     now = datetime.now()
@@ -76,7 +99,7 @@ def main(argc, argv):
 
     suffics = ".log"
     sRCPOWER_DSET= RCPOWER_DSET
-    if ACTUAL_MODE == AUTO_PATH:
+    if args.cl_mode == AUTO_PATH:       #if ACTUAL_MODE == AUTO_PATH:
         sRCPOWER_DSET= RCPOWER_DSET_AUTO.replace(' ','_')
 
     file_for_train_logging   = Path(folder_for_train_logging,   sRCPOWER_DSET + "_" + Path(__file__).stem).with_suffix(
@@ -99,7 +122,7 @@ def main(argc, argv):
     cp = ControlPlane()
 
     cp.modes        = MODES
-    cp.actual_mode  = ACTUAL_MODE
+    cp.actual_mode  = args.cl_mode #ACTUAL_MODE
     cp.auto_path    = AUTO_PATH
     cp.train_path   = TRAIN_PATH
     cp.predict_path = PREDICT_PATH
@@ -125,6 +148,10 @@ def main(argc, argv):
         fa.close()
         ff.close()
         exit(1)
+    # print('\n\n\n\n\n')
+    # print('\x1b[3;31;43m' + sDescriptor + ' runs in ' + cp.actual_mode + ' mode.' + '\x1b[0m')
+    # print('\n\n\n\n\n')
+
 
 
     cp.rcpower_dset_auto  = RCPOWER_DSET_AUTO
