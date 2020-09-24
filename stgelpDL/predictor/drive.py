@@ -973,6 +973,7 @@ def drive_predict(cp, ds):
         cp.updatePreductDF( dict_predict, cp.getPredictDate(ds), cp.getlastReceivedData(ds) )
 
     cp.logPredictDF()
+    cp.plotPredictDF()
 
     return
 

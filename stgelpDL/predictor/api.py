@@ -660,7 +660,8 @@ def predict_model(dict_model,  cp, ds, n_predict = 1):
                 p, d, q, P, D, Q, cp.seasonaly_period, cp.predict_lag, cp.discret * 60, ds.df[cp.rcpower_dset].values)
             elif key == 'best_arima':
                 curr_model.param = (
-                p, d, q, cp.max_p, cp.max_q, cp.max_d, cp.predict_lag, cp.discret * 60, ds.df[cp.rcpower_dset].values)
+                p, d, q, cp.max_p, cp.max_q, cp.max_d, cp.seasonaly_period,cp.predict_lag, cp.discret * 60,
+                ds.df[cp.rcpower_dset].values)
 
             else:
                 smsg = "Undefined name of ARIMA {}\n It is not supported by STGELDP!".format(key)
@@ -706,7 +707,7 @@ def predict_model(dict_model,  cp, ds, n_predict = 1):
                 # vector_logging("After shift\n", vec_4_predict_sc, 16, cp.fp)
         elif model_type == "tsARIMA":   # saved ARIMA models contain the time seies into. So in order to predict ,
                                         # is need to pass the forcasting lag
-                                        #
+                                        # TODO insert updated ts into model
             y = curr_model.predict_n_steps( n_predict)
 
         vector_logging("{} Short Term Forecasting\n".format(curr_model.nameModel), y, 4, cp.fp)

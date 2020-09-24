@@ -10,6 +10,7 @@ from datetime import datetime
 from datetime import timedelta
 from pathlib import Path
 import sys
+
 """
 print to log
 """
@@ -323,6 +324,7 @@ class  PlotPrintManager():
     _ds_printed = 0
     _folder_for_control_logging =None
     _folder_for_predict_logging = None
+    _list_bak_png            = []
 
     @staticmethod
     def set_Logfolders(control_logging, predict_logging):
@@ -373,9 +375,22 @@ class  PlotPrintManager():
             bPrint =False
 
         return bPrint
+    @staticmethod
+    def addPng2Baklist(strBak):
+        PlotPrintManager._list_bak_png.append(strBak)
+        PlotPrintManager.remPngBak()
 
+    @staticmethod
+    def remPngBak():
+        if len(PlotPrintManager._list_bak_png)<2:
+            return
+        try:
+            strBak=PlotPrintManager._list_bak_png.pop(0)
+            p=Path(strBak)
+            p.unlink(missing_ok=True)
+            print('{} removed'.format(strBak))
 
-
-
-
+        except Exception as e:
+            print('{} exception:\n {}'.format(PlotPrintManager.remPngBak.__name__, e))
+        return
 

@@ -276,8 +276,13 @@ class DemandWidget(DataAdapter):
         pass
 
         if not self.scaled_data:
-            r = requests.get(self.url)
-
+            try:
+                r = requests.get(self.url)
+            except ConnectionError as e:
+                print(e)
+                r = "No response"
+                self.logErrorResponse(r)
+                return None
             if r.status_code != 200:
                 self.logErrorResponse(r)
                 return None

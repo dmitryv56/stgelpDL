@@ -27,11 +27,12 @@ from Statmodel import tsARIMA
 from pathlib import Path
 import json
 import os
-from utility import msg2log, cSFMT
+from utility import msg2log, cSFMT, PlotPrintManager
 from pickle import dump, load
 import pandas as pd
 from datetime import datetime, timedelta
 from shutil import copyfile
+from matplotlib import pyplot as plt
 
 
 class ControlPlane():
@@ -98,9 +99,9 @@ class ControlPlane():
     _file_descriptor    = None
     _seasonaly_period   = 6
     _predict_lag        = 4
-    _max_p              = 5
-    _max_q              = 5
-    _max_d              = 5
+    _max_p              = 3
+    _max_q              = 3
+    _max_d              = 2
 
     _scaled_data_4_auto = False
     _start_date_4_auto  = None
@@ -143,6 +144,7 @@ class ControlPlane():
         self.state         = None
         self.drtDescriptor = {}
         self.predictDF     = None
+        self.bundle_predictions_file = None
 
 
     @staticmethod
@@ -637,14 +639,24 @@ class ControlPlane():
         status = ControlPlane.isARIMAidentified()
         if status is None:
 
-            arima = tsARIMA("control_arima", "tsARIMA", 32, 100, self.fc)
+            arima = tsARIMA("control_seasonal_arima", "tsARIMA", 32, 100, self.fc)
             arima.param =(0, 0, 0, self.max_p, self.max_d, self.max_q, self.seasonaly_period, self.predict_lag,
                       self.discret, ds.df[self.rcpower_dset].values)
             arima.path2modelrepository = self.path_repository
             arima.timeseries_name = self.rcpower_dset
-
+            arima.nameModel = 'control_seasonal_arima'
             arima.control_arima()
             arima.ts_analysis( ControlPlane.get_psd_segment_size())
+
+            del arima
+            arima1 = tsARIMA("control_best_arima", "tsARIMA", 32, 100, self.fc)
+            arima1.param = (0, 0, 0, self.max_p, self.max_d, self.max_q, self.seasonaly_period, self.predict_lag,
+                           self.discret, ds.df[self.rcpower_dset].values)
+            arima1.path2modelrepository = self.path_repository
+            arima1.timeseries_name = self.rcpower_dset
+            arima1.nameModel = 'control_best_arima'
+            arima1.control_arima()
+            del arima1
 
         return
 
@@ -726,10 +738,14 @@ class ControlPlane():
         return value
 
     def logPredictDF(self):
+        """
 
-        suffics      = '.log'
+        :return: file_for_forecast -csv -file
+        """
+
+        suffics      = '.csv'
         suffics_bak  = '.bak'
-        predictDFfile= 'PredictionFan'
+        predictDFfile= 'BundleOfPredictions'
         file_for_forecast = Path(self.folder_forecast, predictDFfile).with_suffix(suffics)
 
 
@@ -741,10 +757,44 @@ class ControlPlane():
         self.predictDF.to_csv(file_for_forecast, index=False)
 
         message =f"""
-        The fan of predictions saved to: {file_for_forecast} 
-        Number of predictions          : {len(self.predictDF[self.rcpower_dset])}
+        The bundle of predictions saved to: {file_for_forecast} 
+        Number of predictions             : {len(self.predictDF[self.rcpower_dset])}
         """
 
         msg2log(self.logPredictDF.__name__, message, self.fa)
+        self.bundle_predictions_file=file_for_forecast
+        return file_for_forecast
 
+    def plotPredictDF(self):
+
+        suffics = '.png'
+
+        try:
+            bundle_predictions_png =Path(self.bundle_predictions_file).with_suffix(suffics)
+            bundle_predictions_png_=str(bundle_predictions_png).replace('.','_') +  datetime.now().strftime(cSFMT)+"_bak_"
+            bundle_predictions_png_bak = Path( bundle_predictions_png_ ).with_suffix(suffics)
+            copyfile(str(bundle_predictions_png), str(bundle_predictions_png_bak))
+            PlotPrintManager.addPng2Baklist(bundle_predictions_png_bak)
+        except:
+            pass
+        df = pd.read_csv(self.bundle_predictions_file)
+        df.head()
+        try:
+            df.plot(x=df.columns.values[0], y=df.columns.values[1:], kind='line')
+            numfig = plt.gcf().number
+            fig = plt.figure(num=numfig)
+            fig.set_size_inches(18.5, 10.5)
+            fig.suptitle("The bundle of {} predictions".format(self.rcpower_dset), fontsize=24)
+
+            plt.savefig(bundle_predictions_png)
+            message=f"""
+            The new predictions saved               : {self.bundle_predictions_file}
+            The bundle of the predictions saved     : {bundle_predictions_png}
+            Previous bundle of predictions backuped : {bundle_predictions_png_bak}
+            """
+            msg2log(self.plotPredictDF.__name__,message, self.f)
+        except:
+            pass
+        finally:
+            plt.close("all")
         return
