@@ -55,6 +55,25 @@ The project is in developing state and some changes are  possible.
 
 NOTES:
 stgelpDL v.1.0.0 published at 17/09/2020
+stgelpDL v.2.0.1 published at 27/09/2020
+
+RELEASE NOTES
+
+In Development
+- Improving structure of logs.
+
+2.0.1.
+New Features
+- instead of '[Real demand]' time series the delta '[Programmed demand] - [Real demand]' time series is predicting.
+- command-line arguments added.
+- stand-alone script for run the predictor added.
+Bug Fixes
+- exception in seasonal ARIMA model fixed.
+
+1.0.0.
+New Features
+-predictor runs in 'auro'- mode.
+
 
 
 
