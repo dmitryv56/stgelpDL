@@ -1,24 +1,23 @@
 #!/usr/bin/python3
 
 import sys
+from datetime import timedelta
+from time import sleep
+from pathlib import Path
+
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
-
-from Statmodel import tsARIMA
-from NNmodel import MLP, LSTM, CNN
-from control import ControlPlane
-from pathlib import Path
-# import matplotlib
-# matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from pickle import dump, load
 import copy
 
-from datetime import timedelta
-from utility import msg2log, chunkarray2log, svld2log, vector_logging, shift,exec_time, PlotPrintManager, \
+from predictor.Statmodel import tsARIMA
+from predictor.NNmodel import MLP, LSTM, CNN
+from predictor.control import ControlPlane
+from predictor.utility import msg2log, chunkarray2log, svld2log, vector_logging, shift,exec_time, PlotPrintManager, \
                     dataset_properties2log
-from time import sleep
+
 
 def chart_MAE(name_model, name_time_series, history, n_steps, logfolder, stop_on_chart_show=False):
     # Plot history: MAE
@@ -310,7 +309,7 @@ def scale_sequence(scaler, df_val_or_test, dt_dset, rcpower_dset, f=None):
     rcpower_val_or_test_scaled = scaler.transform(rcpower_val_or_test.reshape(-1, 1)).reshape(-1, )
 
     chunkarray2log("Data array", rcpower_val_or_test, 8, f)
-    chunkarray2log("Scaled dataarray", rcpower_val_or_test_scaled, 8, f)
+    chunkarray2log("Scaled Data array", rcpower_val_or_test_scaled, 8, f)
 
     return rcpower_val_or_test_scaled, rcpower_val_or_test
 

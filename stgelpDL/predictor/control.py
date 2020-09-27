@@ -21,19 +21,18 @@ The internal structures fo this dictionary is following
 The dictionary is serialized in json format. The path to the dictionary  holds in the configuration file (cfg.py) and
 supports in Control Plane object.
 """
-
-import copy
-from Statmodel import tsARIMA
-from pathlib import Path
-import json
 import os
-from utility import msg2log, cSFMT, PlotPrintManager
+from shutil import copyfile
+from datetime import datetime, timedelta
+from pathlib import Path
+import copy
+
 from pickle import dump, load
 import pandas as pd
-from datetime import datetime, timedelta
-from shutil import copyfile
 from matplotlib import pyplot as plt
 
+from predictor.Statmodel import tsARIMA
+from predictor.utility import msg2log, cSFMT, PlotPrintManager
 
 class ControlPlane():
     r""" A class used to realize the control plane functionality of the short term predicting.

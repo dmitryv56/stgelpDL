@@ -6,12 +6,12 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
+import argparse
 
 from tensorflow import random
 
-from dataset import Dataset
-
-from cfg import AUTO_PATH, TRAIN_PATH, PREDICT_PATH, CONTROL_PATH, MODES, ACTUAL_MODE, \
+from predictor.dataset import Dataset
+from predictor.cfg import AUTO_PATH, TRAIN_PATH, PREDICT_PATH, CONTROL_PATH, MODES, ACTUAL_MODE, \
                 MAGIC_SEED, CSV_PATH, DT_DSET, RCPOWER_DSET, RCPOWER_DSET_AUTO, DISCRET, \
                 TEST_CUT_OFF, VAL_CUT_OFF, LOG_FILE_NAME, STOP_ON_CHART_SHOW, PATH_REPOSITORY, \
                 PATH_DATASET_REPOSITORY,PATH_DESCRIPTOR_REPOSITORY, ALL_MODELS, \
@@ -20,17 +20,14 @@ from cfg import AUTO_PATH, TRAIN_PATH, PREDICT_PATH, CONTROL_PATH, MODES, ACTUAL
                 SCALED_DATA_FOR_AUTO,START_DATE_FOR_AUTO,END_DATE_FOR_AUTO ,TIME_TRUNC_FOR_AUTO, GEO_LIMIT_FOR_AUTO , \
                 GEO_IDS_FOR_AUTO,FILE_DESCRIPTOR, MODE_IMBALANCE, IMBALANCE_NAME, PROGRAMMED_NAME, DEMAND_NAME, \
                 TS_DURATION_DAYS, SEGMENT_SIZE
-from control import ControlPlane
-from api import prepareDataset
-
-from utility import msg2log, exec_time, PlotPrintManager, OutVerbose
-import argparse
-
-
+from predictor.control import ControlPlane
+from predictor.api import prepareDataset
+from predictor.utility import msg2log, exec_time, PlotPrintManager, OutVerbose
 
 """
 This Control Plane function creates a dataset and runs specified plane functions (Train plane or Predict Plane)
 """
+
 @exec_time
 def drive_STGELPDL(cp):
 
@@ -224,7 +221,6 @@ def main(argc, argv):
     msg2log("{} Predict Plane {}".format(title1,title2), msg, fp)
     msg2log("{} Auto Management Plane {}".format(title1, title2), msg, fa)
 
-
     fc.close()
     fp.close()
     ft.close()
@@ -236,14 +232,8 @@ def main(argc, argv):
 
     return
 
-
-
 if __name__ == "__main__":
+    pass
 
-
-    random.set_seed(MAGIC_SEED)
-    main(len(sys.argv), sys.argv)
-
-    exit(0)
 
 

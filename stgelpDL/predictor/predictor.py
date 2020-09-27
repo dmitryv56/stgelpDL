@@ -1,7 +1,13 @@
 #!/usr/bin/python3
+""" This predictor module contains an implementation of Predictor class that is the base class for NNmodel and
+Statmodel classes.
+
+"""
+
 import os
 import sys
 from pathlib import Path
+
 from tensorflow.keras.models import Sequential, save_model, load_model
 from pickle import dump, load
 

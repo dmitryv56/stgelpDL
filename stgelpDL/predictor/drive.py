@@ -1,29 +1,28 @@
 #! /usr/bin/python3
-'''
-This module
+"""
+This module contains implementation of the Observer pattern for State Machine
 
-'''
+"""
 
-import copy
-from api import d_models_assembly, fit_models, save_modeles_in_repository,  get_list_trained_models, predict_model, \
-                chart_predict, tbl_predict, prepareDataset
-from utility import exec_time, msg2log,PlotPrintManager,cSFMT,incDateStr,decDateStr,PERIOD_MODEL_RETRAIN
-from demandwidget import DemandWidget
-from abc import ABC, abstractmethod
-from datetime import datetime, timedelta as td
-from time import sleep
-from control import ControlPlane
-from dataset import Dataset
-from Statmodel import tsARIMA
 import os
 from pathlib import Path
 from shutil import copyfile
+import copy
+from abc import ABC, abstractmethod
+from datetime import datetime, timedelta as td
+from time import sleep
+
+from predictor.api import d_models_assembly, fit_models, save_modeles_in_repository,  get_list_trained_models, predict_model, \
+                chart_predict, tbl_predict, prepareDataset
+from predictor.utility import exec_time, msg2log,PlotPrintManager,cSFMT,incDateStr,decDateStr,PERIOD_MODEL_RETRAIN
+from predictor.demandwidget import DemandWidget
+from predictor.control import ControlPlane
+from predictor.dataset import Dataset
+from predictor.Statmodel import tsARIMA
 
 
+""" State Machine for UpdateChecker"""
 
-'''
-State - machine for UpdateChecker 
-'''
 SM_CP_CREATE_DATASET = 0
 SM_TP_MODEL_TRAINING = 1
 SM_CP_UPDATE_DATASET = 2

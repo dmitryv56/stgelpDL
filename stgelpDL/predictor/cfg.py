@@ -1,17 +1,16 @@
 #!/usr/bin/python3
-
-from os import getcwd
-import sys
-from drive import drive_auto, drive_train, drive_predict, drive_control
-from pathlib import Path
 """
 Configuration settings that are used in the control, train, predict and management planes.
 
 """
 
+from os import getcwd
+import sys
+from pathlib import Path
+
+from predictor.drive import drive_auto, drive_train, drive_predict, drive_control
+
 MAGIC_SEED = 1956
-
-
 #Title for planes
 AUTO_PATH    = 'auto'
 TRAIN_PATH   = 'train'

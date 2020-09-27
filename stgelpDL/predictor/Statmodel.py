@@ -1,16 +1,20 @@
 #!/usr/bin/python3
+""" This module contains the Statmodel class that is the base class for tsARIMA class/"""
 
-from predictor import Predictor
+import sys
+import copy
 
 import pmdarima as pm
 from pmdarima.model_selection import train_test_split
 import numpy as np
 import matplotlib.pyplot as plt
-import copy
 from pickle import dump, load
 from pathlib import Path
-import sys
-from utility import exec_time, msg2log, PlotPrintManager,psd_logging,logDictArima,vector_logging
+
+from predictor.utility import exec_time, msg2log, PlotPrintManager,psd_logging,logDictArima,vector_logging
+from predictor.predictor import Predictor
+
+""" Statmodel class """
 
 class Statmodel(Predictor):
     _param = ()
@@ -142,6 +146,9 @@ class Statmodel(Predictor):
             self.ts_data=copy.copy(tmp_ts_data)
             self.model.arima_res_.data.endog=copy.copy(tmp_ts_data)
         return
+
+""" tsARIMA class """
+
 class tsARIMA(Statmodel):
     pass
     _ar_order  = 0

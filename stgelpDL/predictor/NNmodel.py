@@ -1,18 +1,21 @@
 #!/usr/bin/python3
+""" This module contains the NeuronNet Model implementations."""
+
+import copy
 
 import tensorflow as tf
 from tensorflow.keras import layers
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import Bidirectional,TimeDistributed,Flatten
-
 from tensorflow.keras.layers import Conv1D
 from tensorflow.keras.layers import MaxPooling1D
 from tensorflow.keras import metrics, models
-from predictor import Predictor
-from utility import msg2log,exec_time
-import copy
 
+from predictor.predictor import Predictor
+from predictor.utility import msg2log,exec_time
+
+""" NNmodel class is a base class for MLP, LSTM and CNN classes"""
 
 class NNmodel(Predictor):
     _param = ()

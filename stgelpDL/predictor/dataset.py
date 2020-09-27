@@ -1,12 +1,13 @@
 #!/usr/bin/python3
+""" Dataset class """
 
-
-import pandas as pd
 from datetime import timedelta
 import copy
 
-from utility import tsBoundaries2log, tsSubset2log, dataset_properties2log,exec_time
-from api import get_scaler4train, scale_sequence, TimeSeries2SupervisedLearningData,createDeltaList
+import pandas as pd
+
+from predictor.utility import tsBoundaries2log, tsSubset2log, dataset_properties2log,exec_time
+from predictor.api import get_scaler4train, scale_sequence, TimeSeries2SupervisedLearningData,createDeltaList
 
 class Dataset():
 

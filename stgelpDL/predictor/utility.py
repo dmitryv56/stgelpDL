@@ -3,27 +3,22 @@
 
 
 """
-import numpy as np
+
+import sys
 from time import time, perf_counter, sleep
 import dateutil.parser
-from datetime import datetime
 from datetime import timedelta
 from pathlib import Path
-import sys
 
-"""
-print to log
-"""
+import numpy as np
+
 """ constants """
 cSFMT = "%Y-%m-%d %H:%M:%S"
 
 """ Model training after N dataset updates"""
 PERIOD_MODEL_RETRAIN = 4
 
-
 """
-
-
 tsBoundaries2log prints and logs time series boundaries characterisics (min,max,len)
 """
 
@@ -371,7 +366,7 @@ class  PlotPrintManager():
     @staticmethod
     def isNeedPrintDataset():
         bPrint = True
-        if OutVerbose.get_verbose_level()==0 :
+        if OutVerbose.get_verbose_level()<2 :
             bPrint =False
 
         return bPrint
