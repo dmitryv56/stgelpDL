@@ -72,7 +72,7 @@ Bug Fixes
 
 1.0.0.
 New Features
--predictor runs in 'auro'- mode.
+- predictor runs in 'auro'- mode.
 
 
 
