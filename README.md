@@ -51,7 +51,10 @@ DDS that has being supported now there is REData API of https://www.ree.es/en/ap
 • raise the event on reaching limits of the normal energy load process
 4. The Management Plane (MP) controls the flow of the data and of the signals in the predictor. It implemented as Observer pattern. 
 
-The project is in developing state and some changes are  possible. 
+The project is in developing state and some changes are  possible.
+
+NOTES:
+stgelpDL v.1.0.0 published at 17/09/2020
 
 
 
