@@ -18,6 +18,20 @@ cSFMT = "%Y-%m-%d %H:%M:%S"
 """ Model training after N dataset updates"""
 PERIOD_MODEL_RETRAIN = 4
 
+
+def isCLcsvExists(cl_csv):
+    ret =False
+    csvPath = Path(cl_csv)
+    if csvPath.exists() and csvPath.is_file():
+        ret=True
+    else:
+        msg=f"""\n
+             File does not exist : {cl_csv}
+             The program should be terminated.\n   
+        """
+        print (msg)
+    return ret
+
 """
 tsBoundaries2log prints and logs time series boundaries characterisics (min,max,len)
 """

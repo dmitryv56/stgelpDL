@@ -41,7 +41,7 @@ CSV_PATH = Path( Path.home() / ".keras" / "datasets" )
 #     CSV_PATH = "C:\\Users\\dmitr_000\\.keras\\datasets\\Imbalance_data.csv"
 # Header names and discrtization in minutes
 DT_DSET      = "Date Time"
-RCPOWER_DSET = "Imbalance"
+RCPOWER_DSET = "Real_demand" #"Imbalance"
 
 RCPOWER_DSET_AUTO = 'Real demand'
 
@@ -51,7 +51,7 @@ DISCRET      = 10
 # to the timedelta() like as 'days=<value>' or 'hours=<value>' or 'minutes=<value>'
 # We use 'minute' resolution
 TEST_CUT_OFF = 6 * DISCRET
-VAL_CUT_OFF  = 500 * DISCRET
+VAL_CUT_OFF  = 500 * DISCRET   # 8 hours
 
 
 

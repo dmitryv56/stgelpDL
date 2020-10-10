@@ -22,7 +22,7 @@ from predictor.cfg import AUTO_PATH, TRAIN_PATH, PREDICT_PATH, CONTROL_PATH, MOD
                 TS_DURATION_DAYS, SEGMENT_SIZE
 from predictor.control import ControlPlane
 from predictor.api import prepareDataset
-from predictor.utility import msg2log, exec_time, PlotPrintManager, OutVerbose
+from predictor.utility import msg2log, exec_time, PlotPrintManager, OutVerbose,isCLcsvExists
 
 """
 This Control Plane function creates a dataset and runs specified plane functions (Train plane or Predict Plane)
@@ -52,11 +52,15 @@ def main(argc, argv):
 
     # command-line parser
     sDescriptor = 'Short-Term (Green) Energy Load Predictor using Deep Learning and Statistical Time Series methods'
+    sCSVhelp="Absolute path to a source dataset (csv-file). The dataset header and content must meet the requriments README"
+    sTSnameHelp="Time Series (column) name in the dataset, its relevanted for 'train' and 'predict' mode"
     parser = argparse.ArgumentParser(description=sDescriptor)
 
     parser.add_argument('-m', '--mode', dest='cl_mode', action='store', default='auto',
                         choices=['auto', 'train', 'predict', 'control'],
                         help='Possible modes of operations of the short-term predictor')
+    parser.add_argument('-c','--csv_dataset', dest='cl_dset',  action='store', help=sCSVhelp)
+    parser.add_argument('-t','--tsname',dest='cl_tsname',action='store',help=sTSnameHelp)
     parser.add_argument('--verbose','-v',action='count',dest='cl_verbose',default=0 )
     parser.add_argument('--version', action='version', version='%(prog)s 2.0.1')
     args = parser.parse_args()
@@ -98,6 +102,8 @@ def main(argc, argv):
     sRCPOWER_DSET= RCPOWER_DSET
     if args.cl_mode == AUTO_PATH:       #if ACTUAL_MODE == AUTO_PATH:
         sRCPOWER_DSET= RCPOWER_DSET_AUTO.replace(' ','_')
+    if args.cl_tsname is not None:
+        sRCPOWER_DSET=args.cl_tsname
 
     file_for_train_logging   = Path(folder_for_train_logging,   sRCPOWER_DSET + "_" + Path(__file__).stem).with_suffix(
         suffics)
@@ -130,7 +136,18 @@ def main(argc, argv):
         cp.rcpower_dset  = sRCPOWER_DSET
         cp.log_file_name = sRCPOWER_DSET
     elif cp.actual_mode == cp.train_path or cp.actual_mode == cp.predict_path:
-        cp.csv_path = CSV_PATH
+        if args.cl_dset is  None:
+            cp.csv_path = CSV_PATH
+        else:
+
+            cp.csv_path = args.cl_dset
+            if False == isCLcsvExists(cp.csv_path):
+                fc.close()
+                fp.close()
+                ft.close()
+                ff.close()
+                sys.exit(2)
+
         cp.rcpower_dset  = RCPOWER_DSET
         cp.log_file_name = LOG_FILE_NAME
     elif cp.actual_mode == cp.control_path:
