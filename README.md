@@ -62,6 +62,9 @@ RELEASE NOTES
 In Development
 - Improving structure of logs.
 
+2.0.2.
+New Features
+- dataset (csv-file) and time series name (column into dataset) arguments added in command-line interface.
 2.0.1.
 New Features
 - instead of '[Real demand]' time series the delta '[Programmed demand] - [Real demand]' time series is predicting.
