@@ -24,6 +24,8 @@ from predictor.control import ControlPlane
 from predictor.api import prepareDataset
 from predictor.utility import msg2log, exec_time, PlotPrintManager, OutVerbose,isCLcsvExists
 
+
+__version__='2.0.2'
 """
 This Control Plane function creates a dataset and runs specified plane functions (Train plane or Predict Plane)
 """
@@ -62,7 +64,7 @@ def main(argc, argv):
     parser.add_argument('-c','--csv_dataset', dest='cl_dset',  action='store', help=sCSVhelp)
     parser.add_argument('-t','--tsname',dest='cl_tsname',action='store',help=sTSnameHelp)
     parser.add_argument('--verbose','-v',action='count',dest='cl_verbose',default=0 )
-    parser.add_argument('--version', action='version', version='%(prog)s 2.0.1')
+    parser.add_argument('--version', action='version', version='%(prog)s {}'.format(__version__))
     args = parser.parse_args()
     print("\n\n\n{}".format(args.cl_mode))
     OutVerbose.set_verbose_level(args.cl_verbose)
