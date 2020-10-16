@@ -45,13 +45,13 @@ RCPOWER_DSET = "Real_demand" #"Imbalance"
 
 RCPOWER_DSET_AUTO = 'Real demand'
 
-DISCRET      = 10
+DISCRET      = 10 #10
 
 # The time cutoffs for the formation of the validation  and test sequence in the format of the parameter passed
 # to the timedelta() like as 'days=<value>' or 'hours=<value>' or 'minutes=<value>'
 # We use 'minute' resolution
 TEST_CUT_OFF = 6 * DISCRET
-VAL_CUT_OFF  = 500 * DISCRET   # 8 hours
+VAL_CUT_OFF  = 1000 * DISCRET   # 8 hours
 
 
 
@@ -109,9 +109,9 @@ DROPOUT        = 0.2
 #ARIMA
 SEASONALY_PERIOD = 6  # hour season , 144 for daily season
 PREDICT_LAG      = 20
-MAX_P            = 3
-MAX_Q            = 3
-MAX_D            = 2
+MAX_P            = 2
+MAX_Q            = 0
+MAX_D            = 1
 
 """ Samples/ Time Series """
 TS_DURATION_DAYS = 7 # days

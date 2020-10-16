@@ -98,9 +98,9 @@ class ControlPlane():
     _file_descriptor    = None
     _seasonaly_period   = 6
     _predict_lag        = 4
-    _max_p              = 3
-    _max_q              = 3
-    _max_d              = 2
+    _max_p              = 2
+    _max_q              = 2
+    _max_d              = 1
 
     _scaled_data_4_auto = False
     _start_date_4_auto  = None
@@ -124,8 +124,8 @@ class ControlPlane():
     _programmed_name = None
     _demand_name = None
 
-    _ts_duration_days = 3
-    _psd_segment_size = 256
+    _ts_duration_days = 7
+    _psd_segment_size = 512
 
 
 
@@ -641,6 +641,7 @@ class ControlPlane():
             arima = tsARIMA("control_seasonal_arima", "tsARIMA", 32, 100, self.fc)
             arima.param =(0, 0, 0, self.max_p, self.max_d, self.max_q, self.seasonaly_period, self.predict_lag,
                       self.discret, ds.df[self.rcpower_dset].values)
+
             arima.path2modelrepository = self.path_repository
             arima.timeseries_name = self.rcpower_dset
             arima.nameModel = 'control_seasonal_arima'
@@ -651,6 +652,7 @@ class ControlPlane():
             arima1 = tsARIMA("control_best_arima", "tsARIMA", 32, 100, self.fc)
             arima1.param = (0, 0, 0, self.max_p, self.max_d, self.max_q, self.seasonaly_period, self.predict_lag,
                            self.discret, ds.df[self.rcpower_dset].values)
+
             arima1.path2modelrepository = self.path_repository
             arima1.timeseries_name = self.rcpower_dset
             arima1.nameModel = 'control_best_arima'

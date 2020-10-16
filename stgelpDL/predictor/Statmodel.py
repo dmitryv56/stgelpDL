@@ -372,7 +372,7 @@ class tsARIMA(Statmodel):
                 start_q_=0
                 max_p_  =p+1
                 max_d_  =d
-                max_q_  =q+1
+                max_q_  =0 #q+1
 
 
             ################################################################################3
@@ -381,7 +381,10 @@ class tsARIMA(Statmodel):
             #                       max_p=max_p_, max_d=max_d_, max_q=max_q_, max_order=16,seasonal=False, trace=True, \
             #                       error_action='ignore', suppress_warnings=True, stepwise=True)
 
-            model = pm.auto_arima(self.ts_data, exogenous=None, d=2, seasonal=False, trace=True, \
+            # model = pm.auto_arima(self.ts_data, exogenous=None, d=2, seasonal=False, trace=True, \
+            #                       error_action='ignore', suppress_warnings=True, stepwise=True)
+
+            model = pm.auto_arima(self.ts_data, exogenous=None, d=0, max_d=2, start_q=0, max_q=0, seasonal=False, trace=True, \
                                   error_action='ignore', suppress_warnings=True, stepwise=True)
 
             self.model = model
@@ -410,8 +413,8 @@ class tsARIMA(Statmodel):
             start_D_=0
             start_Q_=0
             max_P_  =2
-            max_D_  =1
-            max_Q_  =2
+            max_D_  =0
+            max_Q_  =0
 
             if bAlreadyCreated: # tsARIMA was created ,initial parameters are being got from tsARIMA class static members.
                 start_p_=p
@@ -433,7 +436,8 @@ class tsARIMA(Statmodel):
             #                       max_p=max_p_, max_d=max_d_, max_q=max_q_, start_P=start_P_, D=start_D_, start_Q=start_Q_,
             #                       max_P=max_P_, max_D=max_D_, max_Q=max_Q_, max_order=16,     seasonal=True, m=self.period,
             #                       trace=True,   error_action='ignore', suppress_warnings=True,stepwise=True)
-            model = pm.auto_arima(self.ts_data, d=2,D=1, exogenous=None, seasonal=True, m=self.period,
+            model = pm.auto_arima(self.ts_data, start_p=0,max_p=1,start_q=0, max_q=1,d=0,max_d=1, D=0, max_D=0,start_P=0, max_P=1,start_Q=0,max_Q=0,
+                                  exogenous=None, seasonal=True, m=self.period,
                                   trace=True, error_action='ignore', suppress_warnings=True, stepwise=True)
             self.model = model
             model.summary()
@@ -502,7 +506,7 @@ class tsARIMA(Statmodel):
         return
 
     @exec_time
-    def ts_analysis(self,NFFT):
+    def ts_analysis(self,NFFT: int)->(np.array,np.array,np.array,np.array):
         """
 
         :param NFFT: -segment size for FFT belongs to {16,32,64,  ..., 2^M}, M<12
@@ -539,7 +543,7 @@ class tsARIMA(Statmodel):
             msg2log(self.ts_analysis.__name__, message, self.f)
 
 
-
+        message =""
         delta = self.discret*60  # in sec
         N=len(self.ts_data)
 
@@ -568,7 +572,8 @@ class tsARIMA(Statmodel):
 
         message = f"""
                     Time series length     : {N}
-                    Discretization, sec    : {self.discret}
+                    FFT wnow length        : {NFFT}
+                    Discretization, sec    : {self.discret*60}
                     Max.Frequency, Hz      : {maxFreq}
                     Freq. delta for PSD, Hz: {stepFreqPSD}
                     Mean value             : {mean}
@@ -579,10 +584,11 @@ class tsARIMA(Statmodel):
         for i in range(len(self.ts_data)):
             self.ts_data[i]=(self.ts_data[i]-mean)/std
 
-        plt.subplot(211)
+        plt.subplot(311)
         t=np.arange(0, len(self.ts_data),1)
         plt.plot(t, self.ts_data)
-        plt.subplot(212)
+        plt.subplot(312)
+        message=""
         try:
             Pxx,freqs, line = plt.psd(self.ts_data,NFFT, Fs, return_line=True)
         except ValueError:
@@ -600,17 +606,40 @@ class tsARIMA(Statmodel):
         finally:
             msg2log(self.ts_analysis.__name__, message, self.f)
 
+        plt.subplot(313)
+        message = ""
+        try:
+            maxlags=len(self.ts_data)/4
+            if maxlags>250:
+                maxlags=250
 
+
+            alags, acorr, line,b = plt.acorr(self.ts_data, maxlags=maxlags,normed=True)
+        except ValueError:
+            message = f"""
+                                    Oops!! That was no valid value..
+                                    Error : {sys.exc_info()[0]}
+                    """
+
+        except:
+            message = f"""
+                                    Oops!! Unexpected error...
+                                    Error : {sys.exc_info()[0]}
+                    """
+
+        finally:
+            msg2log(self.ts_analysis.__name__, message, self.f)
         #plt.show(block=False)
 
 
         filePng = Path(PlotPrintManager.get_ControlLoggingFolder()) / (
-            "SpectralDensity_{}.png".format(self.timeseries_name))
+            "{}_TS_SPD_AutoCorr_{}.png".format(self.nameModel, self.timeseries_name))
 
         plt.savefig(filePng)
         if PlotPrintManager.isNeedDestroyOpenPlots(): plt.close("all")
-        psd_logging('Power Spectral Density', freqs, Pxx)
-        return
+        psd_logging('{}_Power Spectral Density{}'.format(self.nameModel,  self.timeseries_name), freqs, Pxx)
+        psd_logging('{}_Autocorrelation two-side{}'.format(self.nameModel,self.timeseries_name), alags, acorr)
+        return (Pxx,freqs,acorr,alags)
 
 def predict_sarima(ds,cp, n_predict):
 
