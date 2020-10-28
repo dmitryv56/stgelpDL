@@ -100,11 +100,11 @@ def powerSolarPlant_edit():
 
 def powerElHiero_edit():
 
-    ds = pd.read_csv("~/LaLaguna/stgelpDL/dataLaLaguna/_ElHiero_24092020_20102020_additionalData.csv")
+    ds = pd.read_csv("~/LaLaguna/stgelpDL/dataLaLaguna/_ElHiero_24092020_27102020.csv")
 
     dt_col_name = 'Date Time'
     aux_col_name = "Programmed_demand"
-    data_col_name = "PowerGen"
+    data_col_name = "Real_demand"
     v = ds[dt_col_name].values
     for i in range(len(ds[dt_col_name].values)):
         a = v[i].split(' ')
@@ -117,13 +117,13 @@ def powerElHiero_edit():
     ds[dt_col_name] = copy.copy(v)
 
 
-    ds.to_csv("~/LaLaguna/stgelpDL/dataLaLaguna/ElHiero_24092020_20102020_additionalData.csv", index=False)
+    ds.to_csv("~/LaLaguna/stgelpDL/dataLaLaguna/ElHiero_24092020_27102020.csv", index=False)
     pass
 
 if __name__=="__main__":
     # privateHouse_edit()
     #powerSolarPlant_edit()
-    # powerElHiero_edit()
+    powerElHiero_edit()
     #WindTurbine_edit()
-    ElHieroPlant_edit()
+    # ElHieroPlant_edit()
     pass
