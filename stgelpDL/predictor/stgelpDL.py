@@ -25,7 +25,7 @@ from predictor.api import prepareDataset
 from predictor.utility import msg2log, exec_time, PlotPrintManager, OutVerbose,isCLcsvExists
 
 
-__version__='2.0.2'
+__version__='2.0.3'
 """
 This Control Plane function creates a dataset and runs specified plane functions (Train plane or Predict Plane)
 """
@@ -101,11 +101,15 @@ def main(argc, argv):
     PlotPrintManager.set_Logfolders(folder_for_control_logging,folder_for_predict_logging)
 
     suffics = ".log"
+    if args.cl_tsname is not None:
+        RCPOWER_DSET = args.cl_tsname
+
     sRCPOWER_DSET= RCPOWER_DSET
     if args.cl_mode == AUTO_PATH:       #if ACTUAL_MODE == AUTO_PATH:
         sRCPOWER_DSET= RCPOWER_DSET_AUTO.replace(' ','_')
-    if args.cl_tsname is not None:
-        sRCPOWER_DSET=args.cl_tsname
+    # if args.cl_tsname is not None:
+    #     # RCPOWER_DSET =args.cl_tsname
+    #     sRCPOWER_DSET=args.cl_tsname
 
     file_for_train_logging   = Path(folder_for_train_logging,   sRCPOWER_DSET + "_" + Path(__file__).stem).with_suffix(
         suffics)

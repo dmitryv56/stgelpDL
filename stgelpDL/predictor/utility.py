@@ -188,9 +188,14 @@ def dataset_properties2log(csv_path, dt_dset, rcpower_dset, discret, test_cut_of
 
 
 def msg2log(funcname, msg, f=None):
-    print("\n{}: {}".format(funcname, msg))
-    if f is not None:
-        f.write("\n{}: {}\n".format(funcname, msg))
+    if funcname is not None:
+        print("\n{}: {}".format(funcname, msg))
+        if f is not None:
+            f.write("\n{}: {}\n".format(funcname, msg))
+    else:
+        print("\n{}".format(msg))
+        if f is not None:
+            f.write("{}\n".format(msg))
 
 def vector_logging(title, seq, print_weigth, f=None):
     if f is None:
