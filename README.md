@@ -56,11 +56,16 @@ The project is in developing state and some changes are  possible.
 NOTES:
 stgelpDL v.1.0.0 published at 17/09/2020
 stgelpDL v.2.0.1 published at 27/09/2020
+stgelpDL v.2.0.3 publisyed at 28/10/2020
 
 RELEASE NOTES
 
 In Development
 - Improving structure of logs.
+
+2.0.3.
+New features
+- in 'auto' mode the delta [Programmed_demand] -[Real_demand] time series is predictind while in 'train' and'predict' modes the time series name is set in command line(--tsname argument)/ If argument missed in command line the time series name received from cfg.py.
 
 2.0.2.
 New Features
