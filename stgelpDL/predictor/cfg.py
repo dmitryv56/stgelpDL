@@ -45,7 +45,7 @@ RCPOWER_DSET = "Real_demand" #"Imbalance"
 
 RCPOWER_DSET_AUTO = 'Real demand'
 
-DISCRET      = 1440 # 10
+DISCRET      = 10
 
 # The time cutoffs for the formation of the validation  and test sequence in the format of the parameter passed
 # to the timedelta() like as 'days=<value>' or 'hours=<value>' or 'minutes=<value>'
@@ -107,7 +107,7 @@ HIDDEN_NEYRONS = 16
 DROPOUT        = 0.2
 
 #ARIMA
-SEASONALY_PERIOD = 7 #  6  # hour season , 144 for daily season
+SEASONALY_PERIOD = 6  # hour season , 144 for daily season
 PREDICT_LAG      = 20
 MAX_P            = 3
 MAX_Q            = 3
