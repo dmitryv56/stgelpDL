@@ -1,27 +1,25 @@
 #!/usr/bin/python3
 
+import copy
 import sys
 from datetime import timedelta
-from time import sleep
 from pathlib import Path
+from pickle import dump, load
 
+import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-from pickle import dump, load
-import copy
 
-from predictor.Statmodel import tsARIMA
 from predictor.NNmodel import MLP, LSTM, CNN
+from predictor.Statmodel import tsARIMA
 from predictor.control import ControlPlane
-from predictor.utility import msg2log, chunkarray2log, svld2log, vector_logging, shift,exec_time, PlotPrintManager, \
-                    dataset_properties2log
+from predictor.utility import msg2log, chunkarray2log, svld2log, vector_logging, shift, exec_time, PlotPrintManager, \
+    dataset_properties2log
 
 
 def chart_MAE(name_model, name_time_series, history, n_steps, logfolder, stop_on_chart_show=False):
     # Plot history: MAE
-
 
     plt.style.use('seaborn-darkgrid')
     palette = plt.get_cmap('Set1')
@@ -34,8 +32,7 @@ def chart_MAE(name_model, name_time_series, history, n_steps, logfolder, stop_on
     ax.set_title('Mean Absolute Error{} {} (Time Steps = {})'.format(name_model, name_time_series, n_steps))
     ax.set_xlabel("No. epoch")
     ax.set_ylabel("MAE value")
-    #plt.show(block=stop_on_chart_show)
-
+    # plt.show(block=stop_on_chart_show)
 
     if logfolder is not None:
         plt.savefig("{}/MAE_{}_{}_{}.png".format(logfolder, name_model, name_time_series, n_steps))
@@ -46,20 +43,17 @@ def chart_MAE(name_model, name_time_series, history, n_steps, logfolder, stop_on
 def chart_MSE(name_model, name_time_series, history, n_steps, logfolder, stop_on_chart_show=False):
     # Plot history: MSE
 
-
-
     plt.style.use('seaborn-darkgrid')
     palette = plt.get_cmap('Set1')
     fig, ax = plt.subplots()
 
-    ax.plot(history.history['mean_squared_error'],     marker='', label='MSE (training data)',   color=palette(0))
+    ax.plot(history.history['mean_squared_error'], marker='', label='MSE (training data)', color=palette(0))
     ax.plot(history.history['val_mean_squared_error'], marker='', label='MSE (validation data)', color=palette(1))
     plt.legend(loc=2, ncol=2)
     ax.set_title('Mean Square Error  {} {} (Time Steps = {})'.format(name_model, name_time_series, n_steps))
     ax.set_xlabel("No. epoch")
     ax.set_ylabel("MSE value")
-    #plt.show(block=stop_on_chart_show)
-
+    # plt.show(block=stop_on_chart_show)
 
     if logfolder is not None:
         plt.savefig("{}/MSE_{}.png".format(logfolder, name_model, name_time_series, n_steps))
@@ -89,7 +83,7 @@ def chart_2series(df, title, Y_label, dt_dset, array_pred, array_act, n_pred, lo
     plt.plot(times, array_pred, label='Y pred')
 
     plt.plot(times, array_act, label='Y act')
-    title_com='{} (Length of series   {})'%(title, n_pred)
+    title_com = '{} (Length of series   {})' % (title, n_pred)
     plt.title(title_com)
 
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M'))
@@ -99,8 +93,7 @@ def chart_2series(df, title, Y_label, dt_dset, array_pred, array_act, n_pred, lo
 
     plt.legend()
     plt.gcf().autofmt_xdate()
-    #plt.show(block=False)
-
+    # plt.show(block=False)
 
     title.replace(" ", "_")
     if logfolder is not None:
@@ -109,7 +102,7 @@ def chart_2series(df, title, Y_label, dt_dset, array_pred, array_act, n_pred, lo
     return
 
 
-def chart_predict(dict_predict, n_predict, cp, ds, title, Y_label ):
+def chart_predict(dict_predict, n_predict, cp, ds, title, Y_label):
     """
 
     :param dict_predict:    {act.model name>:<pred. vector>}
@@ -127,17 +120,18 @@ def chart_predict(dict_predict, n_predict, cp, ds, title, Y_label ):
     # times = mdates.drange (ds.df[ds.dt_dset][len(ds.df[ds.dt_dset])].to_pydatetime(),
     #                        ds.df[ds.dt_dset][len(ds.df[ds.dt_dset] + n_predict)].to_pydatetime(),
     #                                    timedelta(minutes=cp.discret))
-    times = mdates.drange( (ds.df[ds.dt_dset][len(ds.df[ds.dt_dset]) - 1] + timedelta( minutes = cp.discret )).to_pydatetime(),
-                           (ds.df[ds.dt_dset][len(ds.df[ds.dt_dset]) - 1] + timedelta( minutes = cp.discret * (n_predict+1) )).to_pydatetime(),
-                           timedelta(minutes=cp.discret))
-    ndelta =  len(times)-n_predict
+    times = mdates.drange(
+        (ds.df[ds.dt_dset][len(ds.df[ds.dt_dset]) - 1] + timedelta(minutes=cp.discret)).to_pydatetime(),
+        (ds.df[ds.dt_dset][len(ds.df[ds.dt_dset]) - 1] + timedelta(
+            minutes=cp.discret * (n_predict + 1))).to_pydatetime(),
+        timedelta(minutes=cp.discret))
+    ndelta = len(times) - n_predict
 
-    msg="\nlen(times)={} n_predict={}\n".format(len(times),n_predict)
+    msg = "\nlen(times)={} n_predict={}\n".format(len(times), n_predict)
     msg2log(chart_predict.__name__, msg, None)
 
     try:
-        for k,vector in dict_predict.items():
-
+        for k, vector in dict_predict.items():
             plt.plot(times[ndelta:], vector, label=k)
 
         # sfile = "predict_{}.png".format(title.replace(' ', '_'))
@@ -147,12 +141,12 @@ def chart_predict(dict_predict, n_predict, cp, ds, title, Y_label ):
         # if PlotPrintManager.isNeedDestroyOpenPlots(): plt.close("all")
 
     except ValueError:
-        msg="\nOoops! That was not valid value\n {}\n{}".format(sys.exc_info()[0],sys.exc_info()[1])
-        msg2log(chart_predict.__name__, msg,cp.fp)
+        msg = "\nOoops! That was not valid value\n {}\n{}".format(sys.exc_info()[0], sys.exc_info()[1])
+        msg2log(chart_predict.__name__, msg, cp.fp)
         plt.close("all")
         return
     except:
-        msg = "\nOoops! Unexpected error: {}\n{}\n}".format(sys.exc_info()[0],sys.exc_info()[1])
+        msg = "\nOoops! Unexpected error: {}\n{}\n}".format(sys.exc_info()[0], sys.exc_info()[1])
         msg2log(chart_predict.__name__, msg, cp.fp)
         plt.close("all")
         return
@@ -169,7 +163,7 @@ def chart_predict(dict_predict, n_predict, cp, ds, title, Y_label ):
 
     plt.legend()
     plt.gcf().autofmt_xdate()
-    #plt.show(block=cp.stop_on_chart_show)
+    # plt.show(block=cp.stop_on_chart_show)
 
     # title.replace(" ", "_")
     # if cp.folder_predict_log is not None:
@@ -189,7 +183,8 @@ Prints the table of forecasts where the columns are actual model names and rows 
 
 """
 
-def tbl_predict(dict_predict, n_predict,cp, ds, title):
+
+def tbl_predict(dict_predict, n_predict, cp, ds, title):
     """
 
     :param dict_predict: the dictionary with key is actual model name and value is a vector of predicted values, i.e.
@@ -215,8 +210,8 @@ def tbl_predict(dict_predict, n_predict,cp, ds, title):
         j += 1
     #   print
 
-    ds.predict_date = ds.df[ds.dt_dset].max()                            # set predict date on the last sample into dataset
-    dt=ds.predict_date + timedelta(minutes=cp.discret)  # first predict date/time
+    ds.predict_date = ds.df[ds.dt_dset].max()  # set predict date on the last sample into dataset
+    dt = ds.predict_date + timedelta(minutes=cp.discret)  # first predict date/time
     date_time = dt.strftime("%Y-%m-%d %H:%M")
 
     print('Predict step {}\n\n'.format(cp.forecast_number_step))
@@ -227,9 +222,9 @@ def tbl_predict(dict_predict, n_predict,cp, ds, title):
         cp.ff.write('Predict step {}\n\n'.format(cp.forecast_number_step))
         cp.ff.write(str(title).center(80))
         cp.ff.write('\n')
-        sprt="Date Time".ljust(18)
+        sprt = "Date Time".ljust(18)
         cp.ff.write(sprt)
-        s=sprt
+        s = sprt
         for elem in range(len(head_list)):
             sprt = head_list[elem].center(18)
             s = s + sprt
@@ -237,7 +232,6 @@ def tbl_predict(dict_predict, n_predict,cp, ds, title):
 
         cp.ff.write('\n')
         print('{}\n'.format(s))
-
 
         for i in range(atemp.shape[0]):
 
@@ -254,6 +248,7 @@ def tbl_predict(dict_predict, n_predict,cp, ds, title):
             date_time = dt.strftime("%Y-%m-%d %H:%M")
 
     return
+
 
 ########################################################################################################################
 """
@@ -375,14 +370,15 @@ def prepareDataset(cp, ds, f=None):
     str(ds)
 
     ds.test_cut_off = cp.test_cut_off
-    ds.val_cut_off  = cp.val_cut_off
+    ds.val_cut_off = cp.val_cut_off
     ds.dset2arrays(cp.n_steps, cp.n_features, cp.epochs)
     dataset_properties2log(cp.csv_path, cp.dt_dset, cp.rcpower_dset, cp.discret, cp.test_cut_off, cp.val_cut_off,
-                           cp.n_steps, cp.n_features,cp.epochs, f)
+                           cp.n_steps, cp.n_features, cp.epochs, f)
 
     show_autocorr(ds.rcpower, 144, cp.rcpower_dset, cp.folder_control_log, cp.stop_on_chart_show, cp.fc)
 
     return
+
 
 """
 The d_models dictionary is filled by pair index:wrapper for tensorflow model
@@ -396,6 +392,8 @@ Now are exists:
     tsARIMA -> seasonal_arima, besr_arima
 
 """
+
+
 @exec_time
 def d_models_assembly(d_models, keyType, valueList, cp, ds):
     """
@@ -421,24 +419,24 @@ def d_models_assembly(d_models, keyType, valueList, cp, ds):
             curr_model.param = (cp.n_steps, cp.n_features)
         elif keyType == "tsARIMA":
             curr_model = tsARIMA(name_model, keyType, cp.n_steps, cp.epochs, cp.fc)
-            #reverse_arr=ds.df[cp.rcpower_dset].values[::-1]
+            # reverse_arr=ds.df[cp.rcpower_dset].values[::-1]
             # For ARIMA passed certain orders which identifyed by ControlPlane  API
             status = ControlPlane.isARIMAidentified()
             if status is not None:
-                ((p,d,q), (p1,d1,q1), (P,D,Q))=status
+                ((p, d, q), (p1, d1, q1), (P, D, Q)) = status
             else:
-                p=d=q=p1=d1=q1=P=D=Q=0
-                cp.max_p=cp.max_d=cp.max_q=2
+                p = d = q = p1 = d1 = q1 = P = D = Q = 0
+                cp.max_p = cp.max_d = cp.max_q = 2
             if name_model == 'seasonal_arima':
 
                 curr_model.param = (
-                p1,d1,q1,P,D,Q, cp.seasonaly_period, cp.predict_lag, cp.discret * 60, ds.df[cp.rcpower_dset].values)
+                    p1, d1, q1, P, D, Q, cp.seasonaly_period, cp.predict_lag, cp.discret * 60,
+                    ds.df[cp.rcpower_dset].values)
             elif name_model == 'best_arima':
 
-
                 curr_model.param = (
-                p, d, q, cp.max_p, cp.max_d, cp.max_q, cp.seasonaly_period,cp.predict_lag, cp.discret * 60,
-                ds.df[cp.rcpower_dset].values)
+                    p, d, q, cp.max_p, cp.max_d, cp.max_q, cp.seasonaly_period, cp.predict_lag, cp.discret * 60,
+                    ds.df[cp.rcpower_dset].values)
             else:
                 smsg = "Undefined name of ARIMA {}\n It is not supported by STGELDP!".format(keyType)
                 print(smsg)
@@ -453,20 +451,21 @@ def d_models_assembly(d_models, keyType, valueList, cp, ds):
             return
         curr_model.path2modelrepository = cp.path_repository
         curr_model.timeseries_name = cp.rcpower_dset
-        if keyType != "tsARIMA":   # no scaler for ARIMA
+        if keyType != "tsARIMA":  # no scaler for ARIMA
             curr_model.scaler = ds.scaler
 
         funcname = getattr(curr_model, name_model)
         curr_model.set_model_from_template(funcname)
 
-        print (str(curr_model))
+        print(str(curr_model))
         msg2log(d_models_assembly, str(curr_model), cp.ft)
 
         d_models[index_model] = curr_model
     return
 
+
 @exec_time
-def fit_models(d_models,  cp, ds):
+def fit_models(d_models, cp, ds):
     r""" A method fits NN models and STS models.
 
     :param d_models:
@@ -492,14 +491,17 @@ def fit_models(d_models,  cp, ds):
 
         if curr_model.typeModel == "CNN" or curr_model.typeModel == "LSTM" or curr_model.typeModel == "MLP":
 
-            chart_MAE(curr_model.nameModel, cp.rcpower_dset, history, cp.n_steps, cp.folder_train_log, cp.stop_on_chart_show)
-            chart_MSE(curr_model.nameModel, cp.rcpower_dset, history, cp.n_steps, cp.folder_train_log, cp.stop_on_chart_show)
+            chart_MAE(curr_model.nameModel, cp.rcpower_dset, history, cp.n_steps, cp.folder_train_log,
+                      cp.stop_on_chart_show)
+            chart_MSE(curr_model.nameModel, cp.rcpower_dset, history, cp.n_steps, cp.folder_train_log,
+                      cp.stop_on_chart_show)
         elif curr_model.typeModel == "tsARIMA":
             curr_model.fitted_model_logging()
 
         histories[k] = history
 
     return histories
+
 
 """
 The trained models saved in the 'Model Repository'.
@@ -533,7 +535,9 @@ F:\MODEL_REPOSITORY
     
     
 """
-def save_modeles_in_repository(d_models,  cp):
+
+
+def save_modeles_in_repository(d_models, cp):
     """
 
     :param d_models:
@@ -541,14 +545,15 @@ def save_modeles_in_repository(d_models,  cp):
     :return:
     """
     # save modeles
-    dict_srz={}
-    lst_srz =[]
+    dict_srz = {}
+    lst_srz = []
     for k, v in d_models.items():
         curr_model = v
 
-        filepath_to_save_model = Path(curr_model.path2modelrepository) / curr_model.timeseries_name / curr_model.typeModel/curr_model.nameModel
+        filepath_to_save_model = Path(
+            curr_model.path2modelrepository) / curr_model.timeseries_name / curr_model.typeModel / curr_model.nameModel
 
-        if curr_model.typeModel == "CNN" or curr_model.typeModel=="LSTM" or curr_model.typeModel == "MLP":
+        if curr_model.typeModel == "CNN" or curr_model.typeModel == "LSTM" or curr_model.typeModel == "MLP":
             curr_model.save_model_wrapper()
         elif curr_model.typeModel == "tsARIMA":
             curr_model.save_model()
@@ -558,26 +563,26 @@ def save_modeles_in_repository(d_models,  cp):
         msg2log(title, msg, cp.ft)
         lst_srz.append(filepath_to_save_model)
 
-    dict_srz[cp.rcpower_dset]=lst_srz
+    dict_srz[cp.rcpower_dset] = lst_srz
 
     serialize_lst_trained_models(dict_srz, cp)
 
     return
 
+
 def serialize_lst_trained_models(dict_srz, cp):
     pass
-    filepath_to_serialize = Path( Path(cp.path_repository) / cp.rcpower_dset / cp.rcpower_dset).with_suffix('.pkl')
+    filepath_to_serialize = Path(Path(cp.path_repository) / cp.rcpower_dset / cp.rcpower_dset).with_suffix('.pkl')
 
-    with open(filepath_to_serialize,'wb') as fw:
+    with open(filepath_to_serialize, 'wb') as fw:
         dump(dict_srz, fw)
-    msg ="Trained models list serialized in {}\n".format(filepath_to_serialize)
+    msg = "Trained models list serialized in {}\n".format(filepath_to_serialize)
     msg2log(serialize_lst_trained_models.__name__, msg, cp.ft)
 
     return
 
 
 def deserialize_lst_trained_models(cp):
-
     pass
     filepath_to_serialize = Path(Path(cp.path_repository) / cp.rcpower_dset / cp.rcpower_dset).with_suffix('.pkl')
 
@@ -624,43 +629,48 @@ def get_list_trained_models(cp):
             act_model_type = ppar[ll - 2]
             dict_model[act_model_name] = (act_model_type, path_model_name)
     return dict_model
+
+
 """
 From dictionary dict_model with items <act. model>:(<type  model or class >, <path to saved trained model>), the classes are 
 instantiated and predict processed.
 The type model belongs to 'LSTM','CNN','MLP'
 """
-@exec_time
-def predict_model(dict_model,  cp, ds, n_predict = 1):
 
-    dict_predict= {}
+
+@exec_time
+def predict_model(dict_model, cp, ds, n_predict=1):
+    dict_predict = {}
     vec_4_predict = copy.copy(ds.data_for_predict)
-    vector_logging("The tail of {} time series for short term prediction\n".format(cp.rcpower_dset), vec_4_predict, 8, cp.fp)
+    vector_logging("The tail of {} time series for short term prediction\n".format(cp.rcpower_dset), vec_4_predict, 8,
+                   cp.fp)
     pass
     for key, value in dict_model.items():
         (model_type, path_model_name) = value
         if model_type == "MLP":
-            curr_model = MLP(  key, model_type, cp.n_steps, cp.epochs, cp.fp)
+            curr_model = MLP(key, model_type, cp.n_steps, cp.epochs, cp.fp)
         elif model_type == "CNN":
-            curr_model = CNN(  key, model_type, cp.n_steps, cp.epochs, cp.fp)
+            curr_model = CNN(key, model_type, cp.n_steps, cp.epochs, cp.fp)
         elif model_type == "LSTM":
-            curr_model = LSTM( key, model_type, cp.n_steps, cp.epochs, cp.fp)
+            curr_model = LSTM(key, model_type, cp.n_steps, cp.epochs, cp.fp)
         elif model_type == "tsARIMA":
             curr_model = tsARIMA(key, model_type, cp.n_steps, cp.epochs, cp.fc)
             # reverse_arr=ds.df[cp.rcpower_dset].values[::-1]
 
             status = ControlPlane.isARIMAidentified()
             if status is not None:
-                ((p,d,q),(p1,d1,q1),(P,D,Q))= status
+                ((p, d, q), (p1, d1, q1), (P, D, Q)) = status
             else:
-                p=d=q=p1=d1=q1=P=D=Q=0
-                cp.max_p= cp.max_q= cp.max_d =2
+                p = d = q = p1 = d1 = q1 = P = D = Q = 0
+                cp.max_p = cp.max_q = cp.max_d = 2
             if key == 'seasonal_arima':
                 curr_model.param = (
-                p, d, q, P, D, Q, cp.seasonaly_period, cp.predict_lag, cp.discret * 60, ds.df[cp.rcpower_dset].values)
+                    p, d, q, P, D, Q, cp.seasonaly_period, cp.predict_lag, cp.discret * 60,
+                    ds.df[cp.rcpower_dset].values)
             elif key == 'best_arima':
                 curr_model.param = (
-                p, d, q, cp.max_p, cp.max_q, cp.max_d, cp.seasonaly_period,cp.predict_lag, cp.discret * 60,
-                ds.df[cp.rcpower_dset].values)
+                    p, d, q, cp.max_p, cp.max_q, cp.max_d, cp.seasonaly_period, cp.predict_lag, cp.discret * 60,
+                    ds.df[cp.rcpower_dset].values)
 
             else:
                 smsg = "Undefined name of ARIMA {}\n It is not supported by STGELDP!".format(key)
@@ -685,36 +695,34 @@ def predict_model(dict_model,  cp, ds, n_predict = 1):
 
         status = curr_model.load_model_wrapper()
 
-        y=np.zeros(n_predict)
-        ins_index =0
+        y = np.zeros(n_predict)
+        ins_index = 0
         if curr_model.scaler is not None:
             vec_4_predict_sc = curr_model.scaler.transform(vec_4_predict.reshape(-1, 1)).reshape(-1, )
             vector_logging("After scaling\n", vec_4_predict_sc, 16, cp.fp)
         else:
             vec_4_predict_sc = copy.copy(vec_4_predict)
-        if model_type == "MLP" or  model_type == "CNN" or  model_type == "LSTM":
+        if model_type == "MLP" or model_type == "CNN" or model_type == "LSTM":
             for k in range(n_predict):
-                y_sc =curr_model.predict_one_step(vec_4_predict_sc)
+                y_sc = curr_model.predict_one_step(vec_4_predict_sc)
 
-                y_pred=y_sc
+                y_pred = y_sc
                 if curr_model.scaler is not None:
                     y_pred = curr_model.scaler.inverse_transform((y_sc))
-                y[ins_index]=y_pred
-                ins_index+=1
+                y[ins_index] = y_pred
+                ins_index += 1
 
                 vec_4_predict_sc = shift(vec_4_predict_sc, -1, y_sc)
                 # vector_logging("After shift\n", vec_4_predict_sc, 16, cp.fp)
-        elif model_type == "tsARIMA":   # saved ARIMA models contain the time seies into. So in order to predict ,
-                                        # is need to pass the forcasting lag
-                                        # TODO insert updated ts into model
-            y = curr_model.predict_n_steps( n_predict)
+        elif model_type == "tsARIMA":  # saved ARIMA models contain the time seies into. So in order to predict ,
+            # is need to pass the forcasting lag
+            # TODO insert updated ts into model
+            y = curr_model.predict_n_steps(n_predict)
 
         vector_logging("{} Short Term Forecasting\n".format(curr_model.nameModel), y, 4, cp.fp)
-        dict_predict[curr_model.nameModel]=copy.copy(y)
+        dict_predict[curr_model.nameModel] = copy.copy(y)
 
     return dict_predict
-
-
 
 
 ###################################################################################################################
@@ -730,10 +738,10 @@ def autocorr(x, lags, f=None):
     return np.array(corr)
 
 
-def autocorr_firstDiff(x, lags,  f=None):
+def autocorr_firstDiff(x, lags, f=None):
     x_fd = np.array([])
     for i in range(len(x) - 1):
-        x_fd = np.append(x_fd, x[i+1] - x[i])
+        x_fd = np.append(x_fd, x[i + 1] - x[i])
     chunkarray2log("First Diff. Time Series ...", x_fd[:16], 8, f)
     mean = np.mean(x_fd)
     var = np.var(x_fd)
@@ -747,7 +755,7 @@ def autocorr_firstDiff(x, lags,  f=None):
 def autocorr_secondDiff(x, lags, f=None):
     x_sd = np.array([])
     for i in range(len(x) - 2):
-        x_sd = np.append(x_sd, x[i+2] - 2 * x[i +1] + x[i])
+        x_sd = np.append(x_sd, x[i + 2] - 2 * x[i + 1] + x[i])
     chunkarray2log("Second Diff. Time Series ...", x_sd[:16], 8, f)
     mean = np.mean(x_sd)
     var = np.var(x_sd)
@@ -757,10 +765,11 @@ def autocorr_secondDiff(x, lags, f=None):
     chunkarray2log("Second Diff. Autocorrelation ...", corr[:16], 8, f)
     return np.array(corr)
 
+
 def autocorr_firstDiffSeasonDiff(x, lags, f=None):
     x_sd = np.array([])
-    for i in range(len(x) - 144 -1):
-        x_sd = np.append(x_sd, x[i+145] -  x[i + 144] - x[i + 1] +x[i])
+    for i in range(len(x) - 144 - 1):
+        x_sd = np.append(x_sd, x[i + 145] - x[i + 144] - x[i + 1] + x[i])
     chunkarray2log("(First Diff. * Season Diff) Time Series ...", x_sd[:16], 8, f)
     mean = np.mean(x_sd)
     var = np.var(x_sd)
@@ -778,9 +787,9 @@ def show_autocorr(y, lag_max, title, logfolder, stop_on_chart_show=False, f=None
     fig, ax = plt.subplots()
     fig.suptitle(title, fontsize=16)
 
-    for funcii, labelii in zip([autocorr, autocorr_firstDiff, autocorr_secondDiff,autocorr_firstDiffSeasonDiff], \
+    for funcii, labelii in zip([autocorr, autocorr_firstDiff, autocorr_secondDiff, autocorr_firstDiffSeasonDiff], \
                                ['Time Series Autocorrelation', 'First Diff. Autocorrelation',
-                                'Second Diff. Autocorrelation','(First Diff * Season Diff) Autokorrrelation ']):
+                                'Second Diff. Autocorrelation', '(First Diff * Season Diff) Autokorrrelation ']):
         cii = funcii(y, lags, f)
         print(labelii)
         print(cii)
@@ -789,8 +798,7 @@ def show_autocorr(y, lag_max, title, logfolder, stop_on_chart_show=False, f=None
     ax.set_xlabel('lag')
     ax.set_ylabel('Correlation Coefficient')
     ax.legend()
-    #plt.show(block=stop_on_chart_show)
-
+    # plt.show(block=stop_on_chart_show)
 
     filePng = Path(PlotPrintManager.get_ControlLoggingFolder()) / (
         "autocorrelation_{}.png".format(title))
@@ -798,6 +806,7 @@ def show_autocorr(y, lag_max, title, logfolder, stop_on_chart_show=False, f=None
     if PlotPrintManager.isNeedDestroyOpenPlots(): plt.close("all")
 
     return
+
 
 ########################################################################################################################
 
@@ -810,7 +819,7 @@ def createDeltaList(df1, df2):
     """
 
     delta = []
-    if len(df2)>0:
+    if len(df2) > 0:
         for i in range(len(df2)):
             delta.append(df1[i] - df2[i])
 

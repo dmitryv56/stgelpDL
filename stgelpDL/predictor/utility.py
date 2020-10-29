@@ -5,11 +5,11 @@
 """
 
 import sys
-from time import time, perf_counter, sleep
-import dateutil.parser
 from datetime import timedelta
 from pathlib import Path
+from time import perf_counter, sleep
 
+import dateutil.parser
 import numpy as np
 
 """ constants """
@@ -20,32 +20,35 @@ PERIOD_MODEL_RETRAIN = 4
 
 
 def isCLcsvExists(cl_csv):
-    ret =False
+    ret = False
     csvPath = Path(cl_csv)
     if csvPath.exists() and csvPath.is_file():
-        ret=True
+        ret = True
     else:
-        msg=f"""\n
+        msg = f"""\n
              File does not exist : {cl_csv}
              The program should be terminated.\n   
         """
-        print (msg)
+        print(msg)
     return ret
+
 
 """
 tsBoundaries2log prints and logs time series boundaries characterisics (min,max,len)
 """
+
 
 class OutVerbose():
     _lvl_verbose = 0
 
     @staticmethod
     def set_verbose_level(val):
-        OutVerbose._lvl_verbose=val
+        OutVerbose._lvl_verbose = val
 
     @staticmethod
     def get_verbose_level():
         return OutVerbose._lvl_verbose
+
 
 def tsBoundaries2log(title, df, dt_dset, rcpower_dset, f=None):
     """
@@ -68,23 +71,25 @@ def tsBoundaries2log(title, df, dt_dset, rcpower_dset, f=None):
             TS maximal value : {df[rcpower_dset].max()}
 
     """
-    msg2log(tsBoundaries2log.__name__, message,f)
+    msg2log(tsBoundaries2log.__name__, message, f)
 
     return
 
+
 def tsSubset2log(dt_dset, rcpower_dset, df_train, df_val=None, df_test=None, f=None):
     pass
-    msg ='    Train dataset\nTrain dates: {} to {}'.format(df_train[dt_dset].min(), df_train[dt_dset].max())
-    msg2log(tsSubset2log.__name__, msg,f)
+    msg = '    Train dataset\nTrain dates: {} to {}'.format(df_train[dt_dset].min(), df_train[dt_dset].max())
+    msg2log(tsSubset2log.__name__, msg, f)
 
     if PlotPrintManager.isNeedPrintDataset():
         for i in range(len(df_train)):
-            msg ='{} {}'.format(df_train[dt_dset][i], df_train[rcpower_dset][i])
-            msg2log(" ", msg,f)
+            msg = '{} {}'.format(df_train[dt_dset][i], df_train[rcpower_dset][i])
+            msg2log(" ", msg, f)
 
     if df_val is not None:
 
-        msg ='\n    Validation dataset\nValidation dates: {} to {}'.format(df_val[dt_dset].min(), df_val[dt_dset].max())
+        msg = '\n    Validation dataset\nValidation dates: {} to {}'.format(df_val[dt_dset].min(),
+                                                                            df_val[dt_dset].max())
         msg2log(tsSubset2log.__name__, msg, f)
 
         if PlotPrintManager.isNeedPrintDataset():
@@ -197,11 +202,12 @@ def msg2log(funcname, msg, f=None):
         if f is not None:
             f.write("{}\n".format(msg))
 
+
 def vector_logging(title, seq, print_weigth, f=None):
     if f is None:
         return
     f.write("{}\n".format(title))
-    k=0
+    k = 0
     line = 0
     f.write("{}: ".format(line))
     for i in range(len(seq)):
@@ -209,12 +215,16 @@ def vector_logging(title, seq, print_weigth, f=None):
         k = k + 1
         k = k % print_weigth
         if k == 0:
-            line=line+1
+            line = line + 1
             f.write("\n{}: ".format(line))
 
     return
+
+
 """ This function logs the Spectral Density or two-side AutoCorrelation"""
-def psd_logging( title:str, freqORlag: np.array, psdORacorr:np.array, functype:str ='psd'):
+
+
+def psd_logging(title: str, freqORlag: np.array, psdORacorr: np.array, functype: str = 'psd'):
     """
     :param title:  title
     :param freqORlag:   numpy array of frequencies or lags.  The lag values starts from -lag_max, -lag_max+1, ...,-1,0,
@@ -227,17 +237,18 @@ def psd_logging( title:str, freqORlag: np.array, psdORacorr:np.array, functype:s
     sFolder = PlotPrintManager.get_ControlLoggingFolder()
     filePrint = Path(sFolder) / (sfile)
     stemplate = "{:>5d}  {:>7.7f} {:>15.2f}\n"
-    sHeaderLine='\n Index  Frequency(Hz) Psd \n'
+    sHeaderLine = '\n Index  Frequency(Hz) Psd \n'
     if functype == 'acorr':
         sHeaderLine = '\n Index  Lag  Autocorrelation \n'
     with open(filePrint, 'w+') as fpsd:
         fpsd.write(sHeaderLine)
-        for i in range (len(psdORacorr)):
-            fpsd.write(stemplate.format(i,freqORlag[i],psdORacorr[i]))
+        for i in range(len(psdORacorr)):
+            fpsd.write(stemplate.format(i, freqORlag[i], psdORacorr[i]))
         fpsd.write('\n')
     return
 
-def logDictArima(dct,indent = 0,f=None):
+
+def logDictArima(dct, indent=0, f=None):
     """ This function recursive  puts theARIMA-model dictionary.
 
     :param dct:   object <ARIMA-model>.to_dict()
@@ -248,41 +259,42 @@ def logDictArima(dct,indent = 0,f=None):
 
     deltaindent = 4
     try:
-        if isinstance(dct,(int,float,bool,str)):
+        if isinstance(dct, (int, float, bool, str)):
             s = ' {}'.format(str(dct).rjust(indent))
-            msg2logDictArima(indent,s,f)
+            msg2logDictArima(indent, s, f)
             return
-        elif isinstance(dct,(list,np.ndarray)):
+        elif isinstance(dct, (list, np.ndarray)):
             for i in range(len(dct)):
-                if i%8 == 0:
-                    msg2logDictArima(indent,'\n',f)
-                logDictArima(dct[i], indent + int(deltaindent/2), f)
+                if i % 8 == 0:
+                    msg2logDictArima(indent, '\n', f)
+                logDictArima(dct[i], indent + int(deltaindent / 2), f)
 
-            msg2logDictArima(indent,'\n',f)
+            msg2logDictArima(indent, '\n', f)
             return
         elif isinstance(dct, tuple):
-            logDictArima(list(dct), indent , f)
-        elif isinstance(dct,dict):
-            for k,v in dct.items():
-                s='\n{}:'.format(str(k).rjust(indent))
-                msg2logDictArima(indent,s,f)
-                logDictArima(v, indent+deltaindent, f)
-            msg2logDictArima(indent,'\n', f)
+            logDictArima(list(dct), indent, f)
+        elif isinstance(dct, dict):
+            for k, v in dct.items():
+                s = '\n{}:'.format(str(k).rjust(indent))
+                msg2logDictArima(indent, s, f)
+                logDictArima(v, indent + deltaindent, f)
+            msg2logDictArima(indent, '\n', f)
             return
         else:
-            msg2logDictArima(indent,type(dct),f)
+            msg2logDictArima(indent, type(dct), f)
     except:
-        message=f"""
+        message = f"""
                 Oops! Unexpected error!
                 Error : {sys.exc_info()[0]}
                 (continue) : {sys.exc_info()[1]}
         """
-        msg2log(logDictArima.__name__, message,f)
+        msg2log(logDictArima.__name__, message, f)
     return
 
-def msg2logDictArima( indent,msg, f=None):
+
+def msg2logDictArima(indent, msg, f=None):
     try:
-        st='{' + ':>{}s'.format(indent)  +  '} {}'
+        st = '{' + ':>{}s'.format(indent) + '} {}'
         if f is not None:
             f.write(st.format(" ", msg))
     except:
@@ -293,13 +305,20 @@ def msg2logDictArima( indent,msg, f=None):
                 """
         msg2log(msg2logDictArima.__name__, message, f)
 
-def incDateStr(inDateTime :str, days:int=0,seconds:int=0,minutes:int=0,hours:int=0,weeks:int=0)->str:
-    tDateTime = dateutil.parser.parse(inDateTime)
-    return (tDateTime+timedelta(days=days,seconds=seconds,minutes=minutes,hours=hours,weeks=weeks)).strftime(cSFMT)
 
-def decDateStr(inDateTime :str, days:int=0,seconds:int=0,minutes:int=0,hours:int=0,weeks:int=0)->str:
+def incDateStr(inDateTime: str, days: int = 0, seconds: int = 0, minutes: int = 0, hours: int = 0,
+               weeks: int = 0) -> str:
     tDateTime = dateutil.parser.parse(inDateTime)
-    return (tDateTime-timedelta(days=days,seconds=seconds,minutes=minutes,hours=hours,weeks=weeks)).strftime(cSFMT)
+    return (tDateTime + timedelta(days=days, seconds=seconds, minutes=minutes, hours=hours, weeks=weeks)).strftime(
+        cSFMT)
+
+
+def decDateStr(inDateTime: str, days: int = 0, seconds: int = 0, minutes: int = 0, hours: int = 0,
+               weeks: int = 0) -> str:
+    tDateTime = dateutil.parser.parse(inDateTime)
+    return (tDateTime - timedelta(days=days, seconds=seconds, minutes=minutes, hours=hours, weeks=weeks)).strftime(
+        cSFMT)
+
 
 # ##############################################charting################################################################
 
@@ -320,35 +339,36 @@ def shift(arr, num, fill_value=np.nan):
 """
 Decorator exec_time
 """
+
+
 def exec_time(function):
-    def timed(*args,**kw):
+    def timed(*args, **kw):
         time_start = perf_counter()
-        ret_value=function(*args,**kw)
+        ret_value = function(*args, **kw)
         time_end = perf_counter()
 
         execution_time = time_end - time_start
 
-        arguments =", ".join([str(arg) for arg in args] + ["{}={}".format(k, kw[k]) for k in kw])
+        arguments = ", ".join([str(arg) for arg in args] + ["{}={}".format(k, kw[k]) for k in kw])
 
-        smsg ="  {:.2f} sec  for {}({})\n".format(  execution_time , function.__name__, arguments)
+        smsg = "  {:.2f} sec  for {}({})\n".format(execution_time, function.__name__, arguments)
         print(smsg)
 
-        with open("execution_time.log",'a') as fel:
+        with open("execution_time.log", 'a') as fel:
             fel.write(smsg)
 
         return ret_value
+
     return timed
 
 
-
-
-class  PlotPrintManager():
-    _number_of_plots =0
-    _max_number_of_plots=1
+class PlotPrintManager():
+    _number_of_plots = 0
+    _max_number_of_plots = 1
     _ds_printed = 0
-    _folder_for_control_logging =None
+    _folder_for_control_logging = None
     _folder_for_predict_logging = None
-    _list_bak_png            = []
+    _list_bak_png = []
 
     @staticmethod
     def set_Logfolders(control_logging, predict_logging):
@@ -363,7 +383,6 @@ class  PlotPrintManager():
     def get_PredictLoggingFolder():
         return PlotPrintManager._folder_for_predict_logging
 
-
     @staticmethod
     def get_numberPlots():
         return PlotPrintManager._number_of_plots
@@ -371,12 +390,14 @@ class  PlotPrintManager():
     @staticmethod
     def get_maxnumberPlots():
         return PlotPrintManager._max_number_of_plots
+
     """
     In auto mode  the opened plot windows seriously affect the consumed resources. to avoid proram damage, the plots are
     closed and the charts are saved to png-files.
     In order to print all and show plots, is need to set DEBUP_PRINT_ = 1
        
     """
+
     @staticmethod
     def isNeedDestroyOpenPlots():
 
@@ -387,18 +408,19 @@ class  PlotPrintManager():
         # if PlotPrintManager._number_of_plots == 0:
         #     bDestroy=True
         sleep(2)
-        bDestroy= True
-        if OutVerbose.get_verbose_level()>3 :
+        bDestroy = True
+        if OutVerbose.get_verbose_level() > 3:
             bDestroy = False
         return bDestroy
 
     @staticmethod
     def isNeedPrintDataset():
         bPrint = True
-        if OutVerbose.get_verbose_level()<2 :
-            bPrint =False
+        if OutVerbose.get_verbose_level() < 2:
+            bPrint = False
 
         return bPrint
+
     @staticmethod
     def addPng2Baklist(strBak):
         PlotPrintManager._list_bak_png.append(strBak)
@@ -406,15 +428,14 @@ class  PlotPrintManager():
 
     @staticmethod
     def remPngBak():
-        if len(PlotPrintManager._list_bak_png)<2:
+        if len(PlotPrintManager._list_bak_png) < 2:
             return
         try:
-            strBak=PlotPrintManager._list_bak_png.pop(0)
-            p=Path(strBak)
+            strBak = PlotPrintManager._list_bak_png.pop(0)
+            p = Path(strBak)
             p.unlink(missing_ok=True)
             print('{} removed'.format(strBak))
 
         except Exception as e:
             print('{} exception:\n {}'.format(PlotPrintManager.remPngBak.__name__, e))
         return
-

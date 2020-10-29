@@ -1,25 +1,25 @@
 #!/usr/bin/python3
 """ Dataset class """
 
-from datetime import timedelta
 import copy
+from datetime import timedelta
 
 import pandas as pd
 
-from predictor.utility import tsBoundaries2log, tsSubset2log, dataset_properties2log,exec_time
-from predictor.api import get_scaler4train, scale_sequence, TimeSeries2SupervisedLearningData,createDeltaList
+from predictor.api import get_scaler4train, scale_sequence, TimeSeries2SupervisedLearningData
+from predictor.utility import tsBoundaries2log, tsSubset2log, dataset_properties2log, exec_time
+
 
 class Dataset():
-
-    df       = None      # pandas DataFrame
+    df = None  # pandas DataFrame
     df_train = None
-    df_val   = None
-    df_test  = None
+    df_val = None
+    df_test = None
 
     _data_for_predict = None
     _predict_date = None
 
-    def __init__(self, csv_path, dt_dtset, rcpower_dset, discret, f = None):
+    def __init__(self, csv_path, dt_dtset, rcpower_dset, discret, f=None):
 
         self.csv_path = csv_path
         self.dt_dset = dt_dtset
@@ -27,10 +27,10 @@ class Dataset():
         self.discret = discret
         self.f = f
         self.simple_bias = 0
-        self.simple_scale =1
+        self.simple_scale = 1
 
-        self.test_cut_off=60
-        self.val_cut_off=600
+        self.test_cut_off = 60
+        self.val_cut_off = 600
         self.scaler = None
         self.X = None
         self.y = None
@@ -40,16 +40,12 @@ class Dataset():
         self.y_test = None
         self.rcpower = None
 
-
-
-
     def __str__(self):
-        s = 'csv-file:' + str(self.csv_path)  +  '\n Date Time : ' + self.dt_dset + "  Time Series Name : " \
+        s = 'csv-file:' + str(self.csv_path) + '\n Date Time : ' + self.dt_dset + "  Time Series Name : " \
             + self.rcpower_dset + "\n discretization: " + str(self.discret)
         if self.f is not None:
             self.f.write(s)
         return s
-
 
     # getter setter
     def get_data_for_predict(self):
@@ -60,8 +56,9 @@ class Dataset():
 
     data_for_predict = property(get_data_for_predict, set_data_for_predict)
 
-    def set_predict_date(self, date_time = None):
-        type(self)._predict_date = self.df[self.dt_dset].max() + timedelta(self.discret) if date_time is None else date_time
+    def set_predict_date(self, date_time=None):
+        type(self)._predict_date = self.df[self.dt_dset].max() + timedelta(
+            self.discret) if date_time is None else date_time
 
     def get_predict_date(self):
         return type(self)._predict_date
@@ -69,7 +66,7 @@ class Dataset():
     predict_date = property(get_predict_date, set_predict_date)
 
     @exec_time
-    def readDataSet(self ):
+    def readDataSet(self):
         """
 
         self.csv_path :  csv -file was made by excel export.It can contain data on many characteristics. For time series ,
@@ -91,7 +88,6 @@ class Dataset():
         # with a few minor changes.
         #
 
-
         self.df[self.rcpower_dset] = pd.to_numeric(self.df[self.rcpower_dset], errors='coerce')
         # for i in range(490):
         #    self.df[rcpower_dset][i]=i
@@ -105,16 +101,15 @@ class Dataset():
 
         # simple scaling and biasing of the time series
         self.df[self.rcpower_dset] *= self.simple_scale
-        self.df[self.rcpower_dset]+=self.simple_bias
-
+        self.df[self.rcpower_dset] += self.simple_bias
 
         self.df.info()
         self.df.head(10)
-        title ='Number of rows and columns after removing missing values'
+        title = 'Number of rows and columns after removing missing values'
         tsBoundaries2log(title, self.df, self.dt_dset, self.rcpower_dset, self.f)
 
-
         return
+
     """
     This method is used for split dataset on 2 (or 3) subdatasets : training, evaliation (and testing)
     """
@@ -148,7 +143,8 @@ class Dataset():
             self.df_val = None
         else:
             val_cutoff_date = test_cutoff_date - timedelta(minutes=self.val_cut_off)
-            self.df_val = self.df[(self.df[self.dt_dset] > val_cutoff_date) & (self.df[self.dt_dset] <= test_cutoff_date)]
+            self.df_val = self.df[
+                (self.df[self.dt_dset] > val_cutoff_date) & (self.df[self.dt_dset] <= test_cutoff_date)]
 
         self.df_train = self.df[self.df[self.dt_dset] <= val_cutoff_date]
 
@@ -157,37 +153,32 @@ class Dataset():
         datePredict = self.df_test[self.dt_dset].values[0]
         actvalPredict = self.df_test[self.rcpower_dset].values[0]
 
-        return  datePredict, actvalPredict
+        return datePredict, actvalPredict
 
     @exec_time
     def dset2arrays(self, n_steps, n_features, n_epochs):
 
-
         dataset_properties2log(self.csv_path, self.dt_dset, self.rcpower_dset, self.discret, self.test_cut_off, \
-                               self.val_cut_off, n_steps, n_features,n_epochs, self.f)
+                               self.val_cut_off, n_steps, n_features, n_epochs, self.f)
         # read dataset
         df = self.readDataSet()
 
         # set training, validation and test sequence
         datePredict, actvalPredict = self.set_train_val_test_sequence()
 
-
         # scaling time series
         self.scaler, rcpower_scaled, rcpower = get_scaler4train(self.df_train, self.dt_dset, self.rcpower_dset, self.f)
 
-        rcpower_val_scaled,  rcpower_val  = scale_sequence(self.scaler, self.df_val,  self.dt_dset, self.rcpower_dset, self.f)
-        rcpower_test_scaled, rcpower_test = scale_sequence(self.scaler, self.df_test, self.dt_dset, self.rcpower_dset, self.f)
+        rcpower_val_scaled, rcpower_val = scale_sequence(self.scaler, self.df_val, self.dt_dset, self.rcpower_dset,
+                                                         self.f)
+        rcpower_test_scaled, rcpower_test = scale_sequence(self.scaler, self.df_test, self.dt_dset, self.rcpower_dset,
+                                                           self.f)
 
         # time series is transformed to supevised learning data
-        self.X,      self.y      = TimeSeries2SupervisedLearningData( rcpower_scaled,      n_steps, self.f )
-        self.X_val,  self.y_val  = TimeSeries2SupervisedLearningData( rcpower_val_scaled,  n_steps, self.f )
-        self.X_test, self.y_test = TimeSeries2SupervisedLearningData( rcpower_test_scaled, n_steps, self.f )
+        self.X, self.y = TimeSeries2SupervisedLearningData(rcpower_scaled, n_steps, self.f)
+        self.X_val, self.y_val = TimeSeries2SupervisedLearningData(rcpower_val_scaled, n_steps, self.f)
+        self.X_test, self.y_test = TimeSeries2SupervisedLearningData(rcpower_test_scaled, n_steps, self.f)
 
         self.rcpower = copy.copy(rcpower)
 
         return
-
-
-
-
-
