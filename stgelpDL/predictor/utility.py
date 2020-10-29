@@ -213,17 +213,27 @@ def vector_logging(title, seq, print_weigth, f=None):
             f.write("\n{}: ".format(line))
 
     return
-
-def psd_logging(title,freq,psd):
-
+""" This function logs the Spectral Density or two-side AutoCorrelation"""
+def psd_logging( title:str, freqORlag: np.array, psdORacorr:np.array, functype:str ='psd'):
+    """
+    :param title:  title
+    :param freqORlag:   numpy array of frequencies or lags.  The lag values starts from -lag_max, -lag_max+1, ...,-1,0,
+     1,..., lag_max-1,lag_max
+    :param psdORacorr:    numpy array of psd or acorr values
+    :param functype: {'psd', 'acorr'}, 'psd' for spectral density (default),'acorr' for autocorrelation/
+    :return:
+    """
     sfile = "{}.log".format(title.replace(' ', '_'))
     sFolder = PlotPrintManager.get_ControlLoggingFolder()
     filePrint = Path(sFolder) / (sfile)
     stemplate = "{:>5d}  {:>7.7f} {:>15.2f}\n"
+    sHeaderLine='\n Index  Frequency(Hz) Psd \n'
+    if functype == 'acorr':
+        sHeaderLine = '\n Index  Lag  Autocorrelation \n'
     with open(filePrint, 'w+') as fpsd:
-        fpsd.write('\n Index  Frequency(Hz) Psd \n')
-        for i in range (len(psd)):
-            fpsd.write(stemplate.format(i,freq[i],psd[i]))
+        fpsd.write(sHeaderLine)
+        for i in range (len(psdORacorr)):
+            fpsd.write(stemplate.format(i,freqORlag[i],psdORacorr[i]))
         fpsd.write('\n')
     return
 

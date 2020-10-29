@@ -31,6 +31,7 @@ from pickle import dump, load
 import pandas as pd
 from matplotlib import pyplot as plt
 
+from predictor.cfg import SEASONALY_PERIOD, PREDICT_LAG, MAX_P, MAX_Q, MAX_D
 from predictor.Statmodel import tsARIMA
 from predictor.utility import msg2log, cSFMT, PlotPrintManager
 
@@ -96,11 +97,11 @@ class ControlPlane():
     _folder_rt_datasets = None
     _folder_descriptor  = None
     _file_descriptor    = None
-    _seasonaly_period   = 6
-    _predict_lag        = 4
-    _max_p              = 2
-    _max_q              = 2
-    _max_d              = 1
+    _seasonaly_period   = SEASONALY_PERIOD
+    _predict_lag        = PREDICT_LAG
+    _max_p              = MAX_P
+    _max_q              = MAX_Q
+    _max_d              = MAX_D
 
     _scaled_data_4_auto = False
     _start_date_4_auto  = None

@@ -637,8 +637,8 @@ class tsARIMA(Statmodel):
 
         plt.savefig(filePng)
         if PlotPrintManager.isNeedDestroyOpenPlots(): plt.close("all")
-        psd_logging('{}_Power Spectral Density{}'.format(self.nameModel,  self.timeseries_name), freqs, Pxx)
-        psd_logging('{}_Autocorrelation two-side{}'.format(self.nameModel,self.timeseries_name), alags, acorr)
+        psd_logging('{}_Power Spectral Density{}'.format(self.nameModel,  self.timeseries_name), freqs, Pxx,'psd')
+        psd_logging('{}_Autocorrelation two-side{}'.format(self.nameModel,self.timeseries_name), alags, acorr, 'acorr')
         return (Pxx,freqs,acorr,alags)
 
 def predict_sarima(ds,cp, n_predict):

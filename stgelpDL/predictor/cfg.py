@@ -108,9 +108,9 @@ DROPOUT        = 0.2
 
 #ARIMA
 SEASONALY_PERIOD = 6  # hour season , 144 for daily season
-PREDICT_LAG      = 20
+PREDICT_LAG      = 4
 MAX_P            = 3
-MAX_Q            = 3
+MAX_Q            = 2
 MAX_D            = 2
 
 """ Samples/ Time Series """
