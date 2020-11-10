@@ -26,7 +26,8 @@ class hmm():
         self.transitDist = np.zeros((self.num_states, self.num_states), dtype=float)
         self.observations = None  # for discrete observations
         self.emisDist = None
-        self.B = np.zeros((self.num_states, self.num_obs), dtype=float)
+        # self.B = np.zeros((self.num_states, self.num_obs), dtype=float)
+        self.bObs =None
         self.d_pai = {}
         self.d_transitDist = {}
         self.d_emisDist = {}
@@ -130,7 +131,8 @@ class hmm():
 
     """ Forward, backward, viterbi and etc"""
 
-    def forward(self) -> tuple(float, np.array):
+    # def forward(self) -> tuple(float, np.array):
+    def forward(self) -> (float, np.array):
         pass
         self.alfa = np.zeros((self.num_states, self.num_obs), dtype=float)
 
@@ -150,8 +152,12 @@ class hmm():
 
         return (self.forwardprob, self.alfa)
 
-    def viterbi(self) -> tuple(float, np.array, np.array):
+    def backward(self):
+        pass
 
+
+    # def viterbi(self) -> tuple(float, np.array, np.array):
+    def viterbi(self) -> (float, np.array, np.array):
         vi = np.zeros((self.states.shape[0], self.bObs.shape[1]))
         bt = np.zeros((self.states.shape[0], self.bObs.shape[1]), dtype=int)
 
@@ -280,7 +286,7 @@ class hmm_gmix(hmm_cobs):
         return hmm_gmix._ind_scale_param
 
     def fillObsProbMatrix(self):
-        del self.bObs
+        self.bObs = None
         self.bObs = np.zeros((self.states.shape[0], self.observations.shape[0]))
         round_decision = 6
         for s in range(self.states.shape[0]):
@@ -322,7 +328,7 @@ def test_discreteEmission():
     dhmm.fillObsProbMatrix()
     prob, alfa = dhmm.forward()
 
-    dhmm.viterbi()
+    (bestPathProb, vi, viterbi_path)= dhmm.viterbi()
 
     s1 = dhmm.dumpModel("a.json")
     dhmm.loadModel(s1, "a.json")
@@ -341,12 +347,13 @@ def test_continuousEmission():
     ahmm.setObs([1.0, -5.0, 0.1, 0.9, -0.09, 4.0, 6.0, 2.5])
     ahmm.fillObsProbMatrix()
     prob, alfa = ahmm.forward()
-
+    (bestPathProb, vi, viterbi_path) =ahmm.viterbi()
     s1 = ahmm.dumpModel("a.json")
     ahmm.loadModel(s1, "a.json")
 
 
 if __name__ == "__main__":
-    test_discreteEmission()
+    # test_discreteEmission()
+    test_continuousEmission()
 
     pass

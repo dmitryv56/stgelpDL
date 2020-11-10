@@ -368,6 +368,7 @@ class PlotPrintManager():
     _ds_printed = 0
     _folder_for_control_logging = None
     _folder_for_predict_logging = None
+    _folder_for_train_logging = None
     _list_bak_png = []
 
     @staticmethod
@@ -376,12 +377,22 @@ class PlotPrintManager():
         PlotPrintManager._folder_for_predict_logging = predict_logging
 
     @staticmethod
+    def set_LogfoldersExt(control_logging, predict_logging,train_logging):
+        PlotPrintManager._folder_for_control_logging = control_logging
+        PlotPrintManager._folder_for_predict_logging = predict_logging
+        PlotPrintManager._folder_for_train_logging   = train_logging
+
+    @staticmethod
     def get_ControlLoggingFolder():
         return PlotPrintManager._folder_for_control_logging
 
     @staticmethod
     def get_PredictLoggingFolder():
         return PlotPrintManager._folder_for_predict_logging
+
+    @staticmethod
+    def get_TrainLoggingFolder():
+        return PlotPrintManager._folder_for_train_logging
 
     @staticmethod
     def get_numberPlots():
@@ -439,3 +450,6 @@ class PlotPrintManager():
         except Exception as e:
             print('{} exception:\n {}'.format(PlotPrintManager.remPngBak.__name__, e))
         return
+
+
+

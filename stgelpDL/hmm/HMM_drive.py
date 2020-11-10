@@ -279,8 +279,8 @@ def main():
 
     :return:
     """
-    # workmode=LEARN_HMM
-    workmode = PREDICT_HMM
+    workmode=LEARN_HMM
+    # workmode = PREDICT_HMM
     now = datetime.now()
     date_time = now.strftime("%d_%m_%y__%H_%M_%S")
     with open("execution_time.log", 'w') as fel:
@@ -591,13 +591,15 @@ def plotViterbiPath(pref, observations, viterbi_path, hidden_sequence, cp):
         file_name = "{}_viterbi_sequence_vs_hidden_sequence".format(pref)
     else:
         file_name = "{}_viterbi_sequence".format(pref)
-    if sys.platform == "win32":
-        file_png = file_name + ".png"
-        vit_png = Path(cp.folder_predict_log / file_png)
-    elif sys.platform == "linux":
-        vit_png = Path(cp.folder_predict_log / file_name).with_suffics(suffics)
-    else:
-        vit_png = Path(cp.folder_predict_log / file_name).with_suffics(suffics)
+    file_png = file_name + ".png"
+    vit_png = Path(cp.folder_predict_log / file_png)
+    # if sys.platform == "win32":
+    #     file_png = file_name + ".png"
+    #     vit_png = Path(cp.folder_predict_log / file_png)
+    # elif sys.platform == "linux":
+    #     vit_png = Path(cp.folder_predict_log / file_name).with_suffics(suffics)
+    # else:
+    #     vit_png = Path(cp.folder_predict_log / file_name).with_suffics(suffics)
     try:
         # plt.plot(observations, viterbi_path, label="Viterbi path")
         # plt.plot(observations, hidden_sequence, label="Hidden path")
@@ -637,13 +639,15 @@ def plotDF(df, cp):
 
     suffics = ".png"
     file_name = str(cp.csv_path.name)
-    if sys.platform == "win32":
-        file_png = file_name + ".png"
-        df_png = Path(cp.folder_control_log / file_png)
-    elif sys.platform == "linux":
-        df_png = Path(cp.folder_control_log / file_name).with_suffics(suffics)
-    else:
-        df_png = Path(cp.folder_control_log / file_name).with_suffics(suffics)
+    file_png = file_name + ".png"
+    df_png = Path(cp.folder_control_log / file_png)
+    # if sys.platform == "win32":
+    #     file_png = file_name + ".png"
+    #     df_png = Path(cp.folder_control_log / file_png)
+    # elif sys.platform == "linux":
+    #     df_png = Path(cp.folder_control_log / file_name+suffics)
+    # else:
+    #     df_png = Path(cp.folder_control_log / file_name+suffics)
     try:
         df.plot(x=df.columns.values[0], y=df.columns.values[1:], kind='line')
         numfig = plt.gcf().number
@@ -705,13 +709,10 @@ def trainHMMprob(concat_list: list, states_concat_list: list, cp: ControlPlane) 
 def plotArray(arr, title, file_name, cp):
     suffics = ".png"
 
-    if sys.platform == "win32":
-        file_png = file_name + ".png"
-        fl_png = Path(cp.folder_control_log / file_png)
-    elif sys.platform == "linux":
-        fl_png = Path(cp.folder_control_log / file_name).with_suffics(suffics)
-    else:
-        fl_png = Path(cp.folder_control_log / file_name).with_suffics(suffics)
+
+    file_png = file_name + ".png"
+    fl_png = Path(cp.folder_control_log / file_png)
+
     try:
         plt.plot(arr)
         numfig = plt.gcf().number
@@ -807,6 +808,53 @@ def logDist(arDist: np.array, title: str, f: object = None) -> None:
         s = s + '\n'
         f.write(s)
     return
+
+def imprLogDist(arDist: np.array, row_header:list, col_header:list, title: str, f: object = None) -> None:
+    if f is None:
+        return
+
+
+
+    f.write("\n{}\n".format(title))
+    shp = arDist.shape
+    if len(shp) == 1:
+
+        b = arDist.reshape((-1, 1))
+        (n_row, n_col) = b.shape
+        auxLogDist(b, n_row, n_col, row_header, col_header, title, f)
+
+    elif len(shp) == 2:
+        (n_row, n_col) = shp
+        auxLogDist(arDist, n_row, n_col, row_header, col_header, title, f)
+    else:
+        msg2log(None,"Incorrect array shape {}".format(shp),f)
+
+    return
+
+def auxLogDist(arDist: np.array, n_row:int, n_col:int,  row_header:list, col_header:list, title: str, f: object = None):
+    if row_header is None or not row_header:
+        row_header = [str(i) for i in range(n_row)]
+    if col_header is None or not col_header:
+        col_header = [str(i) for i in range(n_col)]
+    row_header = [str(i) for i in row_header]
+    col_header = [str(i) for i in col_header]
+    wspace = ' '
+    s = "{:<10s}".format(wspace)
+
+    for i in col_header:
+        s = s + "{:^11s}".format(i)
+    f.write("{}\n".format(s))
+    for i in range(n_row):
+        s = "{:<10s}".format(row_header[i])
+        for j in range(n_col):
+            if isinstance(arDist[i][j], int):
+                s1 = "{:>10d}".format(arDist[i][j])
+            elif isinstance(arDist[i][j], float):
+                s1 = "{:>10.4f}".format(arDist[i][j])
+            else:
+                s1 = "{:^10s}".format(arDist[i][j])
+            s = s + "  " + s1
+        f.write("{}\n".format(s))
 
 
 def transitionsDist(a_sign: np.array, states: np.array, f: object = None) -> np.matrix:
@@ -1025,9 +1073,10 @@ def logHistogram(title, file_png, arr, bins):
 
 
 def drive_HMM(cp: ControlPlane, pai: np.array, transitDist: np.matrix, emisDist: np.matrix, observations: np.array,
-              observation_labels: np.array, states_set: np.array):
+              observation_labels: np.array, states_set: np.array)->(np.array, str, object):
     """
 
+    :rtype: object
     :param cp:
     :param pai:
     :param transitDist:
@@ -1086,7 +1135,12 @@ def drive_HMM(cp: ControlPlane, pai: np.array, transitDist: np.matrix, emisDist:
     msg2log(drive_HMM.__name__, "Log probability \n\n{}\n".format(log_probability), cp.fp)
 
     plotViterbiPath(str(len(observations)), observation_labels, post_mode.numpy(), states_set, cp)
-    return
+        
+    return post_mode.numpy(),post_marg.name, post_marg.logits      
+
+
+
+
 
 
 if __name__ == "__main__":
