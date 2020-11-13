@@ -56,12 +56,13 @@ The project is in developing state and some changes are  possible.
 NOTES:
 stgelpDL v.1.0.0 published at 17/09/2020
 stgelpDL v.2.0.1 published at 27/09/2020
-stgelpDL v.2.0.3 publisyed at 28/10/2020
+stgelpDL v.2.0.3 published at 28/10/2020
 
 RELEASE NOTES
 
 In Development
-- Improving structure of logs.
+- Imbalance Time Series Clusterization and predict.
+- Hidden Markow Model for Imbalance time series analysis.
 
 2.0.3.
 New features
