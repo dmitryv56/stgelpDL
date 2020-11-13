@@ -15,7 +15,7 @@ from hmm.fwd import fwd_bkw, viterbi, probNormDist
 from hmm.HMM import hmm_gmix
 from hmm.HMM_drive import emissionDistribution,logDist, imprLogDist, transitionsDist,plotArray,drive_HMM,input4FwdBkw,\
 logFwdBkwDict,logViterbi,plotViterbiPath
-from hmm.state import state8, DIESEL, WIND, HYDRO
+from hmm.state import state8, state36, DIESEL, WIND, HYDRO
 from predictor.control import ControlPlane
 from predictor.utility import  msg2log,tsBoundaries2log,logDictArima
 
@@ -176,7 +176,7 @@ def trainPath(cp):
     # ds, state_sequence = readDataset(csv_file, data_col_name, dt_col_name, cp.fc)
     #states_dict=copy.copy(STATES_DICT)
 
-    st = state8(cp.fc)
+    st = state36(cp.fc) #st = state8(cp.fc)
     ds, state_sequence= st.readDataset(csv_file, data_col_name, dt_col_name, [DIESEL, WIND, HYDRO])
     ds.to_csv("Imbalance_ElHierro_hiddenStates.csv")
     st.printListState()
@@ -245,11 +245,16 @@ def trainPath(cp):
 
     post_mode,post_marg_name, post_marg_logits  = drive_HMM(cp, pai, transDist, emisDist, observations,
                                                            observation_labels, state_sequence)
-    msg2log(None, "HMM. {} period. Started at {}, finisyed at {}\n".format(len(observations),observation_labels[0],
+    msg2log(None, "HMM. {} period. Started at {}, finished at {}\n".format(len(observations),observation_labels[0],
                                                                 observation_labels[len(observation_labels)-1]), cp.fp)
     diffSequences(post_mode, state_sequence, observation_labels, states_dict,cp.fp)
 
-
+    log_state_file = Path( cp.folder_predict_log / "statesTotal.log")
+    with open(log_state_file,"w+") as flog:
+        logStateSequence(ds, dt_col_name, data_col_name, state_sequence, post_mode,st, flog)
+    flog.close()
+    ds["ViterbiPath"] = post_mode.tolist()
+    ds.to_csv("ElHiero_2409_27102020_statepathes.csv")
     if 1: return
 
     aux_states = [str(states[i]) for i in range(len(states))]
@@ -336,6 +341,27 @@ def diffSequences(seqViterbi: np.array,seqOrigin:np.array,observation_labels:np.
             s1,_ = getStateNamesByIndex(seqOrigin[i], states_dict)
             s2,_ = getStateNamesByIndex(seqOrigin[i - 1], states_dict)
             msg2log(None, "{:<30s}:  {:>10s}  {:>10s}  {:<60s} ".format(observation_labels[i],s0,s1,s2), f)
+
+    return
+
+def logStateSequence(ds, dt_col_name, data_col_name, state_sequence, viterbi_sequence,stateObj:object, f:object=None):
+    pass
+
+    savef=stateObj.f
+    stateObj.f=f
+    stateObj.printListState()
+    stateObj.f=savef
+    msg="{:<6s} {:<30s} {:<9s} {:<7s} {:<7s} {:<7s} {:<7s}".format("##", "Date Time", "Imbalance", "Hidden","States",
+                                                                   "Viterby","Path" )
+    msg2log(None, msg, f)
+    for i in range(len(ds)):
+        dt=ds[dt_col_name].values[i]
+        val=ds[data_col_name].values[i]
+        st =state_sequence[i]
+        st_name,_=stateObj.getStateNamesByIndex(st)
+        vt=viterbi_sequence[i]
+        vt_name, _ = stateObj.getStateNamesByIndex(vt)
+        f.write("{:>6d} {:<30s} {:<9.4f} {:>7d} {:<7s} {:>7d} {:<7s}\n".format(i,dt,val,st,st_name,vt,vt_name))
 
     return
 

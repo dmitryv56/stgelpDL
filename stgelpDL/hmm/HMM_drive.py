@@ -770,9 +770,13 @@ def emissionDistribution(trainArray: np.array, ar_state: np.array, states: np.ar
                 a[j] = trainArray[k]
                 k += 1
                 j += 1
-
-        emisDist[i][0] = a.mean()
-        emisDist[i][1] = max(1e-02, a.std())
+        (nn,)=a.shape
+        if nn == 1:
+            emisDist[i][0] = a[0]
+            emisDist[i][1] = 1e-04
+        else:
+            emisDist[i][0] = a.mean()
+            emisDist[i][1] = max(1e-02, a.std())
 
         del a
     print(emisDist)
