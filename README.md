@@ -63,7 +63,10 @@ RELEASE NOTES
 In Development
 - Imbalance Time Series Clusterization and predict.
 - Hidden Markow Model for Imbalance time series analysis.
+- Dataset time series statistical analysis.
 
+Patch. Statistical nalysis of the Time Series in dataset added.
+ 
 2.0.3.
 New features
 - in 'auto' mode the delta [Programmed_demand] -[Real_demand] time series is predictind while in 'train' and'predict' modes the time series name is set in command line(--tsname argument)/ If argument missed in command line the time series name received from cfg.py.
