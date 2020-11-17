@@ -2,7 +2,7 @@
 
 import copy
 import sys
-from datetime import timedelta
+from datetime import timedelta,datetime
 from pathlib import Path
 from pickle import dump, load
 
@@ -825,6 +825,118 @@ def createDeltaList(df1, df2):
 
     return delta
 
+"""  Control plane initializaion. This functionsinits  a minimal set of need properties for ControlPlane uing in another
+packages like as tsstan"""
+def initCP(program_title:str, tuple_cfg:tuple, csv_file:str = "", actual_mode: str="control path",
+           dt_col_name: str = "Date Time", data_col_name: str = "Imbalance", logFolderName: str = "Logs_AnalyzeData",
+           dir_path: str = "", discret: int  =10 )->(ControlPlane):
+    """
+
+    :param program_title:  - using in header of main logs. It does not saved in ControlPlane object.
+    :param tuple_cfg: - a tuple contains absolute and relative paths to
+                        PATH_DATASET_REPOSITORY,
+                        PATH_REPOSITORY,
+                        CONTROL_PATH,
+                        TRAIN_PATH,
+                        PREDICT_PATH,
+                        LOG_FILE_NAME.
+                        They paths defined in cfg.py for predictor package and may be used in another packages.
+
+    :param csv_file:   - dataset , csv-format file compatible with Pandas' APi for Panda DataFrame/
+    :param actual_mode:     - mode of program run, it is like as title.
+    :param dt_col_name:  - the timestamp column in dataset.
+    :param data_col_name: - the main time series in the dataset.
+    :param logFolderName: - parent folder for logs
+    :param dir_path:      - work directory for main function in package
+    :param discret:       - time series discretizftion ic minutes.
+    :return: implemented object of ControlPlane
+    """
+
+
+    # dir_path = os.path.dirname(os.path.realpath(__file__))
+    PROGRAM_TITLE_=program_title
+    (PATH_DATASET_REPOSITORY_,  PATH_REPOSITORY_, CONTROL_PATH_, TRAIN_PATH_, PREDICT_PATH_, LOG_FILE_NAME_ ) = tuple_cfg
+    DISCRET_=discret
+
+    now = datetime.now()
+    date_time = now.strftime("%d_%m_%y__%H_%M_%S")
+    cSFMT = "%Y-%m-%d %H:%M:%S" # like as in predictor.utility
+    with open("execution_time.log", 'w') as fel:
+        fel.write("Time execution logging started at {}\n\n".format(datetime.now().strftime(cSFMT)))
+
+
+    folder_for_control_logging = Path(dir_path) / logFolderName / CONTROL_PATH_ / date_time
+    folder_for_predict_logging = Path(dir_path) / logFolderName / PREDICT_PATH_ / date_time
+    folder_for_train_logging   = Path(dir_path) / logFolderName / TRAIN_PATH_  / date_time
+
+    # CSV_PATH = Path(PATH_DATASET_REPOSITORY / "Demanda_el_huerro" / "Imbalance.csv")
+    RCPOWER_DSET_ = data_col_name  # RCPOWER_DSET_AUTO.replace(' ', '_')
+
+    folder_for_rt_datasets = Path(PATH_DATASET_REPOSITORY_)
+    Path(folder_for_control_logging).mkdir(parents=True, exist_ok=True)
+    Path(folder_for_predict_logging).mkdir(parents=True, exist_ok=True)
+    Path(folder_for_train_logging).mkdir(parents=True, exist_ok=True)
+    PlotPrintManager.set_LogfoldersExt(folder_for_control_logging, folder_for_predict_logging, folder_for_train_logging)
+
+    suffics = ".log"
+    sRCPOWER_DSET = RCPOWER_DSET_
+    file_for_predict_logging = Path(folder_for_predict_logging, data_col_name + "_" + Path(__file__).stem).with_suffix(
+        suffics)
+    file_for_control_logging = Path(folder_for_control_logging, data_col_name + "_" + Path(__file__).stem).with_suffix(
+        suffics)
+    file_for_train_logging = Path(folder_for_train_logging, data_col_name + "_" + Path(__file__).stem).with_suffix(
+        suffics)
+    fp = open(file_for_predict_logging, 'w+')
+    fc = open(file_for_control_logging, 'w+')
+    ft = open(file_for_train_logging, 'w+')
+
+    cp = ControlPlane()
+    cp.actual_mode = actual_mode #"Hidden Markov Model"
+    cp.csv_path = csv_file
+    cp.rcpower_dset = data_col_name
+    cp.log_file_name = LOG_FILE_NAME_
+    cp.rcpower_dset_auto = data_col_name
+    cp.dt_dset = dt_col_name
+    cp.discret = DISCRET_
+    cp.path_repository = str(PATH_REPOSITORY_)
+    cp.folder_control_log = folder_for_control_logging
+    cp.folder_predict_log = folder_for_predict_logging
+    cp.fc = fc
+    cp.fp = fp
+    cp.ft = ft
+
+    # TODO Are we  need this code?
+    # ControlPlane.set_modeImbalance(MODE_IMBALANCE)
+    # ControlPlane.set_modeImbalanceNames((IMBALANCE_NAME, PROGRAMMED_NAME, DEMAND_NAME))
+    # ControlPlane.set_ts_duration_days(TS_DURATION_DAYS)
+    # ControlPlane.set_psd_segment_size(SEGMENT_SIZE)
+
+    msg2log(PROGRAM_TITLE_, " (Control Plane) started at {} ".format(date_time), fc)
+    msg2log(PROGRAM_TITLE_, " (Predict Plane) started at {} ".format(date_time), fp)
+    msg2log(PROGRAM_TITLE_, " (Train Plane) started at {} ".format(date_time), ft)
+    return cp
+
+""" This function closes the file objects opened at initialization ControlPlane object"""
+def endCP(cp: ControlPlane, program_title:str =""):
+
+    PROGRAM_TITLE_=program_title
+
+    now = datetime.now()
+    date_time = now.strftime("%d_%m_%y__%H_%M_%S")
+    cSFMT = "%Y-%m-%d %H:%M:%S"  # like as in predictor.utility
+    msg2log(PROGRAM_TITLE_, " (Control Plane) finished at {} ".format(date_time), cp.fc)
+    msg2log(PROGRAM_TITLE_, " (Predict Plane) finished at {} ".format(date_time), cp.fp)
+    msg2log(PROGRAM_TITLE_, " (Train Plane) finished at {} ".format(date_time),   cp.ft)
+
+    cp.fc.close()
+    cp.fp.close()
+    cp.ft.close()
+
+
+    with open("execution_time.log", 'a') as fel:
+        fel.write("Time execution logging finished at {}\n\n".format(datetime.now().strftime(cSFMT)))
+
+    return
 
 if __name__ == "__main__":
     pass
