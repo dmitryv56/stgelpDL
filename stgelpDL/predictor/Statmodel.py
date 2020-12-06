@@ -612,7 +612,8 @@ class tsARIMA(Statmodel):
             maxlags = len(self.ts_data) / 4
             if maxlags > 250:
                 maxlags = 250
-
+            alags=None
+            acorr=None
             alags, acorr, line, b = plt.acorr(self.ts_data, maxlags=maxlags, normed=True)
         except ValueError:
             message = f"""
@@ -636,7 +637,20 @@ class tsARIMA(Statmodel):
         plt.savefig(filePng)
         if PlotPrintManager.isNeedDestroyOpenPlots(): plt.close("all")
         psd_logging('{}_Power Spectral Density{}'.format(self.nameModel, self.timeseries_name), freqs, Pxx, 'psd')
-        psd_logging('{}_Autocorrelation two-side{}'.format(self.nameModel, self.timeseries_name), alags, acorr, 'acorr')
+        message=""
+        try:
+            if alags and acorr:
+                psd_logging('{}_Autocorrelation two-side{}'.format(self.nameModel, self.timeseries_name), alags, acorr, 'acorr')
+        except:
+
+            message = f"""
+                                        Oops!! Unexpected error...
+                                        Error : {sys.exc_info()[0]}
+                        """
+
+        finally:
+            msg2log(self.ts_analysis.__name__, message, self.f)
+
         return (Pxx, freqs, acorr, alags)
 
 

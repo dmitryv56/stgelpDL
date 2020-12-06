@@ -41,7 +41,7 @@ CSV_PATH = Path(Path.home() / ".keras" / "datasets")
 #     CSV_PATH = "C:\\Users\\dmitr_000\\.keras\\datasets\\Imbalance_data.csv"
 # Header names and discrtization in minutes
 DT_DSET = "Date Time"
-RCPOWER_DSET = "Real_demand"  # "Imbalance"
+RCPOWER_DSET = "Imbalance"
 
 RCPOWER_DSET_AUTO = 'Real demand'
 

@@ -25,6 +25,7 @@ from predictor.control import ControlPlane
 from predictor.utility import msg2log,cSFMT,PlotPrintManager
 from tsstan.pltStan import setPlot, plotAll
 from tsstan.apiStatAn import getAbruptChanges
+from tsstan.dsetWvAn import drive_tsWvAnalysis
 
 __version__='0.0.1'
 
@@ -174,6 +175,9 @@ def drive_tsAnalysis(ds,dt_col_name, listTS,  cp, abrupt_type:str='all', abrupt_
 
 
     for item in listTS:
+
+        drive_tsWvAnalysis(ds, listTS, cp)
+
         minValue,  maxValue , meanValue, medianValue,modeValue, stdValue = getScalarProperties(ds, item, cp.fc)
         hist, bins , f, Pxx,autocorr =  getVectorProperties(ds, item, cp)
 
