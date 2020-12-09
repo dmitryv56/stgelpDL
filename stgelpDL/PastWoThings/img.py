@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 
+import argparse
+import os
 from datetime import datetime
 import os
 import sys
@@ -12,15 +14,59 @@ from numpy.linalg import inv,det
 import pywt
 import pywt.data
 
-from dev.pilim import rgba2rgb,png2jpg, kMeanCluster
+from PastWoThings.pilim import rgba2rgb,png2jpg, kMeanCluster
 from predictor.utility import msg2log
 
-SOURCES_PATH = "/home/dmitryv/PastWithoutToughts"
+SOURCES_PATH = ""   #"/home/dmitryv/PastWithoutToughts"
 
 APPROXIMATION ="Approximation"
 DETAIL        = "Detail"
 PAINTING_QUANTIFICATION = "Quantification"
 PAINTING_FIGURES        = "figures"
+__version__ = '0.0.1'
+
+def parseCL():
+    # command-line parser
+    sDescriptor = 'Image Classifications'
+    sAPhelp = "Absolute path to a folder contains an image files."
+    sNClustHelp = "Number clusters to form from given set of images"
+    sWVtypeHelp = "A type of used wavelet transformation"
+
+    parser = argparse.ArgumentParser(description=sDescriptor)
+    parser.add_argument('-f', '--src_folder', dest='cl_src', action='store', help=sAPhelp)
+    parser.add_argument('-w', '--wv_type', dest='cl_wvtype', action='store', default='db2',help=sWVtypeHelp,
+                        choices=['db1', 'db2', 'db3', 'db4', 'db5', 'db6', 'db7', 'db8', 'db9', 'db10','db11','db12',
+                                 'db13','db14','db15','db16','db17','db18','db19','db20','db21','db22','db23','db24',
+                                 'db25','db26','db27','db28','db29','db30','db31','db32','db33','db34','db35','db36',
+                                 'db37','db38'])
+
+    parser.add_argument('-n', '--num_cluster', dest='cl_num_clusters', action='store', default=4,help=sNClustHelp)
+    parser.add_argument('--verbose', '-v', dest='cl_verbose', action='count', default=0)
+    parser.add_argument('--version', action='version',
+                        version='%(prog)s {}'.format(__version__))
+
+    args = parser.parse_args()
+
+    # command-line parser
+    arglist = sys.argv[0:]
+    argstr = ""
+    for arg in arglist:
+        argstr += " " + arg
+    message = f"""  Command-line arguments
+
+             {argstr}
+
+
+Image files are in                    : {args.cl_src}
+Number clusters to form               : {args.cl_num_clusters}
+Wavelet Tarnsformation (by I.Dobeshi) : {args.cl_wvtype}
+             
+
+     """
+    with open("commandline_arguments.log", "w+") as fcl:
+        msg2log(None, message, fcl)
+    fcl.close()
+    return args
 
 def createApprox0(rgbArray:np.array,f:object=None, wavelet='db38',mode='symmetric')->(np.array):
     coeff_R, coeff_G, coeff_B = dec2D(rgbArray, f, wavelet, mode)
@@ -216,6 +262,13 @@ def KLdivergence(mnp0:tuple,mnp1:tuple,f:object=None)->float:
     return klDiv
 
 def main(argc,argv):
+    args = parseCL()
+    if not args.cl_src:
+        print("Please set the absolute path to image files folder. ")
+        sys.exit(1)
+    sources_path=args.cl_src
+    wavelet=args.cl_wvtype
+    cluster_max = int(args.cl_num_clusters)
 
     dir_path = os.path.dirname(os.path.realpath(__file__))
     now = datetime.now()
@@ -230,11 +283,11 @@ def main(argc,argv):
 
     dict_repository = Path(folder_log / "Paintings_dict")
     Path(dict_repository).mkdir(parents=True, exist_ok=True)
-    wavelet = 'db2'  # 'db38'
 
-    painting_files = [f for f in os.listdir(SOURCES_PATH) if os.path.isfile(os.path.join(SOURCES_PATH, f))]
 
-    mnd_msg,pdf_msg, X, labelX = paDrive(painting_files, wavelet, folder_paint, folder_log, dict_repository, f=fl)
+    painting_files = [f for f in os.listdir(sources_path) if os.path.isfile(os.path.join(sources_path, f))]
+
+    mnd_msg,pdf_msg, X, labelX = paDrive(sources_path,painting_files, wavelet, folder_paint, folder_log, dict_repository, f=fl)
     msg="Multivariate Normal Distribution"
     msg2log("Wavelet {},Model -".format(wavelet),msg,fl)
     for item in mnd_msg:
@@ -246,7 +299,7 @@ def main(argc,argv):
         msg2log("", item, fl)
     #classifcation
     name = "Paintings"
-    cluster_centers, cluster_labels = kMeanCluster(name, X, labelX, cluster_max = 6, type_features = 'pca',
+    cluster_centers, cluster_labels = kMeanCluster(name, X, labelX, cluster_max = cluster_max, type_features = 'pca',
                                                    n_component = 6, file_png_path =folder_log, f=fl)
 
 
@@ -258,7 +311,8 @@ def main(argc,argv):
 
 
 
-def paDrive(imglist, wavelet:str,folder_paint:str, folder_log:str,dict_repository:str, f:object=None)->(list,list,np.array, list):
+def paDrive(sources_path:str, imglist, wavelet:str, folder_paint:str, folder_log:str, dict_repository:str,
+            f:object=None)->(list,list,np.array, list):
 
 
 
@@ -271,9 +325,9 @@ def paDrive(imglist, wavelet:str,folder_paint:str, folder_log:str,dict_repositor
     iRow=0
     for fimg in imglist:
 
-        fimage=str(Path(Path(SOURCES_PATH)/Path(fimg)))
+        fimage=str(Path(Path(sources_path)/Path(fimg)))
         # fimage = "/home/dmitryv/Downloads/magrit49600.jpg"
-        wavelet='db2'#'db38'
+        #wavelet='db2'#'db38'
         p=Path(fimage)
         title=p.stem
         labelX.append(title)

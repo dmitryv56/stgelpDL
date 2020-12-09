@@ -4,6 +4,8 @@ from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import scale
 
 from predictor.utility import msg2log
 
@@ -16,8 +18,15 @@ def rgba2rgb(rgba_file:str, rgb_file:str):
     return
 
 def png2jpg(png_file:str, jpg_file:str):
-    png_image = pilim.open(png_file)
-    png_image.save(jpg_file)
+
+    png_image = pilim.open(png_file).convert('RGB')
+
+    if png_image.format=='PNG':
+        print('\n{} saved as PNG\n'.format(png_file))
+        png_image.save(png_file,'PNG')
+    else:
+
+        png_image.save(jpg_file)
 
     return
 
@@ -52,9 +61,13 @@ def kMeanCluster(name: str, X: np.array, labelX: list, cluster_max:int = 4,type_
     cluster_contains_blocks = {}
     block_belongs_to_cluster = {}
     Path(file_png_path).mkdir(parents=True, exist_ok=True)
+    Y=scale(X)
+    reduced_Y=PCA(n_components=3).fit_transform(Y)
 
     for n_clusters in range(1, n_cluster_max):
-        kmeans = KMeans(n_clusters=n_clusters, random_state=0).fit(X[:,:])
+        # kmeans = KMeans(n_clusters=n_clusters, random_state=0).fit(X[:,:])
+        kmeans = KMeans(init='k-means++',n_clusters=n_clusters, n_init=5).fit(Y[:, :])
+        # kmeans = KMeans(n_clusters=n_clusters, random_state=0).fit(reduced_Y[:, :])
         lst_lbl=[]
         for i in range(n_clusters):
             lst_lbl.append([])
