@@ -3,7 +3,7 @@
 from math import floor,ceil
 import numpy as np
 
-from simTM.cfg import DELTAPWR
+from simTM.cfg import D_LOGS,DELTAPWR, PUMP_PERIOD
 
 """ Imbalance predictor """
 
@@ -14,10 +14,10 @@ class ImbPred:
         self.low = floor(low/DELTAPWR)
         self.high = ceil(high/DELTAPWR)
         self.f = f
-        self.imbSeq = None
+        self.imbSeq = []
         self.imbLst = []
 
-    def genImbSeq(self, low: int = None, high: int = None, nSize: int = 4):
+    def genImbSeq(self, low: int = None, high: int = None, nSize: int = PUMP_PERIOD):
         if low is None:
             low = self.low
         else:
@@ -28,9 +28,15 @@ class ImbPred:
             high = ceil(high / DELTAPWR)
 
         imbSeq = np.random.randint(size=nSize, low=low, high=high)
-        self.imbSeq = imbSeq * DELTAPWR
+        if len(self.imbSeq) == 0:
+            self.imbSeq=(np.round(imbSeq*DELTAPWR,2)).tolist()
+        else:
+            self.imbSeq.pop(0)
+            self.imbSeq.append(np.round(imbSeq[0]*DELTAPWR,2))
+        self.imbLst.append(round(self.imbSeq[0],3))
         return
 
+    # not used
     def genImb(self, low: int = None, high: int = None):
         if low is None:
             low = self.low
