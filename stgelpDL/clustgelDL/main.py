@@ -20,7 +20,7 @@ from predictor.utility import  msg2log
 from tsstan.pltStan import setPlot, plotAll
 
 
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 
 
 def main(argc, argv):
@@ -105,28 +105,7 @@ def main(argc, argv):
     message1 ="Time execution logging started at {}\n\n".format(datetime.now().strftime("%d %m %y %H:%M:%S"))
 
 
-    # with open("execution_time.log", 'w') as fel:
-    #     fel.write("Time execution logging started at {}\n\n".format(datetime.now().strftime("%d %m %y %H:%M:%S")))
 
-    # dir_path = os.path.dirname(os.path.realpath(__file__))
-    #
-    # folder_for_train_logging = Path(dir_path) / "Logs" / "train" / date_time
-    # folder_for_control_logging = Path(dir_path) / "Logs" / "control" / date_time
-    # folder_for_predict_logging = Path(dir_path) / "Logs" / "predict" / date_time
-    # Path(folder_for_train_logging).mkdir(parents=True, exist_ok=True)
-    # Path(folder_for_control_logging).mkdir(parents=True, exist_ok=True)
-    # Path(folder_for_predict_logging).mkdir(parents=True, exist_ok=True)
-    #
-    # suffics=".log"
-    # dt_col_name   = args.cl_timestamp #"Date Time"
-    # data_col_name = args.cl_tsname  # "Imbalance"
-    #
-    # file_for_train_logging = Path(folder_for_train_logging, data_col_name + "_" + Path(__file__).stem).with_suffix(
-    #     suffics)
-    # file_for_predict_logging = Path(folder_for_predict_logging, data_col_name + "_" + Path(__file__).stem).with_suffix(
-    #     suffics)
-    # file_for_control_logging = Path(folder_for_control_logging, data_col_name + "_" + Path(__file__).stem).with_suffix(
-    #     suffics)
 
     dir_path = os.path.dirname(os.path.realpath(__file__))
     folder_for_logging=Path(dir_path)/"Logs"/"{}_{}".format(data_col_name,date_time)
@@ -135,9 +114,7 @@ def main(argc, argv):
     msg2log(None, message0, D_LOGS["clargs"])
     msg2log(None, message1, D_LOGS["timeexec"])
 
-    # fc = open(file_for_control_logging, 'w+')
-    # fp = open(file_for_predict_logging, 'w+')
-    # ft = open(file_for_train_logging, 'w+')
+
     fc=D_LOGS["control"]
     fp=D_LOGS["predict"]
     ft=D_LOGS["train"]
@@ -155,26 +132,7 @@ def main(argc, argv):
     cluster_max   = int(args.cl_num_clusters)
     n_pred        = int(args.cl_num_predicts)
 
-    # message = f"""  Common parameters set
-    #             Dataset path           : {csv_source}
-    #             Mode                   : {args.cl_mode}
-    #             Time Series in dataset : {data_col_name}
-    #             Timestamp in dataset   : {dt_col_name}
-    #             Discretization (min)   : {discret}
-    #             Block size (number of neurons in the input layer of Neuron Net)
-    #                                    : {block_size}
-    #             Number of blocks being have  be randomly generated
-    #                                    : {number_blocks}
-    #             Number of target clusters (number of neurons in the output layer of Neuron Net
-    #                                    : {cluster_max}
-    #             Predict period (number of blocks for which belonging to class is estimated)
-    #                                    : {n_pred}
-    #             Logs (control path)    : {str(folder_for_control_logging )}
-    #             Logs (predict path)    : {str(folder_for_predict_logging )}
-    #             Logs (train path)      : {str(folder_for_train_logging )}
-    #
-    #
-    # """
+
     message = f"""  Common parameters set
                    Dataset path             : {csv_source}
                    Mode                     : {args.cl_mode}
@@ -246,10 +204,7 @@ def main(argc, argv):
         predicted states: {y_pred}
     """
     msg2log(None,msg,fp)
-    # fc.close()
-    # fp.close()
-    # ft.close()
-    # fel.close()
+
 
 
     message = "Time execution logging stoped at {}\n\n".format(datetime.now().strftime("%d %m %y %H:%M:%S"))
