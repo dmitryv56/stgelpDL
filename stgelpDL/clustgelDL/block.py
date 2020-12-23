@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 
 from clustgelDL.kmean import kMeanCluster, block_to_cluster,cluster_Blocks,logClusterblock
+from clustgelDL.auxcfg import D_LOGS, log2All
 from predictor.utility import msg2log, svld2log
 
 
@@ -104,12 +105,12 @@ class block(baseBlock):
             plt.savefig(png_file)
 
         except np.linalg.LinAlgError:
-            msg="Oops! raise LinAlgError(singular matrix)"
+            msg="Oops! raise LinAlgError(singular matrix) {}".format( sys.exc_info()[0])
         except:
-           msg ="Unexpected error: {}".format( sys.exc_info()[0])
+            msg ="Unexpected error: {}".format( sys.exc_info()[0])
         finally:
-
-            msg2log(None,msg,self.f)
+            if len(msg)>0:
+                msg2log(None,msg,D_LOGS["except"])
             plt.close("all")
         return
 
@@ -137,20 +138,23 @@ def createBlocks(df: pd.DataFrame, dt_col_name: str, data_col_name: str, block_s
     dt_list = [x for x in df[dt_col_name].tolist()]
     start_block = 0  # This block is exactly alignmented to begin of the time series
     list_blocks.append(
-        block(block_size, start_block, dt_list[start_block], auxData_list(data_list, start_block, block_size), f))
+        block(block_size, start_block, dt_list[start_block], auxData_list(data_list, start_block, block_size),
+              f=D_LOGS["block"]))
     for nb in range(number_blocks - 2):
         pass
         start_block = randrange(1, len(data_list) - block_size)
         list_blocks.append(
-            block(block_size, start_block, dt_list[start_block], auxData_list(data_list, start_block, block_size), f))
+            block(block_size, start_block, dt_list[start_block], auxData_list(data_list, start_block, block_size),
+                  f=D_LOGS["block"]))
     start_block = len(data_list) - block_size  # This block is exactly alignmented  to end of the time series
     list_blocks.append(
-        block(block_size, start_block, dt_list[start_block], auxData_list(data_list, start_block, block_size), f))
+        block(block_size, start_block, dt_list[start_block], auxData_list(data_list, start_block, block_size),
+              f=D_LOGS["block"]))
 
-    msg2log(createBlocks.__name__, "Generated {} blocks of {} size".format(number_blocks, block_size), f)
+    msg2log(createBlocks.__name__, "Generated {} blocks of {} size".format(number_blocks, block_size), f=D_LOGS["block"])
     k = 0
     for item in list_blocks:
-        msg2log(None, "\n{} block. {} ".format(k, item), f)
+        msg2log(None, "\n{} block. {} ".format(k, item), f=D_LOGS["block"])
         k += 1
     return list_blocks
 
@@ -293,7 +297,7 @@ def createInputOutput(name, df, dt_col_name, data_col_name, block_size,number_bl
 
     # with open("Sequence{}.log".format(block_size), "w") as fl:
 
-    list_blocks = createBlocks(df, dt_col_name, data_col_name, block_size, number_blocks, f)
+    list_blocks = createBlocks(df, dt_col_name, data_col_name, block_size, number_blocks, f=D_LOGS["block"])
     X, labelX = listBlocks2matrix(list_blocks, f)
 
     X_pca, eig_vals = pca(X, labelX, f)
@@ -312,17 +316,17 @@ def createInputOutput(name, df, dt_col_name, data_col_name, block_size,number_bl
     # with open("Sequence{}Clusters.log".format(block_size), 'w') as fk:
     cluster_centers, cluster_labels, all_cluster_contains_blocks, all_block_belongs_to_cluster = \
             kMeanCluster(name, X_pca, labelX, cluster_max=cluster_max+1,type_features='pca', n_component=n_pc, \
-                         file_png_path=file_png_path, f=f)
+                         file_png_path=file_png_path, f=D_LOGS["cluster"])
     block_belongs_to_cluster =all_block_belongs_to_cluster[cluster_max]
 
     cluster_contains_blocks=all_cluster_contains_blocks[cluster_max]
     for val_cluster_Id, label_list in cluster_contains_blocks.items():
         cluster_Id, cluster_center_original_space = cluster_Blocks(val_cluster_Id, label_list, df, dt_col_name, \
-                                                                       data_col_name,block_size, f)
-        cluster_current=cluster(name, block_size,cluster_Id,label_list, cluster_center_original_space.tolist(),f)
+                                                                       data_col_name,block_size, f=D_LOGS["cluster"])
+        cluster_current=cluster(name, block_size,cluster_Id,label_list, cluster_center_original_space.tolist(),f=D_LOGS["cluster"])
         list_clusters.append(cluster_current)
 
-    X_learning, y_desired = learningData(list_blocks, block_belongs_to_cluster, f)
+    X_learning, y_desired = learningData(list_blocks, block_belongs_to_cluster, f=D_LOGS["block"])
 
     return X_learning, y_desired,list_blocks,list_clusters
 

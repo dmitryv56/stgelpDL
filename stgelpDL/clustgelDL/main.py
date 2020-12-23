@@ -14,13 +14,19 @@ import pandas as pd
 from clustgelDL.block import  createInputOutput
 from clustgelDL.NNmodel import create_model,create_LSTMmodel,createTfDatasets,createTfDatasetsLSTM,fitModel,\
     predictModel,EPOCHS
+from clustgelDL.auxcfg  import D_LOGS,listLogSet, closeLogs,log2All,exec_time,logList
 from predictor.api import chart_MAE,chart_MSE
 from predictor.utility import  msg2log
 from tsstan.pltStan import setPlot, plotAll
 
+
 __version__ = '0.0.1'
 
+
 def main(argc, argv):
+
+
+    listLogSet("Logs") # A logs are creating
 
 
     # command-line parser
@@ -68,7 +74,7 @@ def main(argc, argv):
     argstr=""
     for arg in arglist:
         argstr+=" " + arg
-    message=f"""  Command-line arguments
+    message0=f"""  Command-line arguments
 
             {argstr}
 
@@ -88,40 +94,56 @@ def main(argc, argv):
                                    : {args.cl_num_predicts}
 
     """
-    with open("commandline_arguments.log", "w+") as fcl:
-        msg2log(None,message,fcl)
-    fcl.close()
+    dt_col_name   = args.cl_timestamp #"Date Time"
+    data_col_name = args.cl_tsname  # "Imbalance"
+    # with open("commandline_arguments.log", "w+") as fcl:
+    #     msg2log(None,message,fcl)
+    # fcl.close()
 
     now = datetime.now()
     date_time = now.strftime("%d_%m_%y__%H_%M_%S")
+    message1 ="Time execution logging started at {}\n\n".format(datetime.now().strftime("%d %m %y %H:%M:%S"))
 
-    with open("execution_time.log", 'w') as fel:
-        fel.write("Time execution logging started at {}\n\n".format(datetime.now().strftime("%d %m %y %H:%M:%S")))
+
+    # with open("execution_time.log", 'w') as fel:
+    #     fel.write("Time execution logging started at {}\n\n".format(datetime.now().strftime("%d %m %y %H:%M:%S")))
+
+    # dir_path = os.path.dirname(os.path.realpath(__file__))
+    #
+    # folder_for_train_logging = Path(dir_path) / "Logs" / "train" / date_time
+    # folder_for_control_logging = Path(dir_path) / "Logs" / "control" / date_time
+    # folder_for_predict_logging = Path(dir_path) / "Logs" / "predict" / date_time
+    # Path(folder_for_train_logging).mkdir(parents=True, exist_ok=True)
+    # Path(folder_for_control_logging).mkdir(parents=True, exist_ok=True)
+    # Path(folder_for_predict_logging).mkdir(parents=True, exist_ok=True)
+    #
+    # suffics=".log"
+    # dt_col_name   = args.cl_timestamp #"Date Time"
+    # data_col_name = args.cl_tsname  # "Imbalance"
+    #
+    # file_for_train_logging = Path(folder_for_train_logging, data_col_name + "_" + Path(__file__).stem).with_suffix(
+    #     suffics)
+    # file_for_predict_logging = Path(folder_for_predict_logging, data_col_name + "_" + Path(__file__).stem).with_suffix(
+    #     suffics)
+    # file_for_control_logging = Path(folder_for_control_logging, data_col_name + "_" + Path(__file__).stem).with_suffix(
+    #     suffics)
 
     dir_path = os.path.dirname(os.path.realpath(__file__))
+    folder_for_logging=Path(dir_path)/"Logs"/"{}_{}".format(data_col_name,date_time)
 
-    folder_for_train_logging = Path(dir_path) / "Logs" / "train" / date_time
-    folder_for_control_logging = Path(dir_path) / "Logs" / "control" / date_time
-    folder_for_predict_logging = Path(dir_path) / "Logs" / "predict" / date_time
-    Path(folder_for_train_logging).mkdir(parents=True, exist_ok=True)
-    Path(folder_for_control_logging).mkdir(parents=True, exist_ok=True)
-    Path(folder_for_predict_logging).mkdir(parents=True, exist_ok=True)
+    listLogSet(str(folder_for_logging))  # A logs are creating
+    msg2log(None, message0, D_LOGS["clargs"])
+    msg2log(None, message1, D_LOGS["timeexec"])
 
-    suffics=".log"
-    dt_col_name   = args.cl_timestamp #"Date Time"
-    data_col_name = args.cl_tsname  # "Imbalance"
-
-    file_for_train_logging = Path(folder_for_train_logging, data_col_name + "_" + Path(__file__).stem).with_suffix(
-        suffics)
-    file_for_predict_logging = Path(folder_for_predict_logging, data_col_name + "_" + Path(__file__).stem).with_suffix(
-        suffics)
-    file_for_control_logging = Path(folder_for_control_logging, data_col_name + "_" + Path(__file__).stem).with_suffix(
-        suffics)
-
-    fc = open(file_for_control_logging, 'w+')
-    fp = open(file_for_predict_logging, 'w+')
-    ft = open(file_for_train_logging, 'w+')
-
+    # fc = open(file_for_control_logging, 'w+')
+    # fp = open(file_for_predict_logging, 'w+')
+    # ft = open(file_for_train_logging, 'w+')
+    fc=D_LOGS["control"]
+    fp=D_LOGS["predict"]
+    ft=D_LOGS["train"]
+    folder_for_train_logging=str(Path(os.path.realpath(ft.name)).parent)
+    folder_for_control_logging=str(Path(os.path.realpath(fc.name)).parent)
+    folder_for_predict_logging=str(Path(os.path.realpath(fp.name)).parent)
 
     setPlot()
 
@@ -133,33 +155,56 @@ def main(argc, argv):
     cluster_max   = int(args.cl_num_clusters)
     n_pred        = int(args.cl_num_predicts)
 
+    # message = f"""  Common parameters set
+    #             Dataset path           : {csv_source}
+    #             Mode                   : {args.cl_mode}
+    #             Time Series in dataset : {data_col_name}
+    #             Timestamp in dataset   : {dt_col_name}
+    #             Discretization (min)   : {discret}
+    #             Block size (number of neurons in the input layer of Neuron Net)
+    #                                    : {block_size}
+    #             Number of blocks being have  be randomly generated
+    #                                    : {number_blocks}
+    #             Number of target clusters (number of neurons in the output layer of Neuron Net
+    #                                    : {cluster_max}
+    #             Predict period (number of blocks for which belonging to class is estimated)
+    #                                    : {n_pred}
+    #             Logs (control path)    : {str(folder_for_control_logging )}
+    #             Logs (predict path)    : {str(folder_for_predict_logging )}
+    #             Logs (train path)      : {str(folder_for_train_logging )}
+    #
+    #
+    # """
     message = f"""  Common parameters set
-                Dataset path           : {csv_source}
-                Mode                   : {args.cl_mode}
-                Time Series in dataset : {data_col_name}
-                Timestamp in dataset   : {dt_col_name}
-                Discretization (min)   : {discret}
-                Block size (number of neurons in the input layer of Neuron Net)
-                                       : {block_size}
-                Number of blocks being have  be randomly generated
-                                       : {number_blocks}
-                Number of target clusters (number of neurons in the output layer of Neuron Net
-                                       : {cluster_max}
-                Predict period (number of blocks for which belonging to class is estimated) 
-                                       : {n_pred}
-                Logs (control path)    : {str(folder_for_control_logging )}
-                Logs (predict path)    : {str(folder_for_predict_logging )}
-                Logs (train path)      : {str(folder_for_train_logging )}
+                   Dataset path             : {csv_source}
+                   Mode                     : {args.cl_mode}
+                   Time Series in dataset   : {data_col_name}
+                   Timestamp in dataset     : {dt_col_name}
+                   Discretization (min)     : {discret}
+                   Block size (number of neurons in the input layer of Neuron Net)
+                                            : {block_size}
+                   Number of blocks being have  be randomly generated
+                                             : {number_blocks}
+                   Number of target clusters (number of neurons in the output layer of Neuron Net
+                                             : {cluster_max}
+                   Predict period (number of blocks for which belonging to class is estimated) 
+                                             : {n_pred}
+                   Folder for control logging: {folder_for_control_logging}
+                   Folder for train logging  : {folder_for_train_logging}
+                   Folder for predict logging: {folder_for_predict_logging}
+                   Folder for plots          : {D_LOGS["plot"]}
+                   Logs
+                   {logList()}
 
 
-    """
+       """
 
-    msg2log(None, message, fc)
+    msg2log(None, message, D_LOGS["main"])
 
     df = pd.read_csv(csv_source)
 
-    X_learning,y_desired,list_blocks, list_clusters =  createInputOutput(name, df, dt_col_name, data_col_name, block_size, number_blocks,
-                                              cluster_max, folder_for_control_logging, fc)
+    X_learning,y_desired,list_blocks, list_clusters =  createInputOutput(name, df, dt_col_name, data_col_name,
+                                                        block_size, number_blocks, cluster_max, D_LOGS["plot"], fc)
 
     #Cluster properties
     messages=f"""
@@ -168,7 +213,7 @@ def main(argc, argv):
     msg2log(None,messages,fc)
     for item in list_clusters:
         item.blockProperties()
-        item.printHist(folder_for_control_logging)
+        item.printHist(D_LOGS["plot"])
     # block properties
     messages = f"""
             Block properties and Histograms
@@ -177,7 +222,7 @@ def main(argc, argv):
     msg2log(None, messages, fc)
     for item in list_blocks[:20]:
         item.blockProperties()
-        item.printHist(folder_for_control_logging)
+        item.printHist(D_LOGS["plot"])
     # deep learning
 
     model = create_model(block_size, cluster_max,f=ft)
@@ -200,11 +245,16 @@ def main(argc, argv):
         for Timestamp labels: {[ list_blocks[i].start_label for i in range(number_blocks-n_pred,number_blocks)]}
         predicted states: {y_pred}
     """
-    msg2log(None,msg,fc)
-    fc.close()
-    fp.close()
-    ft.close()
-    fel.close()
+    msg2log(None,msg,fp)
+    # fc.close()
+    # fp.close()
+    # ft.close()
+    # fel.close()
+
+
+    message = "Time execution logging stoped at {}\n\n".format(datetime.now().strftime("%d %m %y %H:%M:%S"))
+    msg2log(None, message, D_LOGS["timeexec"])
+    closeLogs()  # The loga are closing
     return
 
 
