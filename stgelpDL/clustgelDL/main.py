@@ -26,7 +26,7 @@ __version__ = '0.0.2'
 def main(argc, argv):
 
 
-    listLogSet("Logs") # A logs are creating
+
 
 
     # command-line parser
