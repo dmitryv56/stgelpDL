@@ -77,7 +77,7 @@ def exec_time(function):
         smsg = "  {:.2f} sec  for {}({})\n".format(execution_time, function.__name__, arguments)
 
         D_LOGS["timeexec"].write(smsg)
-        D_LOGS["timeexec"].flushes()
+        D_LOGS["timeexec"].flush()
 
         return ret_value
 

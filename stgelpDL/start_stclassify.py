@@ -6,15 +6,23 @@
     or
         cd <Unix path to installed predictor>/stgelpDL      (Ubuntu 18.*),
 
-    and put following command:
-           python start_stclassify.py --csv_dataset "/home/dmitryv/LaLaguna/stgelpDL/dataLaLaguna/ElHiero_24092020_27102020.csv"
-           --endogen 'Imbalance' --exogen 'Diesel_Power,WindTurbine_Power,HydrawlicTurbine_Power,Pump_Power,CO2'
-           --timestamp 'Date Time' --n_step 32 --num_clusters 10 --discret 10 --num_predicts 4 --verbose
-           
+    and put following command to build the desired data:
+           python start_stclassify.py --mode ddbld
+           --csv_dataset "/home/dmitryv/LaLaguna/stgelpDL/dataLaLaguna/ElHiero_24092020_27102020.csv"
+           --endogen "Imbalance" --exogen "Diesel_Power,WindTurbine_Power,HydrawlicTurbine_Power,Pump_Power,CO2"
+           --n_step 32 --num_clusters 10 --discret 10 --num_predicts 4 -vvv
+
+    To run states classification  neural models put following command:
+
+            python start_stclassify.py --mode stcls
+           --csv_dataset "/home/dmitryv/LaLaguna/stgelpDL/dataLaLaguna/ElHiero_24092020_27102020.csv"
+           --endogen "Imbalance" --exogen "Diesel_Power,WindTurbine_Power,HydrawlicTurbine_Power,Pump_Power,CO2"
+           --n_step 32 --num_clusters 10 --discret 10 --num_predicts 4 -vvv
+
+
     To read  a version of predictor
              python start_stclassify.py --version
-    or
-            python start_stclassify.py -v
+
     To read a help
              python start_stclassify.py --help
     or
