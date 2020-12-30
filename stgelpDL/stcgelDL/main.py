@@ -16,6 +16,9 @@ from clustgelDL.block import  createInputOutput
 from clustgelDL.NNmodel import create_model,create_LSTMmodel,createTfDatasets,createTfDatasetsLSTM,fitModel,\
     predictModel,EPOCHS
 from clustgelDL.auxcfg  import D_LOGS,listLogSet, closeLogs,log2All,exec_time,logList
+from stcgelDL.cfg import GlobalConst
+from stcgelDL.blddsddata import driveDesiredDataBuild
+from stcgelDL.bldnnmodel import driveNNmodelBuild
 from predictor.api import chart_MAE,chart_MSE
 from predictor.utility import  msg2log
 from tsstan.pltStan import setPlot, plotAll
@@ -42,9 +45,9 @@ def main(argc, argv):
 
     parser = argparse.ArgumentParser(description=sDescriptor)
 
-    parser.add_argument('-m', '--mode',         dest='cl_mode',         action='store', default='stcks',
-                        choices=['stcls'],
-                        help='Possible modes. Only default mode enabled for current version.')
+    parser.add_argument('-m', '--mode',         dest='cl_mode',         action='store', default='stcls',
+                        choices=['stcls','ddbld'],
+                        help='Possible modes: 1)state classification  2) desired data creating')
     parser.add_argument('-c', '--csv_dataset',  dest='cl_dset',         action='store',            help=sCSVhelp)
     parser.add_argument('-t', '--endogen',      dest='cl_endots',       action='store', default='Imbalance',
                         help=sEndogenTSnameHelp)
@@ -74,7 +77,7 @@ def main(argc, argv):
         argstr+=" " + arg
     message0=f"""  Command-line arguments
 
-            {argstr}
+{argstr}
 
 Dataset path                       : {args.cl_dset}
 Mode                               : {args.cl_mode}
@@ -94,6 +97,7 @@ Predict period                     : {args.cl_num_predicts}
     data_col_name    = args.cl_endots    # "Imbalance"
     exogenious_list  = list(args.cl_exogts.split(','))
     labels_name      = args.cl_labels
+    GlobalConst.setVerbose(args.cl_verbose)
     now = datetime.now()
     date_time = now.strftime("%d_%m_%y__%H_%M_%S")
     message1 ="Time execution logging started at {}\n\n".format(datetime.now().strftime("%d %m %y %H:%M:%S"))
@@ -117,8 +121,9 @@ Predict period                     : {args.cl_num_predicts}
     folder_for_predict_logging=str(Path(os.path.realpath(fp.name)).parent)
 
     setPlot()
-
+    actual_mode   = args.cl_mode
     csv_source    = args.cl_dset   # "~/LaLaguna/stgelpDL/dataLaLaguna/ElHiero_24092020_27102020.csv"
+    title = Path(csv_source).stem
     name          = "{}_Clusters".format(data_col_name)
     discret       = int(args.cl_discret)
     n_step        = int(args.cl_n_step)
@@ -128,7 +133,7 @@ Predict period                     : {args.cl_num_predicts}
     message = f"""  Common parameters set
 
 Dataset path                       : {csv_source}
-Mode                               : {args.cl_mode}
+Mode                               : {actual_mode}
 Endogenious Time Series in dataset : {data_col_name}
 Exogenious Time Series in dataset  : {exogenious_list}
 Labels (desired data) in dataset   : {labels_name}
@@ -143,6 +148,7 @@ Folder for control logging         : {folder_for_control_logging}
 Folder for train logging           : {folder_for_train_logging}
 Folder for predict logging         : {folder_for_predict_logging}
 Folder for plots                   : {D_LOGS["plot"]}
+
 Logs                               :
 {logList()}
         """
@@ -150,49 +156,16 @@ Logs                               :
 
     df = pd.read_csv(csv_source)
 
-    # X_learning,y_desired,list_blocks, list_clusters =  createInputOutput(name, df, dt_col_name, data_col_name,
-    #                                                     block_size, number_blocks, cluster_max, D_LOGS["plot"], fc)
-    #
-    # #Cluster properties
-    # messages=f"""
-    #     Cluster properties and Histograms
-    # """
-    # msg2log(None,messages,fc)
-    # for item in list_clusters:
-    #     item.blockProperties()
-    #     item.printHist(D_LOGS["plot"])
-    # # block properties
-    # messages = f"""
-    #         Block properties and Histograms
-    #         (Only first 20 blocks)
-    #     """
-    # msg2log(None, messages, fc)
-    # for item in list_blocks[:20]:
-    #     item.blockProperties()
-    #     item.printHist(D_LOGS["plot"])
-    # # deep learning
-    #
-    # model = create_model(block_size, cluster_max,f=ft)
-    # train_dataset, test_dataset = createTfDatasets(X_learning[:number_blocks - n_pred, :],
-    #                                                y_desired[:number_blocks - n_pred], validationRatio=0.1, f=ft)
-    # # model = create_LSTMmodel(block_size, cluster_max, f=ft)
-    # # train_dataset, test_dataset = createTfDatasetsLSTM(X_learning[:number_blocks - n_pred, :],
-    # #                                                y_desired[:number_blocks - n_pred], validationRatio=0.1, f=ft)
-    #
-    # history, eval_history = fitModel(model, train_dataset,  test_dataset, n_epochs=EPOCHS, f=ft)
-    #
-    # chart_MAE("MultiLayer Model", data_col_name, history, block_size, folder_for_train_logging,False)
-    #
-    # chart_MSE("MultiLayer Model", data_col_name, history, block_size, folder_for_train_logging,False)
-    #
-    # y_pred = predictModel(model, X_learning[number_blocks-n_pred:,:],
-    #                       [ list_blocks[i].start_label for i in range(number_blocks-n_pred,number_blocks)], f=fp)
-    # msg=f"""
-    #     Prediction
-    #     for Timestamp labels: {[ list_blocks[i].start_label for i in range(number_blocks-n_pred,number_blocks)]}
-    #     predicted states: {y_pred}
-    # """
-    # msg2log(None,msg,fp)
+    if actual_mode == 'ddbld':   # build desired data (labels) according by given dataset
+
+        driveDesiredDataBuild(df, method= "k-mean", num_class= cluster_max, title= title, dt_col_name=dt_col_name, \
+                              endogen_col_name=data_col_name, exogen_list=exogenious_list, f=D_LOGS["cluster"])
+    elif actual_mode == 'stcls':
+        driveNNmodelBuild(df, n_pred = n_pred, title=title, dt_col_name=dt_col_name, endogen_col_name=data_col_name,
+                          exogen_list=exogenious_list, labels_name=labels_name, lag=n_step, f=D_LOGS["train"])
+
+
+
 
 
 
