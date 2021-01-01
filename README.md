@@ -61,6 +61,7 @@ stgelpDL v.2.0.3 published at 28/10/2020
 RELEASE NOTES
 
 In Development
+-Simple Regression Analysis.
 - Imbalance Time Series Clusterization and predict.
 - Hidden Markow Model for Imbalance time series analysis.
 - Dataset time series statistical analysis.
