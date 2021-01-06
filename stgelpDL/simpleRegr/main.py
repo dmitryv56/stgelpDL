@@ -160,7 +160,7 @@ HO: Coefficients are zero F {F_all_coef} <F-dist(0.05, nju1={nu1},nju2={nu2}): {
 
     message = "Time execution logging stoped at {}\n\n".format(datetime.now().strftime("%d %m %y %H:%M:%S"))
     msg2log(None, message, D_LOGS["timeexec"])
-    closeLogs()  # The loga are closing
+    closeLogs()  # The logs are closing
 
     return
 
