@@ -20,7 +20,7 @@ from stcgelDL.blddsddata import logMatrix
 
 H1=1
 H2=0
-
+D_HYPO={H1:"H1",H2:"H2"}
 
 __version__ ="0.0.1"
 
@@ -190,14 +190,15 @@ def estb(title:str=None, Sinv:np.array=None, XtY:np.array=None, f:object=None)->
     return b
 
 
-"""Kulback-Liebler divergence is a way to for statistical hypothesis about of parameters of the linear models testing.
+"""Kulback-Liebler divergence is a way to for statistical hypothesis testing for  parameters of the linear models.
  
 """
 class kldivEst():
-    def __init__(self,title:str=None, categories:list=None,k:int=2,p:int=2, n:int=16, lstX:list =None, lstY:list=None,f:object=None):
-        self.k     = k    # number of categories (observation matrices and outputs )
-        self.p     = p    # number of the features in observation matrices.
-        self.n     = n    # n - number of observations, n=n0+n1+... +nk-1
+    def __init__(self,title:str=None, categories:list=None,k:int=2,p:int=2, n:int=16, lstX:list =None, lstY:list=None,
+                 endogenous:str=None,exogenous:list=None,f:object=None):
+        self.k:int = k    # number of categories (observation matrices and outputs )
+        self.p:int = p    # number of the features in observation matrices.
+        self.n:int = n    # n - number of observations, n=n0+n1+... +nk-1
         self.lstX  = lstX # list of observation matrices [0X(n0,p),1X(n1,p), ...,(k-1)X(nk-1,p)
         self.lstY  = lstY # list of outputs [y(n0),...,Y(nk-1)
         self.f     = f
@@ -209,28 +210,53 @@ class kldivEst():
         self.bH1   = np.zeros((self.k, self.p),         dtype=float)
         self.bH2   = np.zeros((1,      self.p),         dtype=float)
         self.d_ANOVA = {}
-        self.title = title
-        if categories is not None:
-            self.catecories = categories
-        else:
-            self.categories=[str(i) for i in range(self.k)]
+        self.setTitles(title=title,categories=categories,endogenous=endogenous,exogenous=exogenous)
 
         self.hist=history()
 
-        pass
+    def setTitles(self,title:str=None,categories:list=None,endogenous:str=None,exogenous:list=None):
+        self.title = title
+        if categories is not None:  # the names of the categories (samples)
+            self.catecories = categories
+        else:
+            self.categories = [str(i) for i in range(self.k)]
+        if endogenous is not None:
+            self.endogenous=endogenous
+        else:
+            self.endogenous='Y'
+        if exogenous is not None and len(exogenous)>0:
+            self.exogenous=exogenous
+        else:
+            self.exogenous=['X'+str(i) for i in range(self.p)]
+
+        return
+
     def fit(self,lstX:list =None, lstY:list=None ):
         self.lstX = lstX  # list of observation matrices [0X(n0,p),1X(n1,p), ...,(k-1)X(nk-1,p)
         self.lstY = lstY  # list of outputs [y(n0),...,Y(nk-1)
         self.lineq()
         self.linestimation()
         self.anova()
-        return
+        self.hist.fill(hypothesis=H1,coef_reg=self.bH1)
+        self.hist.fill(hypothesis=H2, coef_reg=self.bH2)
+        self.approx()
+        return self.hist
 
     def predict(self,x:np.array=None,hypothesis:int=H1,cat_ind:int=0)->np.array:
         if hypothesis==H1:
             y=x.dot(self.bH1[cat_ind,:])
         else:
             y = x.dot(self.bH2[0,:])
+        return
+
+    def approx(self):
+        y_lstH1 = []
+        y_lstH2 = []
+        for m in range(self.k):
+            y_lstH1.append(self.lstX[m].dot(self.bH1[m,:]))
+            y_lstH2.append(self.lstX[m].dot(self.bH2[0, :]))
+        self.hist.fill(hypothesis=H1,predicts=y_lstH1)
+        self.hist.fill(hypothesis=H2,predicts=y_lstH2)
         return
 
 
@@ -302,12 +328,43 @@ class kldivEst():
         return   #d_ANOVA, F, ssbH2df, sseH1df
 
     def res2log(self):
-        pass
+        message=f"""
+{D_HYPO[H1]} - hepothesis
+Regression coefficients:
+{self.bH1}
+
+{D_HYPO[H2]} - hypothesis
+Regression coefficients:
+{self.bH2}
+"""
+        msg2log(None,message,self.f)
+        for m in range(self.k):
+            msg="\n\n{}-hypothesis: {} sample".format(D_HYPO[H1],self.categories[m])
+            msg2log(None,msg,self.f)
+            msg="{} = ".format(self.endogenous)
+            for j in range(self.p):
+                msg=msg + " {:<+10.4f} * {} ".format(round(self.bH1[m,j],4),self.exogenous[j])
+            msg2log(None,msg,self.f)
+
+        msg="\n\n{}-hypothesis: ".format(D_HYPO[H2])
+        msg2log(None,msg,self.f)
+        msg = "{} = ".format(self.endogenous)
+        for j in range(self.p):
+            msg = msg + " {:<+10.4f} * {} ".format(round(self.bH2[0, j], 4), self.exogenous[j])
+        msg2log(None, msg, self.f)
+        return
 
 class history():  #TODO
     def __init__(self):
         self.f = D_LOGS["train"]
-        self.history={}
+        self.history = {D_HYPO[H1]:{'coef_reg':None,'predicts':None}, D_HYPO[H2]:{'coef_reg':None,'predicts':None}}
+
+    def fill(self,hypothesis:int=H1,coef_reg:np.array = None,predicts:list=None):
+        if coef_reg is not None:
+            self.history[D_HYPO[hypothesis]]['coef_reg'] =coef_reg
+        if predicts is not None:
+            self.history[D_HYPO[hypothesis]]['predicts']=predicts
+        return
 
 
 class linreg(): # TODO
@@ -427,10 +484,12 @@ Log folder                    : {folder_for_logging}
         sys.exit(-1)
 
     print(k,lstN,p,N)
-    kldiv = kldivEst(title=None,k=k,p=p,n=N,lstX=lstX,lstY=lstY,f=f)
-    kldiv.lineq()
-    kldiv.linestimation()
-    kldiv.anova()
+    kldiv = kldivEst(title=None,k=k,p=p,n=N,f=f)
+    # kldiv.lineq()
+    # kldiv.linestimation()
+    # kldiv.anova()
+    history=kldiv.fit(lstX=lstX,lstY=lstY)
+    kldiv.res2log()
     msg = dictIterate(ddict=kldiv.d_ANOVA)
     msg2log(None, msg, f=None)
 
