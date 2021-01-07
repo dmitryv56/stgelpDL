@@ -10,7 +10,7 @@
     Information Criterion
 
            python start_iclrpar.py
-           --repository "/home/dmitryv/LaLaguna/stgelpDL/dataLaLaguna" --datasets "low_co2, mid_co2, high_co2"
+           --mode kcc --repository "/home/dmitryv/LaLaguna/stgelpDL/dataLaLaguna" --datasets "low_co2, mid_co2, high_co2"
            --endogen "CO2" --exogen "Diesel_Power,Pump_Power" --exclude "Pump_Power --timestamp "Date Time" --width 256
            --alfa 0.05
 

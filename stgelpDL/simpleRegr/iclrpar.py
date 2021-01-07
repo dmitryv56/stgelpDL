@@ -28,6 +28,8 @@ def parsing():
     # command-line parser
     sDescriptor = 'Information Criterions for linear regression parameters estimation for several  samples ' + \
                   'of the (green) electricity load processes'
+    sModehelp   = "Modes: k-categories classification of regression models (kcc) and " + \
+                  "k-categories classification with 2 groups of regression coefficients (kcc2)"
     sRpshelp    = "Absolute path to a  dataset repository (folder)."
     sDshelp     = "List of dataset names/A string contains the comma-separated file names in the dataset repository " +\
                   "without file extensions( .csv)"
@@ -41,7 +43,7 @@ def parsing():
     sAlfaHelp = "Significal level (alfa), a probability threshold below which the tested hypothesis will be rejected."
     parser = argparse.ArgumentParser(description=sDescriptor)
 
-
+    parser.add_argument('-m', '--mode', dest='cl_mode', action='store', default="kcc", help=sModehelp)
     parser.add_argument('-r', '--repository', dest='cl_rps', action='store', help=sRpshelp)
     parser.add_argument('-d', '--datasets',   dest='cl_ds',  action='store', default="low_co2,mid_co2, high_co2",
                         help=sDshelp)
@@ -72,6 +74,7 @@ def parsing():
 
     {argstr}
 
+Mode                                : {args.cl_mode}
 Repository path                     : {args.cl_rps}
 Datasets                            : {args.cl_ds}
 Endogenious factors  in datasets    : {args.cl_endog}
@@ -195,7 +198,7 @@ def estb(title:str=None, Sinv:np.array=None, XtY:np.array=None, f:object=None)->
 """
 class kldivEst():
     def __init__(self,title:str=None, categories:list=None,k:int=2,p:int=2, n:int=16, lstX:list =None, lstY:list=None,
-                 endogenous:str=None,exogenous:list=None,f:object=None):
+                 endogenous:str=None,exogenous:list=None,exclexogenous:list=None,f:object=None):
         self.k:int = k    # number of categories (observation matrices and outputs )
         self.p:int = p    # number of the features in observation matrices.
         self.n:int = n    # n - number of observations, n=n0+n1+... +nk-1
@@ -210,25 +213,34 @@ class kldivEst():
         self.bH1   = np.zeros((self.k, self.p),         dtype=float)
         self.bH2   = np.zeros((1,      self.p),         dtype=float)
         self.d_ANOVA = {}
-        self.setTitles(title=title,categories=categories,endogenous=endogenous,exogenous=exogenous)
+        self.setTitles(title=title,categories=categories,endogenous=endogenous,exogenous=exogenous,
+                       exclexogenous=exclexogenous)
 
         self.hist=history()
 
-    def setTitles(self,title:str=None,categories:list=None,endogenous:str=None,exogenous:list=None):
+    def setTitles(self,title:str=None,categories:list=None,endogenous:str=None,exogenous:list=None,
+                  exclexogenous:list=None):
         self.title = title
         if categories is not None:  # the names of the categories (samples)
             self.categories = categories
         else:
             self.categories = [str(i) for i in range(self.k)]
+
         if endogenous is not None:
             self.endogenous=endogenous
         else:
             self.endogenous='Y'
+
         if exogenous is not None and len(exogenous)>0:
             self.exogenous=exogenous
+            self.exogenous.insert(0,"Intercept")
         else:
             self.exogenous=['X'+str(i) for i in range(self.p)]
 
+        if exclexogenous is not None and len(exclexogenous)>0:
+            self.exclexogenous=exclexogenous
+        else:
+            self.exclexogenous= None
         return
 
     def fit(self,lstX:list =None, lstY:list=None ):
@@ -416,6 +428,16 @@ def main(argc, argv):
     date_time = now.strftime("%d_%m_%y__%H_%M_%S")
     message1 = "Time execution logging started at {}\n\n".format(datetime.now().strftime("%d %m %y %H:%M:%S"))
 
+    mode=args.cl_mode
+    if mode=='kcc':
+        mode_name="K-categories linear models classification"
+    elif mode=='kcc2':
+        mode_name="K-categories linear models classification with 2 groups of hegression coefficients"
+        print("{} is not implemented in current version {}. Exit ...".format(mode_name,__version__))
+        sys.exit(-2)
+    else:
+        print("Invalid mode. Must be 'kcc' or kcc2'. Exit ...")
+        sys.exit(-1)
 
     dsRepository=args.cl_rps
     ds_list=list(args.cl_ds.split(','))
@@ -429,7 +451,8 @@ def main(argc, argv):
     #sort exogenius list
     for item in exclexogen_list:
         exogen_list.remove(item)
-        exogen_list.append(item)
+        if mode == 'kcc2':
+            exogen_list.append(item)
     k=len(ds_list)   # number of samples
     output_numbers=1
     dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -441,6 +464,7 @@ def main(argc, argv):
     fm=D_LOGS["main"]
 
     message=f"""
+Mode                          : {mode_name}
 Repository path               : {dsRepository}
 Datasets                      : {ds_list}
 Endogenious factor in datasets: {endogen_col_name}
@@ -485,7 +509,7 @@ Log folder                    : {folder_for_logging}
 
     print(k,lstN,p,N)
     kldiv = kldivEst(title=None,k=k,p=p,n=N,endogenous=endogen_col_name,exogenous=exogen_list,categories=ds_list,
-                     f=D_LOGS["main"])
+                     exclexogenous=None,f=D_LOGS["main"])
 
     history=kldiv.fit(lstX=lstX,lstY=lstY)
     kldiv.res2log()
