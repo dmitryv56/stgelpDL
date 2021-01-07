@@ -217,7 +217,7 @@ class kldivEst():
     def setTitles(self,title:str=None,categories:list=None,endogenous:str=None,exogenous:list=None):
         self.title = title
         if categories is not None:  # the names of the categories (samples)
-            self.catecories = categories
+            self.categories = categories
         else:
             self.categories = [str(i) for i in range(self.k)]
         if endogenous is not None:
@@ -478,21 +478,23 @@ Log folder                    : {folder_for_logging}
             logMatrix(joinYX(y, X),title=item,f=D_LOGS["control"])
             msg2log(None, "\n\n", f=D_LOGS["control"])
 
-    status, (k, lstN, p, N) = checkInputDataValid(lstX=lstX, lstY=lstY, f=f)
+    status, (k, lstN, p, N) = checkInputDataValid(lstX=lstX, lstY=lstY, f=D_LOGS["control"])
     if status != 0:
         print("exit due invalid input data")
         sys.exit(-1)
 
     print(k,lstN,p,N)
-    kldiv = kldivEst(title=None,k=k,p=p,n=N,f=f)
-    # kldiv.lineq()
-    # kldiv.linestimation()
-    # kldiv.anova()
+    kldiv = kldivEst(title=None,k=k,p=p,n=N,endogenous=endogen_col_name,exogenous=exogen_list,categories=ds_list,
+                     f=D_LOGS["main"])
+
     history=kldiv.fit(lstX=lstX,lstY=lstY)
     kldiv.res2log()
+    msg2log(None,"\n\nANOVA\n",f=D_LOGS["train"])
     msg = dictIterate(ddict=kldiv.d_ANOVA)
-    msg2log(None, msg, f=None)
-
+    msg2log(None, msg, f=D_LOGS["train"])
+    msg2log(None, "\n\nTrain Model History\n", f=D_LOGS["train"])
+    msg= dictIterate(ddict=history.history)
+    msg2log(None, msg, f=D_LOGS["train"])
     message = "Time execution logging stoped at {}\n\n".format(datetime.now().strftime("%d %m %y %H:%M:%S"))
     msg2log(None, message, D_LOGS["timeexec"])
     closeLogs()  # The logs are closing
