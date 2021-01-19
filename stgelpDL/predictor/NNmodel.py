@@ -97,7 +97,7 @@ class NNmodel(Predictor):
         self.model.summary()
 
         if self.f is not None:
-            self.write('\n New model \n')
+            self.f.write('\n New model \n')
             self.model.summary(print_fn=lambda x: self.f.write(x + '\n'))
 
         return

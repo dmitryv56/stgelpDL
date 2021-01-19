@@ -452,4 +452,18 @@ class PlotPrintManager():
         return
 
 
+def logMatrix(X:np.array,title:str=None,f:object = None):
+    if title is not None:
+        msg2log(None,title,f)
+    (n,m)=X.shape
+    z=np.array([i for i in range(n)])
+    z=z.reshape((n,1))
+    a=np.append(z,X,axis=1)
+    s = '\n'.join([''.join(['{:10.4f}'.format(item) for item in row]) for row in a])
+    if f is not None:
+        f.write(s)
+
+    return
+
+
 

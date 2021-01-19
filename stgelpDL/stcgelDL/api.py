@@ -3,9 +3,15 @@
 from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
-def prepareLossCharts(object_history:object, folder:str=None,f:object=None):
+from predictor.utility import msg2log
 
+def prepareLossCharts(object_history:object=None, folder:str=None,f:object=None):
+
+    if object_history is None:
+        msg2log(prepareLossCharts.__name__,"No history date available.The accurace charts will be missed",f)
+        return
     for metric_name in object_history.model.metrics_names:
         chart_loss(name_model=object_history.model.name, metric_name=metric_name, history=object_history.history,
                    folder=folder, f=f)
@@ -61,3 +67,33 @@ def _chart_loss(object_history,name_model, name_time_series, history, n_steps, l
         plt.savefig("{}/MAE_{}_{}_{}.png".format(logfolder, name_model, name_time_series, n_steps))
     plt.close("all")
     return
+
+""" The output classes should be indesed as 0,1,..., n-1. The desired data column if dataset contains only them. But
+some indexes may be missed. 
+If missing states are in desired data then number output is set  max_state+1
+
+The indexes of classes (states) and their frequences are logged.
+The function returns the size of output layer of neuron net.
+"""
+def getOutputSize(df:pd.DataFrame =None,desired_col_name:str=None, f:object=None)->int:
+    pass
+    if df is None or desired_col_name is None:
+        msg="Dataset object is None or desired ata name is none. Exit ..."
+        msg2log(None,msg,f)
+        return -1
+
+    a=np.array(df[desired_col_name])
+    uniq,count =np.unique(a,return_counts=True)
+    msg2log(None,"Desired data \n{:^10s} {:^10s}".format("State","Count"),f)
+    n,=uniq.shape
+    for i in range(n):
+        msg2log(None,"{:>10d} {:>10d}".format(uniq[i],count[i]),f)
+    st_max=uniq[-1]
+    if n<st_max+1:
+        msg2log(None,"\nNOTE: some states are missed in desired data\n\n",f)
+        n=st_max+1
+
+    return n
+
+
+

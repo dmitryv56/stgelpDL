@@ -24,7 +24,7 @@ from predictor.utility import  msg2log
 from tsstan.pltStan import setPlot, plotAll
 
 
-__version__ = '0.0.0'
+__version__ = '0.0.1'
 
 
 def main(argc, argv):
@@ -161,8 +161,10 @@ Logs                               :
         driveDesiredDataBuild(df, method= "k-mean", num_class= cluster_max, title= title, dt_col_name=dt_col_name, \
                               endogen_col_name=data_col_name, exogen_list=exogenious_list, f=D_LOGS["cluster"])
     elif actual_mode == 'stcls':
+
         driveNNmodelBuild(df, n_pred = n_pred, title=title, dt_col_name=dt_col_name, endogen_col_name=data_col_name,
-                          exogen_list=exogenious_list, labels_name=labels_name, lag=n_step, f=D_LOGS["train"])
+                          exogen_list=exogenious_list, labels_name=labels_name, n_steps=n_step, test_size=64,
+                          f=D_LOGS["train"])
 
 
 
