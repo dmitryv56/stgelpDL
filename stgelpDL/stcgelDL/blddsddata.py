@@ -340,7 +340,8 @@ def logMatrix(X:np.array,title:str=None,f:object = None):
     s = '\n'.join([''.join(['{:10.4f}'.format(item) for item in row]) for row in a])
     if f is not None:
         f.write(s)
-
+    if f is not None:
+        f.write('\n\n')
     return
 
 @exec_time

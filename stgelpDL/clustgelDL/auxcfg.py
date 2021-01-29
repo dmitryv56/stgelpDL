@@ -75,8 +75,8 @@ def exec_time(function):
         execution_time = time_end - time_start
         arguments = ", ".join([str(arg) for arg in args] + ["{}={}".format(k, kw[k]) for k in kw])
         smsg = "  {:.2f} sec  for {}({})\n".format(execution_time, function.__name__, arguments)
-
-        D_LOGS["timeexec"].write(smsg)
+        smsg1= "  {:.2f} sec  for {}(..)\n".format(execution_time, function.__name__ )
+        D_LOGS["timeexec"].write(smsg1)
         D_LOGS["timeexec"].flush()
 
         return ret_value

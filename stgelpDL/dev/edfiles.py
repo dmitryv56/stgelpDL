@@ -2,6 +2,16 @@ import copy
 
 import pandas as pd
 
+def Forcast_imbalance_edit():
+    ds = pd.read_csv("~/LaLaguna/stgelpDL/dataLaLaguna/ElHiero_24092020_27102020.csv")
+    src_col_name = "Forcasting"
+    src1_col_name = "Real_demand"
+    dst_col_name = "FrcImbalance"
+    ds[dst_col_name] =[round(ds[src_col_name][i]-ds[src1_col_name][i],2)  for i in range(len(ds)) ]
+
+
+    ds.to_csv("~/LaLaguna/stgelpDL/dataLaLaguna/ElHiero_24092020_27102020_CommonAnalyze.csv", index=False)
+    return
 
 def WindTurbine_edit():
     ds = pd.read_csv("~/LaLaguna/stgelpDL/dataLaLaguna/ElHiero_24092020_20102020_WindGenPower.csv")
@@ -66,6 +76,19 @@ def powerSolarPlant_edit():
     ds.to_csv("~/LaLaguna/stgelpDL/dataLaLaguna/SolarPlantPowerGen_21012020_21012020.csv", index=False)
     pass
 
+def powerSolarPlant_Imbalance():
+    # ds = pd.read_csv("~/LaLaguna/stgelpDL/dataLaLaguna/__PowerGenOfSolarPlant_21012020.csv")
+    ds = pd.read_csv("~/LaLaguna/stgelpDL/dataLaLaguna/SolarPlantPowerGen_21012020.csv")
+    # col_name = 'lasts'
+    dt_col_name = 'Date Time'
+    aux_col_name = "Programmed_demand"
+    data_col_name = "PowerGen"
+    ds["Imbalance"] = [ds[aux_col_name].values[i]-ds[data_col_name].values[i] for i in range(len(ds)) ]
+
+
+    ds.to_csv("~/LaLaguna/stgelpDL/dataLaLaguna/SolarPlantPowerGen_21012020.csv", index=False)
+    pass
+
 
 def powerElHiero_edit():
     ds = pd.read_csv("~/LaLaguna/stgelpDL/dataLaLaguna/_ElHiero_24092020_20102020_additionalData.csv")
@@ -91,5 +114,7 @@ if __name__ == "__main__":
     # privateHouse_edit()
     # powerSolarPlant_edit()
     # powerElHiero_edit()
-    WindTurbine_edit()
+    #WindTurbine_edit()
+    # Forcast_imbalance_edit()
+    powerSolarPlant_Imbalance()
     pass

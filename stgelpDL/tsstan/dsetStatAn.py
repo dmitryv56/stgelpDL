@@ -164,7 +164,7 @@ def getLambda(states, T)->(dict):
 
     return lambdaAbrupt
 
-def drive_tsAnalysis(ds,dt_col_name, listTS,  cp, abrupt_type:str='all', abrupt_level: float = 0.9 )->(pd.DataFrame, list):
+def drive_tsAnalysis(ds,dt_col_name, listTS,  cp, abrupt_type:str='all', abrupt_level: float = 0.9, wvletDecRes:bool=False )->(pd.DataFrame, list):
 
     listTSest=[]
     LOWER_ABRUPT = 0
@@ -176,7 +176,8 @@ def drive_tsAnalysis(ds,dt_col_name, listTS,  cp, abrupt_type:str='all', abrupt_
 
     for item in listTS:
 
-        drive_tsWvAnalysis(ds, listTS, cp)
+        if wvletDecRes:
+            drive_tsWvAnalysis(ds, listTS, cp)
 
         minValue,  maxValue , meanValue, medianValue,modeValue, stdValue = getScalarProperties(ds, item, cp.fc)
         hist, bins , f, Pxx,autocorr =  getVectorProperties(ds, item, cp)
