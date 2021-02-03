@@ -47,18 +47,25 @@ if sys.platform == 'win32':
 elif sys.platform == 'linux':
     PATH_REPOSITORY = str(Path(Path.home() / "model_Repository"/"offline_predictor"))
 
-""" class definitions """
+""" ================================================================================================================ """
+""" Classes definition                                                                                               """
 
 class tsSLD(object):
     def __init__(self,df:pd.DataFrame = None, data_col_name:str = None, dt_col_name:str = None, n_step:int = 32,
-                 n_eval:int = 256, n_test:int = 64,bscaled:bool = False, discret:int = 10,f:object = None):
-
+                 n_eval:int = 256, n_test:int = 64,bscaled:bool = False, discret:int = 10,title:str = None,
+                 f:object = None):
+        self.df = df
         df[dt_col_name] = pd.to_datetime(df[dt_col_name], dayfirst=True)
         self.data_col_name = data_col_name
         self.dt_col_name   = dt_col_name
+
         self.n       = len(df)
         self.y       = np.array(df[data_col_name])
         self.tlabs   = np.array(df[dt_col_name])
+        if title is not None:
+            self.title = title
+        else:
+            self.title=self.data_col_name
 
         self.n_step = n_step
         self.n_eval  = n_eval
@@ -205,9 +212,11 @@ class tsSLD(object):
                   f=D_LOGS['control'])
         return x_pred
 
-    def ts_analysis(self):
+    def ts_analysis(self,addtitle:str=None):
         sModel="tsARIMA"
-        sFolder = Path(D_LOGS['plot'] /Path(self.data_col_name)/Path(sModel))
+        sFolder = Path(D_LOGS['plot'] / Path(self.data_col_name) / Path(sModel))
+        if addtitle is not None:
+            sFolder = Path(D_LOGS['plot'] /Path(self.data_col_name)/Path(addtitle)/Path(sModel))
         sFolder.mkdir(parents=True, exist_ok=True)
         self.d,self.D, _, _, _, _ = self.ts_preanalysis(self.psd_segment_size, str(sFolder))
 
@@ -283,6 +292,8 @@ Error : {sys.exc_info()[0]}
                 msg2log("ts_preanalysis", message, D_LOGS['except'])
 
         delta = self.discret * 60  # in sec
+        if self.__class__.__name__  == "hmaggSLD":
+            delta=self.discret * 144 * 60
         N = len(self.y)
         Fs = 1.0 / delta
         maxFreq = 1.0 / (2 * delta)
@@ -338,9 +349,10 @@ Error : {sys.exc_info()[0]}
         finally:
             if len(message)>0:
                 msg2log("ts_preanalysis", message, D_LOGS['except'])
-        # plt.show(block=False)
+
         filePng = \
             Path( Path(folder_name) / Path("PwrSpecD_2sidesAutoCorr_{}".format(self.data_col_name))).with_suffix(".png")
+
         plt.savefig(filePng)
         plt.close("all")
 
@@ -352,6 +364,7 @@ Error : {sys.exc_info()[0]}
             a = np.append(freqs, Pxx, axis=1)
 
             fsp_name = Path(Path(folder_name) /Path("psd_{}".format(self.data_col_name))).with_suffix(".txt")
+
             with open (str(fsp_name),'w') as fsp:
                 logMatrix(a, title='Power Spectral Density_{}\n NN   Frequence  Pxx'.format(self.data_col_name), f=fsp)
 
@@ -362,6 +375,7 @@ Error : {sys.exc_info()[0]}
             b=np.append(al,ac,axis=1)
 
             fcr_name = Path(Path(folder_name) / Path("autocorr_{}".format(self.data_col_name))).with_suffix(".txt")
+
             with open(str(fcr_name), 'w') as fcr:
                 logMatrix(b, title='Autocorrelation_{}\n NN     Lag  Autocorrelation'.format(self.data_col_name), f=fcr)
 
@@ -378,7 +392,73 @@ Error : {sys.exc_info()[0]}
 
         return d,D, Pxx, freqs, acorr, alags
 
-""" API definitions """
+
+""" Aggregated TS along hours,minutes Supervised Learning Data"""
+
+
+class hmaggSLD(tsSLD):
+
+    def __init__(self, df: pd.DataFrame = None, data_col_name: str = None, dt_col_name: str = None, n_step: int = 32,
+                 n_eval: int = 256, n_test: int = 64, bscaled: bool = False, discret: int = 10, f: object = None):
+        self.hour =10
+        self.minute = 0
+        super().__init__(df=df, data_col_name=data_col_name, dt_col_name=dt_col_name, n_step=n_step, n_eval=n_eval,
+                         n_test=n_test, bscaled=bscaled, discret=discret, f=f)
+
+    def crtSLD(self):
+        del self.X_train
+        del self.X_eval
+        del self.X_test
+        del self.y_train
+        del self.y_eval
+        del self.y_test
+
+        x,y = dataSLD(df=self.df,data_col_name=self.data_col_name,dt_col_name=self.dt_col_name,n_step=self.n_step,
+                hour=self.hour,minute=self.minute, f=self.f)
+        logMatrixVector(x, y, title="{} SLD dataset along  time {}:{}".format(self.data_col_name,self.hour,
+                                self.minute),  specification='fixed-point', f=D_LOGS['control'])
+        (self.n,) = y.shape
+        self.n_train=self.n-self.n_eval-self.n_test
+
+        self.X_train = x[:self.n_train,:]
+        self.y_train = y[:self.n_train]
+        self.X_eval  = x[self.n_train:self.n_train+self.n_eval,:]
+        self.y_eval  = y[self.n_train:self.n_train+self.n_eval]
+        self.X_test  = x[self.n_train + self.n_eval:, :]
+        self.y_test  = y[self.n_train + self.n_eval:]
+
+        logMatrixVector(self.X_test, self.y_test,
+                        title="Test sequence. {} SLD dataset along  time {}:{}".format(self.data_col_name,
+                                self.hour, self.minute), specification='fixed-point', f=D_LOGS['control'])
+        del self.y
+        self.y=copy.copy(y)
+        return
+""" =============================================================================================================== """
+"""    API definitions                                                                                              """
+
+this_exactly = lambda x,h,m: pd.Timestamp(x).hour==h and pd.Timestamp(x).minute==m
+
+def dataSLD(df:pd.DataFrame=None, dt_col_name:str="Data Time", data_col_name:str="Imbalance", n_step:int=4, hour:int=10,
+            minute:int=20,f:object=None)->(np.array,np.array):
+
+    dt_list = df[dt_col_name].values
+    df[dt_col_name] = pd.to_datetime(dt_list, dayfirst=True)
+    data_list = df[data_col_name].values
+
+    a=[item  for item in dt_list if this_exactly(item,hour,minute) ]
+    x=np.zeros((len(a),n_step),dtype=float)
+    y=np.zeros((len(a)),dtype=float)
+    k=0
+    for i in range(len(dt_list)):
+        if this_exactly(dt_list[i],hour,minute):
+            y[k]=data_list[i]
+            if i-n_step>=0:
+                x[k,:]=data_list[i-n_step:i]
+            else:
+                x[k,n_step-i:n_step]=data_list[:i]
+
+            k+=1
+    return x,y
 
 def logMatrix(X:np.array,title:str=None,f:object = None):
     if title is not None:
@@ -391,6 +471,8 @@ def logMatrix(X:np.array,title:str=None,f:object = None):
     msg2log(None,"{}\n\n".format(s), f )
 
     return
+
+
 
 
 def logMatrixVector(X:np.array, y:np.array, title:str=None,specification:str='fixed-point', f:object = None):
@@ -508,7 +590,7 @@ def d_models_assembly(d_models, keyType, valueList, sld:tsSLD = None):
     return
 
 @exec_time
-def fit_models(d_models, sld:tsSLD, X_predict:np.array = None,in_sample_start:int = -1)->(dict,dict):
+def fit_models(d_models, sld:tsSLD, X_predict:np.array = None,in_sample_start:int = -1,addtitle:str=None)->(dict,dict):
     """ A function fits NN models and AR models and makes a prediction by these models. If X_predict is None, the predict
     is not carried out.
 
@@ -550,7 +632,11 @@ def fit_models(d_models, sld:tsSLD, X_predict:np.array = None,in_sample_start:in
             X = X.reshape((X.shape[0], X.shape[1], N_FEATURES))
             X_val = X_val.reshape((X_val.shape[0], X_val.shape[1], N_FEATURES))
         folder_train_log = str(Path(path.realpath(D_LOGS['train'].name)).parent)
+
         folder_train_log=Path(D_LOGS['plot']/Path(sld.data_col_name)/Path(curr_model.typeModel))
+        if addtitle is not None:
+            folder_train_log = Path(D_LOGS['plot'] / Path(sld.data_col_name) / Path(addtitle)/Path(curr_model.typeModel))
+
         if not folder_train_log.is_dir():
             Path(folder_train_log).mkdir(parents=True, exist_ok=True)
 
@@ -642,45 +728,90 @@ mean : {mean}  std : {std} max abs(error): {maxabse}
     return
 
 
-def bundlePredict(sld:tsSLD, dict_predict:dict, obs:np.array = None):
+def bundlePredict(sld:tsSLD, dict_predict:dict, obs:np.array = None,addtitle:str=None):
 
-    columns = [key for key in dict_predict.keys()]
-    columns.insert(0,sld.dt_col_name)
+    msgErr=""
+    try:
+        columns = [key for key in dict_predict.keys()]
+        columns.insert(0,sld.dt_col_name)
 
-    if sld.in_sample_start is not None:
-        columns.append(sld.data_col_name)
-
-    header= "    {:<20s} ".format(sld.dt_col_name) + \
-            ''.join(["{:<14s} ".format(item) for item in [key for key in dict_predict.keys()]])
-    title="                The forecasting bundle "
-    if sld.in_sample_start is None :
-        title = title + "(in sample predict)"
-        header +="{:<14s} ".format(sld.data_col_name)
-    X=[]
-    for k in range(sld.predict_lag):
-        row = []
-
-        row.append((sld.predict_date + timedelta(minutes=k*sld.discret)).strftime(cSFMT))
-        for key,val in dict_predict.items():
-            # (n,)=val.shape
-            row.append(val[k])
         if sld.in_sample_start is not None:
-            row.append(sld.y[sld.in_sample_start+k])
-        X.append(row)
+            columns.append(sld.data_col_name)
+
+        header= "    {:<20s} ".format(sld.dt_col_name) + \
+                ''.join(["{:<14s} ".format(item) for item in [key for key in dict_predict.keys()]])
+        title="                The forecasting bundle "
+        if addtitle is not None:
+            title="{} ({})".format(title,addtitle)
+        if sld.in_sample_start is None :
+            title = title + "(in sample predict)"
+            header +="{:<14s} ".format(sld.data_col_name)
+        X=[]
+        for k in range(sld.predict_lag):
+            row = []
+
+            row.append((sld.predict_date + timedelta(minutes=k*sld.discret)).strftime(cSFMT))
+            for key,val in dict_predict.items():
+                # (n,)=val.shape
+                row.append(val[k])
+            if sld.in_sample_start is not None:
+                row.append(sld.y[sld.in_sample_start+k])
+            X.append(row)
+    except:
+        msgErr = "O-o-ops! I got an unexpected error at X creating - reason  {}\n".format(
+            sys.exc_info())
+
+    finally:
+        if len(msgErr)>0:
+            msg2log(bundlePredict.__name__,msgErr,D_LOGS['except'])
+
     msg2log(None,"\n\n{}\n{}\n".format(title, header), D_LOGS['predict'])
 
     k=0
-    for row in X:
-        temp_prnt="{:>3d} {:<20s} ".format(k, row[0])
-        temp_prnt=temp_prnt + ''.join(["{:>14.6f}".format(item) for item in row[1:]])
-        msg2log(None,temp_prnt,D_LOGS['predict'])
+    msgErr=""
+    try:
+        for row in X:
+            temp_prnt="{:>3d} {:<20s} ".format(k, row[0])
+            temp_prnt=temp_prnt + ''.join(["{:>14.6f}".format(item) for item in row[1:]])
+            msg2log(None,temp_prnt,D_LOGS['predict'])
+    except:
+        msgErr = "O-o-ops! I got an unexpected error at temp_prnt - reason  {}\n".format(sys.exc_info())
 
-    df=pd.DataFrame(X)
-    df.columns=columns
-    csv_predict = \
-        Path(path.realpath(D_LOGS['predict'].name)).parent /Path("predict_{}".format(sld.data_col_name)).with_suffix(".csv")
-    df.to_csv(csv_predict,index=False)
-    plotPredictDF(csv_predict, sld.data_col_name, title= "Forecasting_bandle")
+    finally:
+        if len(msgErr) > 0:
+            msg2log(bundlePredict.__name__, msgErr, D_LOGS['except'])
+    msgErr=""
+    try:
+        df=pd.DataFrame(X)
+        df.columns=columns
+        csv_predict = \
+            Path(path.realpath(D_LOGS['predict'].name)).parent /Path("predict_{}".format(sld.data_col_name)).with_suffix(".csv")
+        if addtitle is not None:
+            csv_predict = \
+                Path(path.realpath(D_LOGS['predict'].name)).parent / Path(
+                    "predict_{}_{}".format(sld.data_col_name,addtitle)).with_suffix(".csv")
+
+        df.to_csv(csv_predict,index=False)
+        title="Forecasting_bandle"
+        if addtitle is not None:
+            title="{}_{}".format(title,addtitle)
+    except:
+        msgErr = "O-o-ops! I got an unexpected error at csv saving - reason  {}\n".format(sys.exc_info())
+
+    finally:
+        if len(msgErr) > 0:
+            msg2log(bundlePredict.__name__, msgErr, D_LOGS['except'])
+
+    msgErr = ""
+    try:
+        plotPredictDF(csv_predict, sld.data_col_name, title= title)
+    except:
+        msgErr = "O-o-ops! I got an unexpected error at plotPredictDF - reason  {}\n".format(sys.exc_info())
+
+    finally:
+        if len(msgErr) > 0:
+            msg2log(bundlePredict.__name__, msgErr, D_LOGS['except'])
+
     return
 
 def plotPredictDF(bundle_predictions_file:str, data_col_name:str,title:str = "Forecasting_bandle"):
@@ -701,7 +832,7 @@ def plotPredictDF(bundle_predictions_file:str, data_col_name:str,title:str = "Fo
 The new predictions csv saved           : {bundle_predictions_file}
 The bundle of the predictions png saved : {bundle_predictions_png}
         """
-        msg2log(None, message, D_LOGS['predict'])
+        msg2log(plotPredictDF.__name__, message, D_LOGS['predict'])
     except:
         pass
     finally:
