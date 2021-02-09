@@ -109,6 +109,37 @@ def powerElHiero_edit():
     ds.to_csv("~/LaLaguna/stgelpDL/dataLaLaguna/ElHiero_24092020_20102020_additionalData.csv", index=False)
     pass
 
+def powerSolarPlant_Normalize():
+    # ds = pd.read_csv("~/LaLaguna/stgelpDL/dataLaLaguna/__PowerGenOfSolarPlant_21012020.csv")
+    ds = pd.read_csv("~/LaLaguna/stgelpDL/dataLaLaguna/SolarPlantPowerGen_21012020.csv")
+    # col_name = 'lasts'
+    dt_col_name = 'Date Time'
+    aux_col_name = "Programmed_demand"
+    data_col_name = "PowerGen"
+    ds["normPowerGen"] = [round((ds[data_col_name].values[i]-round(95.0/2.4,4)),4) for i in range(len(ds)) ]
+
+
+    ds.to_csv("~/LaLaguna/stgelpDL/dataLaLaguna/normSolarPlantPowerGen_21012020.csv", index=False)
+    pass
+
+def powerSolarPlant_DifNormalize():
+    # ds = pd.read_csv("~/LaLaguna/stgelpDL/dataLaLaguna/__PowerGenOfSolarPlant_21012020.csv")
+    ds = pd.read_csv("~/LaLaguna/stgelpDL/dataLaLaguna/normSolarPlantPowerGen_21012020.csv")
+    # col_name = 'lasts'
+    dt_col_name = 'Date Time'
+    aux_col_name = "difnormPowerGen"
+    data_col_name = "normPowerGen"
+    v=ds[data_col_name].values
+    v1=[]
+    for i in range(1,len(v)):
+        v1.append(round(v[i]-v[i-1],4))
+    v1.insert(0,0.0)
+    ds[aux_col_name] = v1
+
+
+    ds.to_csv("~/LaLaguna/stgelpDL/dataLaLaguna/difnormSolarPlantPowerGen_21012020.csv", index=False)
+    pass
+
 
 if __name__ == "__main__":
     # privateHouse_edit()
@@ -116,5 +147,6 @@ if __name__ == "__main__":
     # powerElHiero_edit()
     #WindTurbine_edit()
     # Forcast_imbalance_edit()
-    powerSolarPlant_Imbalance()
+    # powerSolarPlant_Imbalance()
+    powerSolarPlant_DifNormalize()
     pass

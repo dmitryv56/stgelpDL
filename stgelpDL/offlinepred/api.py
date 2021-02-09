@@ -9,9 +9,11 @@ import copy
 from os import getcwd,path
 import sys
 from pathlib import Path
-from datetime import timedelta
 
 import numpy as np
+import datetime
+from datetime import datetime, timedelta
+from dateutil import parser
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 import pmdarima as pm
@@ -25,7 +27,7 @@ from predictor.Statmodel import tsARIMA
 from stcgelDL.api import prepareLossCharts
 
 """ NN model hyperparameters """
-EPOCHS = 100  # training model
+EPOCHS = 10  # training model
 N_STEPS = 64
 N_FEATURES = 1
 UNITS = 32    # LSTM
@@ -49,6 +51,9 @@ elif sys.platform == 'linux':
 
 """ ================================================================================================================ """
 """ Classes definition                                                                                               """
+
+indTS4SLD_predict=lambda n,rows,cols,i,j: n-(rows-1-i)-(cols-j)
+indTS4out_predict=lambda n,rows,i: n-(rows-1-i)
 
 class tsSLD(object):
     def __init__(self,df:pd.DataFrame = None, data_col_name:str = None, dt_col_name:str = None, n_step:int = 32,
@@ -150,7 +155,77 @@ class tsSLD(object):
             self.y_test = np.array(yy)
         return
 
-    def predSLD(self, start_in:int = None,ts:np.array = None)->np.array:
+    """  X_pred is a (pred_rows, n_step) matrix,  which is built as Supervised Learnind Data for the last range of time 
+    series Y.
+    If pred_rows is 1, then only 'out-of-sample' prediction for self.predict_lag periods will be carried out.
+    If pred_rows>1, then first  (pred_rows-1) rows  are used for 'in-sample' prediction, and last row is used for
+    'out-of-sample' prediction for self.predict_lag periods.
+    For example, the time series Y contains  N=32 observations  and seems as Y(0), Y(1), ..., Y(30),Y(31).
+    The n_step parameter is 4, pred_rows parameter is 6. X_pred matrix is formed by following:
+    X_pred =[                                         
+    [Y(32-5-4=23) Y(32-5-3=24) Y(32-5-2=25) Y(32-5-1=26)]               Y[32-5=27]  
+    [Y(32-4-4=24) Y(32-4-3=25) Y(32-4-2=26) Y(32-4-1=27)]               Y[32-4=28] 
+    [Y(32-3-4=25) Y(32-3-3=26) Y(32-3-2=27) Y(32-3-1=28)]               Y[32-3=29]  
+    [Y(32-2-4=26) Y(32-2-3=27) Y(32-2-2=28) Y(32-2-1=29)]               Y[32-2=30] 
+    [Y(32-1-4=27) Y(32-1-3=28) Y(32-1-2=29) Y(32-1-1=30)]               Y[32-1=31] 
+    [Y(32-0-4=28) Y(32-0-3=29) Y(32-0-2=30) Y(32-0-1=31)]                   -
+    ]
+    For first 5 rows are 'output' exist and they shoukd use for 'in-sample' prediction.  6th last row is used for 
+    'out-of-sample' prediction.
+    
+    x_pred[i,j]=Y[N-(pred_rows-i)-(n_step-j)],
+    where i =0,1,pred_rows-1;  j=0,n_step-1.                
+    """
+    def predSLD(self,start_in:int = None,ts:np.array = None)->np.array:
+        msgErr = f"""Invalid generation set for prediction Supervised Learning Data. 
+                Either an start index (offset of the end of the original time series (TS))  for intra prediction or 
+                an independent segment of TS must be specified, but not both.
+                If start index is specified then len(TS) - 'start index' should be greather than 'time step'.
+                If TS segment is specified, its length should be greather than 'time step'. Otherwise lead zeros should be  
+                added.
+                """
+        if start_in is None and ts is None:
+            msg2log(None, msgErr, self.f)
+            return None
+
+        if (self.n - start_in < self.n_step and ts is None) or (self.n - start_in >= self.n_step and ts is not None):
+            msg2log(None, msgErr, self.f)
+            return None
+        rows=1 if ts is not None else start_in+1
+
+        cols=self.n_step
+        n=self.n
+        x_pred = np.zeros((rows, cols), dtype=float)
+        y_out  = np.zeros((rows),dtype=float)
+        zind   = np.zeros((rows),dtype=int)
+        message=''
+        if ts is None:
+            for i in range(0, rows):
+                if i<rows-1:
+                    zind[i]=indTS4out_predict(n,rows,i)
+                    y_out[i]=self.y[zind[i]]
+                for j in range(0, self.n_step):
+                    ind_in_y = indTS4SLD_predict(n, rows, cols, i, j)
+                    x_pred[i, j] = self.y[ind_in_y]
+            message = \
+                "'In-sample' and 'out-of-sample' predicts\nStart index into TS: {}".format(zind[0])
+
+        else:
+            (nn,)=ts.shape
+            for i in range(max(0,cols-nn),cols):
+                x_pred[0,i]=ts[i-max(0,cols-nn)]
+            zind[0]=0
+            message = "'Out-of-sample' predict TS."
+
+        msg2log(None, message, D_LOGS['control'])
+        if cols>2:
+            z = np.column_stack((zind, x_pred[:, :2], x_pred[:, cols - 2:],y_out))
+            title = "Predicting data in Supervised Learning Data form.\n" + \
+                    "Index  X(t-{}) X(t-{})...X(t-2)  X(t-1) Y(t)".format(cols, cols - 1)
+            logMatrix(z,title=title,f=D_LOGS['control'])
+        return x_pred
+
+    def predSLD_(self, start_in:int = None,ts:np.array = None)->np.array:
         """
         This method prepares Supervised Learning Data for predict by using NN models.
         For 'pure' forecasting on next time perion start_in should be 0.
@@ -176,11 +251,18 @@ class tsSLD(object):
             msg2log(None,msgErr,self.f)
             return None
 
+        x_pred=np.zeros((start_in,self.n_step))
+        for i in range(0,start_in):
+            for j in range(0,self.n_step):
+                ind_in_y=indTS4SLD_predict(self.n,start_in,self.n_step,i,j)
+                x_pred[i,j]=self.y[ind_in_y]
+
         message=[]
         x = []
         zind = []
         """ predict into time series (TS)  """
         if ts is None:
+
             k_start=self.n -start_in-self.n_step
             k_end =k_start+self.n_step
 
@@ -596,7 +678,9 @@ def fit_models(d_models, sld:tsSLD, X_predict:np.array = None,in_sample_start:in
 
     :param d_models:{ind:obj} where ind -index of the model, obj-compiled NN model or AR-model
     :param sld:  object tsSLD
-    :param X_predict: vector for predicting, np.array  with shape (1,sld.n_step)
+    :param X_predict: matrix for predicting, np.array  with shape (pred_rows,sld.n_step).
+           The last row of X_predict is used for preducting on sld.predict_lag periods. The first predict carried out for
+           the last observations of TS, then
     :param in_sample_start: zero-indexed observation number an which to start forecasting or -1 (default). Be default,
         the forecasting is carried out starting for next period, ouf of the sample (observations of the time series).
         Or zero-based index of observation in the TS an which to start forecasting, i.e. test sequence.
@@ -619,7 +703,7 @@ def fit_models(d_models, sld:tsSLD, X_predict:np.array = None,in_sample_start:in
     if X_predict is not None:
         (n, m) = X_predict.shape
         msg2log(None,"Predict data shape is {},{}".format(n,m), D_LOGS['train'])
-        vec_4_predict = copy.copy(X_predict[0, :])
+        vec_4_predict = copy.copy(X_predict[n-1, :])
         vec_4_predict = vec_4_predict.astype('float')
 
     for k, v in d_models.items():
@@ -658,7 +742,7 @@ def fit_models(d_models, sld:tsSLD, X_predict:np.array = None,in_sample_start:in
                     yy[kk]=ypred
                 dict_predict[curr_model.nameModel] =yy
 
-                one_step_predicts_in_sampleNN(sld, curr_model, X_predict)
+                one_step_predicts_in_sampleNN(sld, curr_model, X_predict) # predict in sample
 
         elif curr_model.typeModel == "tsARIMA":
             curr_model.fitted_model_logging()
@@ -678,26 +762,63 @@ def fit_models(d_models, sld:tsSLD, X_predict:np.array = None,in_sample_start:in
 
 def one_step_predicts_in_sampleNN(sld:tsSLD, curr_model:object, X_predict:np.array):
 
-    (n,m) = X_predict.shape
-    if n==1:
+    (pred_rows,pred_n_step) = X_predict.shape
+    if pred_rows==1:
         return
-    y_pred=np.zeros((n-1),dtype=float)
-    e=np.zeros((n-1),dtype=float)
-    abse=np.zeros((n-1),dtype=float)
+    y_pred=np.zeros((pred_rows),dtype=float)
+    e=np.zeros((pred_rows),dtype=float)
+    abse=np.zeros((pred_rows),dtype=float)
     maxabse=0.0
     msg2log(None,"\n\n {} predict in sample by {}\n".format(sld.data_col_name, curr_model.nameModel),D_LOGS["predict"])
     header= "     {:<20s} {:<14s} {:<14s} {:<14s} {:<14s}".format(sld.dt_col_name, sld.data_col_name, "predict",
                                                                          "error", "abs.error")
     msg2log(None,header,D_LOGS["predict"])
-    for i in range(1, n):
-        y_pred[i-1] = curr_model.predict_one_step(X_predict[i,:])
-        e[i-1]=sld.y[sld.n-i]-y_pred[i-1]
-        abse[i-1]=abs(e[i-1])
-        maxabse=max(maxabse,abse[i-1])
-        ii=sld.n-1
-        msg="{:>4d} {:<20s} {:<14.4f} {:<14.4f} {:<14.4f} {:<14.4f}".format(i-1, sld.tlabs[ii].strftime(cSFMT),
-                                                                            sld.y[ii], y_pred[i-1], e[i-1], abse[i-1])
-        msg2log(None,msg,D_LOGS['predict'])
+    msgErr=""
+    try:
+        for i in range(0, pred_rows):
+            iy = sld.n - pred_rows +i  # (sld.n-1) - index of the last item in TS
+            y_pred[i] = curr_model.predict_one_step(X_predict[i,:])
+            e[i]=sld.y[iy]-y_pred[i]
+            abse[i]=abs(e[i])
+            maxabse=max(maxabse,abse[i])
+
+            """ To prevent exception when program runs in the  terminal,not into PyCharm """
+            msgErr1=""
+            try:
+                stm=str(sld.tlabs[iy]) #TODO check why strftime exception raised when we launch the program in terminal.
+                                       # No exception in PyCharm.   stm=sld.tlabs[iy].strftime(cSFMT)
+            except AttributeError as excp:
+
+                msgErr1 = f"""
+Oops!! AttributeError exception ...
+Error        : {sys.exc_info()[0]}
+Description  : {sys.exc_info()[1]}
+Excetion as e: {excp}
+Type of timestamp : {type(sld.tlabs[iy])}
+                                   """
+
+            except:
+                msgErr1 = "O-o-ops! I got an unexpected error at predict values logging - reason  {}\n".format(
+                    sys.exc_info())
+            finally:
+                if len(msgErr1) > 0:
+                    msg2log(one_step_predicts_in_sampleNN.__name__, msgErr1, D_LOGS['except'])
+                    stm = str(sld.tlabs[iy])
+                    log2All()
+
+
+            msg="{:>4d} {:<20s} {:<14.4f} {:<14.4f} {:<14.4f} {:<14.4f}".format(i, stm,  sld.y[iy], y_pred[i],
+                                                                                e[i], abse[i])
+            msg2log(None,msg,D_LOGS['predict'])
+    except:
+        msgErr = "O-o-ops! I got an unexpected error at predict values logging - reason  {}\n".format(
+            sys.exc_info())
+
+    finally:
+        if len(msgErr) > 0:
+            msg2log(one_step_predicts_in_sampleNN.__name__, msgErr, D_LOGS['except'])
+            log2All()
+
     mean =e.mean()
     std  =e.std()
     message=f""" Prediction errors
@@ -707,13 +828,13 @@ mean : {mean}  std : {std} max abs(error): {maxabse}
 
     """Prepares data for charting"""
     err_dict={}
-    e=np.flip(e)
-    y_pred=np.flip(y_pred)
+    # e=np.flip(e)
+    # y_pred=np.flip(y_pred)
     yobs=np.add(e,y_pred)
-    err_dict['obs_index']=[i for i in range(sld.n-n,sld.n-1)]
-    err_dict['error']=e
-    err_dict['predict']=y_pred
-    err_dict['observation']=yobs
+    err_dict['obs_index']=[int(i) for i in range(sld.n -pred_rows,sld.n)]
+    err_dict['error']=e.round(decimals=3)
+    err_dict['predict']=y_pred.round(decimals=3)
+    err_dict['observation']=yobs.round(decimals=3)
     df=pd.DataFrame(err_dict)
     sFolder = Path(D_LOGS['plot'] / Path(sld.data_col_name) / Path(curr_model.typeModel))
     sFolder.mkdir(parents=True, exist_ok=True)
@@ -749,12 +870,20 @@ def bundlePredict(sld:tsSLD, dict_predict:dict, obs:np.array = None,addtitle:str
         X=[]
         for k in range(sld.predict_lag):
             row = []
+            """ These au[iliary transformations due to problem in the console launching."""
+            tm1=sld.predict_date
+            tm2=timedelta(minutes=k * sld.discret)
+            stm1=str(tm1)
+            pstm=parser.parse(stm1)
+            dtm = pstm + tm2
+            stm=str(dtm)
 
-            row.append((sld.predict_date + timedelta(minutes=k*sld.discret)).strftime(cSFMT))
+            row.append(stm)
             for key,val in dict_predict.items():
-                # (n,)=val.shape
                 row.append(val[k])
             if sld.in_sample_start is not None:
+                msg2log(bundlePredict.__name__, "sld.in_sample_start={} k= {} y= {}".format(sld.in_sample_start, k,sld.y[sld.in_sample_start+k]),
+                        D_LOGS['except'])
                 row.append(sld.y[sld.in_sample_start+k])
             X.append(row)
     except:
@@ -764,6 +893,8 @@ def bundlePredict(sld:tsSLD, dict_predict:dict, obs:np.array = None,addtitle:str
     finally:
         if len(msgErr)>0:
             msg2log(bundlePredict.__name__,msgErr,D_LOGS['except'])
+            log2All()
+            sys.exit(-1)
 
     msg2log(None,"\n\n{}\n{}\n".format(title, header), D_LOGS['predict'])
 
@@ -780,6 +911,8 @@ def bundlePredict(sld:tsSLD, dict_predict:dict, obs:np.array = None,addtitle:str
     finally:
         if len(msgErr) > 0:
             msg2log(bundlePredict.__name__, msgErr, D_LOGS['except'])
+            log2All()
+
     msgErr=""
     try:
         df=pd.DataFrame(X)
@@ -801,6 +934,7 @@ def bundlePredict(sld:tsSLD, dict_predict:dict, obs:np.array = None,addtitle:str
     finally:
         if len(msgErr) > 0:
             msg2log(bundlePredict.__name__, msgErr, D_LOGS['except'])
+            log2All()
 
     msgErr = ""
     try:
@@ -811,6 +945,7 @@ def bundlePredict(sld:tsSLD, dict_predict:dict, obs:np.array = None,addtitle:str
     finally:
         if len(msgErr) > 0:
             msg2log(bundlePredict.__name__, msgErr, D_LOGS['except'])
+            log2All()
 
     return
 

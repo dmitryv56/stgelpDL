@@ -96,7 +96,7 @@ def drive_feature(df:pd.DataFrame=None, title:str="ElHiero" , dt_col_name:str="D
     msg2log(None, "Used models\n{}".format(message), D_LOGS['control'])
     for keyType, valueList in ALL_MODELS.items():
         print('{}->{}'.format(keyType, valueList))
-
+        # if keyType=="LSTM": continue
         status = d_models_assembly(d_models, keyType, valueList, sld=sld)
 
     message = dictIterate(d_models)
