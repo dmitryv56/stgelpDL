@@ -1,6 +1,7 @@
 import copy
 
 import pandas as pd
+import math
 
 def Forcast_imbalance_edit():
     ds = pd.read_csv("~/LaLaguna/stgelpDL/dataLaLaguna/ElHiero_24092020_27102020.csv")
@@ -122,18 +123,18 @@ def powerSolarPlant_Normalize():
     ds.to_csv("~/LaLaguna/stgelpDL/dataLaLaguna/normSolarPlantPowerGen_21012020.csv", index=False)
     pass
 
-def powerSolarPlant_DifNormalize():
+def powerSolarPlant_log():
     # ds = pd.read_csv("~/LaLaguna/stgelpDL/dataLaLaguna/__PowerGenOfSolarPlant_21012020.csv")
-    ds = pd.read_csv("~/LaLaguna/stgelpDL/dataLaLaguna/normSolarPlantPowerGen_21012020.csv")
+    ds = pd.read_csv("~/LaLaguna/stgelpDL/dataLaLaguna/difnormSolarPlantPowerGen_21012020.csv")
     # col_name = 'lasts'
     dt_col_name = 'Date Time'
-    aux_col_name = "difnormPowerGen"
-    data_col_name = "normPowerGen"
+    aux_col_name = "lnPowerGen"
+    data_col_name = "PowerGen"
     v=ds[data_col_name].values
     v1=[]
-    for i in range(1,len(v)):
-        v1.append(round(v[i]-v[i-1],4))
-    v1.insert(0,0.0)
+    for i in range(len(v)):
+        v1.append(round(math.log(v[i]+1.0),4))
+
     ds[aux_col_name] = v1
 
 
@@ -148,5 +149,5 @@ if __name__ == "__main__":
     #WindTurbine_edit()
     # Forcast_imbalance_edit()
     # powerSolarPlant_Imbalance()
-    powerSolarPlant_DifNormalize()
+    powerSolarPlant_log()
     pass

@@ -448,7 +448,8 @@ Error : {sys.exc_info()[0]}
             fsp_name = Path(Path(folder_name) /Path("psd_{}".format(self.data_col_name))).with_suffix(".txt")
 
             with open (str(fsp_name),'w') as fsp:
-                logMatrix(a, title='Power Spectral Density_{}\n NN   Frequence  Pxx'.format(self.data_col_name), f=fsp)
+                title = 'Power Spectral Density_{}\n    NN    Frequence     Pxx'.format(self.data_col_name)
+                logMatrix(a, title=title, wideformat='14.8f',f=fsp)
 
             nn,=alags.shape
             nnn:int = int((nn-1)/2) +1
@@ -542,14 +543,22 @@ def dataSLD(df:pd.DataFrame=None, dt_col_name:str="Data Time", data_col_name:str
             k+=1
     return x,y
 
-def logMatrix(X:np.array,title:str=None,f:object = None):
+def logMatrix(X:np.array,title:str=None, wideformat:str='10.4f', f:object = None):
     if title is not None:
         msg2log(None,title,f)
     (n,m)=X.shape
     z=np.array([i for i in range(n)])
     z=z.reshape((n,1))
     a=np.append(z,X,axis=1)
-    s = '\n'.join([''.join(['{:10.4f}'.format(item) for item in row]) for row in a])
+    if wideformat=='16.8f':
+        s = '\n'.join([''.join(['{:16.8f}'.format(item) for item in row]) for row in a])
+    elif wideformat == '14.8f':
+        s = '\n'.join([''.join(['{:14.8f}'.format(item) for item in row]) for row in a])
+    elif wideformat=='10.4f':
+        s = '\n'.join([''.join(['{:10.4f}'.format(item) for item in row]) for row in a])
+    else:
+        s = '\n'.join([''.join(['{:10.4f}'.format(item) for item in row]) for row in a])
+
     msg2log(None,"{}\n\n".format(s), f )
 
     return
