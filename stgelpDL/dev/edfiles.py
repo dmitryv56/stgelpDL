@@ -1,7 +1,10 @@
 import copy
 
 import pandas as pd
+import numpy as np
 import math
+from datetime import datetime,timedelta
+import matplotlib.pyplot as plt
 
 def Forcast_imbalance_edit():
     ds = pd.read_csv("~/LaLaguna/stgelpDL/dataLaLaguna/ElHiero_24092020_27102020.csv")
@@ -141,6 +144,76 @@ def powerSolarPlant_log():
     ds.to_csv("~/LaLaguna/stgelpDL/dataLaLaguna/difnormSolarPlantPowerGen_21012020.csv", index=False)
     pass
 
+def powerSolarPlant_analysis():
+    # ds = pd.read_csv("~/LaLaguna/stgelpDL/dataLaLaguna/__PowerGenOfSolarPlant_21012020.csv")
+    ds = pd.read_csv("~/LaLaguna/stgelpDL/dataLaLaguna/difnormSolarPlantPowerGen_21012020.csv")
+    # col_name = 'lasts'
+    dt_col_name = 'Date Time'
+    aux_col_name = "lnPowerGen"
+    data_col_name = "PowerGen"
+    v=ds[data_col_name].values
+    v1=[]
+    start_ind=0
+    delta_ind=144
+    while (start_ind<len(v)):
+
+        v1.append(v[start_ind:start_ind+delta_ind])
+        start_ind=start_ind+delta_ind
+    # ds[aux_col_name] = v1
+
+    a_min=np.zeros((144),dtype=float)
+    for i in range(144):
+        a_min[i]=100000.0
+    a_max = np.zeros((144), dtype=float)
+    a_mean = np.zeros((144), dtype=float)
+
+    n=0
+    for i in range(len(v1)):
+        (m,)=v1[i].shape
+        if m<144: continue
+        n=n+1
+        for j in range(m):
+            if a_min[j]>v1[i][j]:   a_min[j] = v1[i][j]
+            if a_max[j] < v1[i][j]: a_max[j] = v1[i][j]
+            a_mean[j] = a_mean[j]+v1[i][j]
+    (m,)=a_mean.shape
+    for j in range(m) :
+        a_mean[j]=round(a_mean[j]/n,4)
+
+    pass
+    df1=pd.DataFrame()
+    df1['min_pwr'] =a_min.tolist()
+    df1['max_pwr'] =a_max.tolist()
+    df1['mean_pwr']=a_mean.tolist()
+    today = datetime(year=2020, month=1, day=1, hour=0, minute=0)
+    date_list = [today + timedelta(minutes=10 * x) for x in range(144)]
+    datetext = [x.strftime('%H:%M') for x in date_list]
+    df1['Date Time'] = datetext
+    file_csv="~/LaLaguna/stgelpDL/dataLaLaguna/SolarGenHourMinute.csv"
+    df1.to_csv(file_csv, index=False)
+
+    df = pd.read_csv(file_csv, parse_dates=['Date Time'], index_col='Date Time')
+    # series = df.loc[:, 'value'].values
+    # df.plot(figsize=(14,8),legend=None,title='a10-Drug Sales Series')
+    plot1=df1.plot(figsize=(14, 8), legend=True, title='Solar Power Gen')
+    hist=df1.hist(bins=10)
+    pass
+
+    for i in range(47,119):
+        title="{}_PowerGen".format(datetext[i])
+        file_save="Logs/{}.png".format(title)
+        a=np.zeros((n),dtype=float)
+        for k in range(n):
+            a[k]=v1[k][i]
+        n_out, bins, _ = plt.hist(a,density=True)
+        plt.title(title)
+        plt.legend(title)
+        plt.xlabel("MWatt")
+        plt.savefig(file_save)
+        plt.close("all")
+
+    return
+
 
 if __name__ == "__main__":
     # privateHouse_edit()
@@ -149,5 +222,5 @@ if __name__ == "__main__":
     #WindTurbine_edit()
     # Forcast_imbalance_edit()
     # powerSolarPlant_Imbalance()
-    powerSolarPlant_log()
+    powerSolarPlant_analysis()
     pass
