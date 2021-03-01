@@ -63,17 +63,22 @@ def interpSlopeWF(fsample:float=16e+06,bitrate:float=125000.0,slope:float=0.1,le
     pure = np.array([yinterp[i] for i in range(n0)] + [right_y for i in range(n0, int(fsample / bitrate))])
     return pure
 
-def transitionsPng():
+def transitionsPng(fsample:float=16e+06,bitrate:float=125000.0,snr:float=30.0,slope:float=0.2,f:object=None):
     transition_list=[T__WF,T_0WF,T_1WF,T0_WF,T00WF,T01WF,T1_WF,T10WF,T11WF]
-    fsample = 16e+06
-    bitrate = 125000.0
-    slope = 0.1
+    # fsample = 16e+06
+    # bitrate = 125000.0
+    # slope = 0.3
     SNR = 20
     f = None
     x = np.arange(0,int(fsample / bitrate))
-
+    suffics = '.png'
+    name="simulated_waveforms"
+    waveform_png = Path(D_LOGS['plot'] / Path(name)).with_suffix(suffics)
+    title="Transition Waveform( SNR={} DB, slope ={}, Fsample={} MHz, Bitrate ={} K/sec)".format( SNR, slope,
+                                                                fsample/10e+6, bitrate/1e+3)
     fig,ax_array =plt.subplots(nrows=3,ncols=3,figsize = (18,5),sharex=True, sharey=True)
     fig.subplots_adjust(wspace=0.5, hspace=0.5)
+    fig.suptitle(title,fontsize=16)
     i=0
     for ax in np.ravel(ax_array):
 
@@ -82,7 +87,7 @@ def transitionsPng():
         auxTransitionsPng(ax, tobj, x)
         i=i+1
 
-    plt.show()
+    plt.savefig(waveform_png)
     plt.close("all")
     return
 
@@ -419,7 +424,7 @@ def wfstreamGen(mode:str='train',transition_stream:list=[],fsample:float=16e+6,b
     anomaly_d={}
     loggedSignal = np.array([])
     loggedHist   = []
-    numberLoggedBit = 10
+    numberLoggedBit = 16
     subtitle="Fsample={} MHz Bitrate={} Kbit/sec SNR={} Db".format(round(fsample/10e+6,3), round(bitrate/10e3,2),
                                                                    round(snr,0))
     """ random number for logged packet in the stream """
@@ -507,11 +512,11 @@ def wfstreamGen(mode:str='train',transition_stream:list=[],fsample:float=16e+6,b
 
 
     if mode=="train":
-        msg2log(None, "\nTrain summary\nmatch: {} no match:{}".format(sum_match_train, sum_no_match_train),
+        msg2log(None, "\nTrain summary for SNR={} DB\nmatch: {} no match:{}".format(snr, sum_match_train, sum_no_match_train),
                 D_LOGS['train'])
 
     if mode=="test":
-        msg2log(None, "\nTest summary\nmatch: {} no match:{}".format(sum_match_test, sum_no_match_test),
+        msg2log(None, "\nTest summary for SNR = {} DB\nmatch: {} no match:{}".format(snr,sum_match_test, sum_no_match_test),
                     D_LOGS['predict'])
     log2All()
 

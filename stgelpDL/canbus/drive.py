@@ -8,7 +8,7 @@ import numpy as np
 
 from clustgelDL.auxcfg  import D_LOGS,log2All,exec_time,logList
 from predictor.utility import msg2log
-from canbus.api import wfstreamGen,trstreamGen,SIG_,SIG_0,SIG_1, TR_DICT
+from canbus.api import wfstreamGen,trstreamGen,SIG_,SIG_0,SIG_1, TR_DICT,transitionsPng
 from canbus.BF import BF
 
 def train_path(canbusdump:str="", bf:BF=None, chunk_size:int =16, f:object=None ):
@@ -17,7 +17,9 @@ def train_path(canbusdump:str="", bf:BF=None, chunk_size:int =16, f:object=None 
     fsample = 16e+6
     bitrate = 125000.0
     slope   = 0.3
-    snr     = 30
+    snr     = 40
+
+    transitionsPng(fsample=fsample,bitrate=bitrate,snr=snr,slope=slope,f=f)
 
 
     prev_state= SIG_
