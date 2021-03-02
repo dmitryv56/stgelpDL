@@ -144,6 +144,54 @@ def powerSolarPlant_log():
     ds.to_csv("~/LaLaguna/stgelpDL/dataLaLaguna/difnormSolarPlantPowerGen_21012020.csv", index=False)
     pass
 
+
+def powerSolarGen_Aggregation():
+    ds = pd.read_csv("~/LaLaguna/stgelpDL/dataLaLaguna/SolarPlantPowerGen_21012020.csv")
+    # col_name = 'lasts'
+    dt_col_name = 'Date Time'
+    aux_col_name = "Programmed_demand"
+    data_col_name = "PowerGen"
+    ds["normPowerGen"] = [round((ds[data_col_name].values[i]-round(95.0/2.4,4)),4) for i in range(len(ds)) ]
+    v = ds[data_col_name].values
+    dt = ds[dt_col_name].values
+    start_ind = 0
+    delta_ind = 144
+    vmin=[]
+    vmax=[]
+    vmean=[]
+    vdt=[]
+    while (start_ind+delta_ind<= len(v)):
+        # vmin.append(min(v[start_ind:start_ind + delta_ind]))
+        vvmax=max(v[start_ind:start_ind + delta_ind])
+        vmax.append(vvmax)
+        vmean.append(round(np.mean(v[start_ind:start_ind + delta_ind]),3))
+        vdt.append(dt[start_ind])
+        vvmin=vvmax
+        for i in range(start_ind,start_ind + delta_ind):
+            if v[i]>0.0001 and v[i]<vvmin:
+                vvmin=v[i]
+        vmin.append(vvmin)
+
+        start_ind = start_ind + delta_ind
+    file_csv="~/LaLaguna/stgelpDL/dataLaLaguna/aggSolarPlantPowerGen_21012020.csv"
+    ds1=pd.DataFrame()
+    ds1['min_power']=vmin
+    ds1['max_power']=vmax
+    ds1['mean_power']=vmean
+    ds1['Date Time']=vdt
+    ds1.to_csv(file_csv, index=False)
+    pass
+    ds1.to_csv(file_csv, index=False)
+
+    df1 = pd.read_csv(file_csv, parse_dates=['Date Time'], index_col='Date Time')
+    # series = df.loc[:, 'value'].values
+    # df.plot(figsize=(14,8),legend=None,title='a10-Drug Sales Series')
+    plot1 = df1.plot(figsize=(14, 8), legend=True, title='Solar Power Gen')
+    hist = df1.hist(bins=10,density=True)
+
+
+    return
+
 def powerSolarPlant_analysis():
     # ds = pd.read_csv("~/LaLaguna/stgelpDL/dataLaLaguna/__PowerGenOfSolarPlant_21012020.csv")
     ds = pd.read_csv("~/LaLaguna/stgelpDL/dataLaLaguna/difnormSolarPlantPowerGen_21012020.csv")
@@ -196,7 +244,7 @@ def powerSolarPlant_analysis():
     # series = df.loc[:, 'value'].values
     # df.plot(figsize=(14,8),legend=None,title='a10-Drug Sales Series')
     plot1=df1.plot(figsize=(14, 8), legend=True, title='Solar Power Gen')
-    hist=df1.hist(bins=10)
+    hist=df1.hist(bins=10,density=True)
     pass
 
     for i in range(47,119):
@@ -222,5 +270,6 @@ if __name__ == "__main__":
     #WindTurbine_edit()
     # Forcast_imbalance_edit()
     # powerSolarPlant_Imbalance()
-    powerSolarPlant_analysis()
+    # powerSolarPlant_analysis()
+    powerSolarGen_Aggregation()
     pass
