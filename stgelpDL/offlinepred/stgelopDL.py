@@ -214,6 +214,7 @@ def main(argc,argv):
     finally:
         if len(msgErr)>0:
             msg2log(main.__name__,msgErr,D_LOGS['except'])
+            log2All()
 
         message = "Time execution logging stoped at {}\n\n".format(datetime.now().strftime("%d %m %y %H:%M:%S"))
         msg2log(None, message, D_LOGS["timeexec"])
