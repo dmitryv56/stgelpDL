@@ -736,7 +736,22 @@ def fit_models(d_models, sld:tsSLD, X_predict:np.array = None,in_sample_start:in
         curr_model.param_fit = (
             X, sld.y_train, X_val, sld.y_eval, sld.n_step, N_FEATURES, EPOCHS, str(folder_train_log), D_LOGS['train'])
         msg2log(fit_models.__name__, "\n\n {} model  fitting\n".format(curr_model.nameModel), D_LOGS['train'])
-        history = curr_model.fit_model()
+
+        msgErr=""
+        try:
+            history = curr_model.fit_model()
+
+        except:
+            msgErr = "O-o-ops! I got an unexpected error at fit model {} - reason  {}\n".format(curr_model.typeModel,
+                sys.exc_info())
+        finally:
+            if len(msgErr) > 0:
+                msg2log(fit_models.__name__, msgErr, D_LOGS['except'])
+                log2All()
+                histories[k]={}
+                dict_predict[curr_model.nameModel]=np.zeros((sld.predict_lag),dtype=float)
+        if len(msgErr)>0:  # 'continue' not supported inside 'finally' clause and so the check is carried out here
+            continue
 
         if curr_model.typeModel == "CNN" or curr_model.typeModel == "LSTM" or curr_model.typeModel == "MLP":
 
@@ -754,9 +769,20 @@ def fit_models(d_models, sld:tsSLD, X_predict:np.array = None,in_sample_start:in
                 one_step_predicts_in_sampleNN(sld, curr_model, X_predict) # predict in sample
 
         elif curr_model.typeModel == "tsARIMA":
-            curr_model.fitted_model_logging()
+            msgErr=""
+            try:
+                curr_model.fitted_model_logging()
+            except:
+                msgErr = "O-o-ops! I got an unexpected error at fitted model logging {} - reason  {}\n".format(
+                    curr_model.typeModel,  sys.exc_info())
+            finally:
+                if len(msgErr) > 0:
+                    msg2log(fit_models.__name__, msgErr, D_LOGS['except'])
+                    log2All()
+                    dict_predict[curr_model.nameModel] = np.zeros((sld.predict_lag), dtype=float)
+                else:
+                    dict_predict[curr_model.nameModel] = curr_model.predict
 
-            dict_predict[curr_model.nameModel] = curr_model.predict
             # TODO
             # if in_sample_start is None:
             #     dict_predict[curr_model.nameModel] = curr_model.predict
