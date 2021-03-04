@@ -19,15 +19,25 @@ def main(argc,argv)->int:
     title="canbusFD_train"
     dir_path = path.dirname(path.realpath(__file__))
     folder_for_logging = Path(dir_path) / "Logs" / "{}_{}".format(title, date_time)
-
+    folder_repository=Path(dir_path) / "Repository"
+    Path(folder_repository).mkdir(parents=True, exist_ok=True)
     listLogSet(str(folder_for_logging))  # A logs are creating
 
+    method="BF" # BF -Bloom Filter, DTWIN - digital twin
+    method = "DTWIN"
     canbusdump ="/home/dmitryv/ICSim/ICSim/candump-2021-02-23_143436.log"
+    fsample= 16e+6
+    bitrate: float = 125000.0
+    slope: float = 0.3
+    snr:float = 40.0
     chunk_size=32
     bf = BF(filter_size=1024, fp_prob=0.05, f=D_LOGS['block'])
-    train_path(canbusdump=canbusdump, bf=bf, chunk_size=chunk_size,f=D_LOGS['control'])
+
+    train_path(method=method, canbusdump=canbusdump, bf=bf, chunk_size=chunk_size, fsample=fsample,
+                bitrate=bitrate, slope=slope, snr=snr, repository=str(folder_repository),f=D_LOGS['control'] )
     # canbusdump ="/home/dmitryv/ICSim/ICSim/candump - 2021 - 02 - 11_100040.log"
-    test_path(canbusdump=canbusdump, bf=bf, chunk_size=chunk_size, f=D_LOGS['predict'])
+    test_path(method=method,canbusdump=canbusdump, bf=bf, chunk_size=chunk_size, fsample=fsample,
+                bitrate=bitrate, slope=slope, snr=snr, repository=str(folder_repository),f=D_LOGS['control'])
 
     closeLogs()
     return 0

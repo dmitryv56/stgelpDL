@@ -1,16 +1,19 @@
 #!/usr/bin/python3
 
+import copy
 from pathlib import Path
 import re
 import matplotlib.pyplot as plt
 import math
 import numpy as np
 import random
+import pandas as pd
 
 
 from predictor.utility import msg2log
 from clustgelDL.auxcfg  import D_LOGS,log2All
 from canbus.BF import BF
+
 
 
 # phy layer state
@@ -28,7 +31,7 @@ T00 = 5   # SIG_0 -> SIG_0
 T01 = 6   # SIG_0 -> SIG_1
 T10 = 7   # SIG_1 -> SIG_0
 T11 = 8   # SIG_1 -> SIG_1
-
+TAN = 9
 tr_names={T__:"no signal waveform",
           T_0 :"transition to zero",
           T0_ : "transition from zero",
@@ -38,6 +41,7 @@ tr_names={T__:"no signal waveform",
           T01 : "transition zero-one",
           T10 : "transition one-zero",
           T11 : "transition one-one",
+          TAN : "possible anomaly"
           }
 
 
@@ -402,9 +406,9 @@ def logPackets(ld:list,offset_line:int=0,chunk_size:int=16):
 
 """ For chunk generate list of trasitions."""
 def trstreamGen(canbusdump:str="", offset_line:int=0, chunk_size:int=16, prev_state:int=SIG_, f:object=None)->list:
-    offset_line = offset_line
-    chunk_size = chunk_size
-    canbusdump = canbusdump
+    # offset_line = offset_line
+    # chunk_size = chunk_size
+    # canbusdump = canbusdump
     transition_stream = []
     ld = readChunkFromCanBusDump(offset_line=offset_line, chunk_size=chunk_size, canbusdump=canbusdump, f=f)
     if not ld:
@@ -417,9 +421,30 @@ def trstreamGen(canbusdump:str="", offset_line:int=0, chunk_size:int=16, prev_st
 
     return transition_stream
 
+""" Generation of the waveforma according to the bit stream. 
+A statistical estimate of the histogram is calculated for each waveform.
+At the training stage  within one packet (frame), histograms are averaged over the type of bit transitions.
+The resulting histogram concatenated with type of the bit is added to Blooom Filter. (T.B.D. - add to DB too).
+At the test stage no averaging. The histogram concatenated with the type of the bit is checked with BF. If no matc there
+is an anomaly symptom. 
 
+"""
 def wfstreamGen(mode:str='train',transition_stream:list=[],fsample:float=16e+6,bitrate:float=125000.0, slope:float=0.1,
-                snr:float=20, trwf_d:dict=TR_DICT,bf:BF=None, title:str="", f:object=None)->dict:
+                snr:float=20, trwf_d:dict=TR_DICT,bf:BF=None, title:str="", repository:str="", f:object=None)->dict:
+    """
+
+    :param mode:
+    :param transition_stream:
+    :param fsample:
+    :param bitrate:
+    :param slope:
+    :param snr:
+    :param trwf_d:
+    :param bf:
+    :param title:
+    :param f:
+    :return:
+    """
     packet_in_stream = -1
     anomaly_d={}
     loggedSignal = np.array([])
@@ -525,6 +550,11 @@ def wfstreamGen(mode:str='train',transition_stream:list=[],fsample:float=16e+6,b
                        title=title, subtitle=subtitle)
 
     return anomaly_d
+
+
+
+
+
 
 def plotSignal(mode:str="train", signal:np.array=None, fsample:float=1.0, packetNumber:int=0, startBit:int=0,
                title:str="",subtitle:str=""):
