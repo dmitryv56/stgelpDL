@@ -180,7 +180,7 @@ class T_1WF(canbusWF):
 
     def genWF(self):
         self.pure = interpSlopeWF(fsample=self.fsample, bitrate=self.bitrate, slope=self.slope,
-                                  left_y=self.vcan_lD, right_y=self.vcan_lD, f=self.f)
+                                  left_y=self.vcan_lR, right_y=self.vcan_lD, f=self.f)
         self.signal = np.add(self.pure, self.awgn(self.pure))
 
 class T0_WF(canbusWF):
@@ -205,7 +205,7 @@ class T1_WF(canbusWF):
     def genWF(self):
 
         self.pure= interpSlopeWF(fsample=self.fsample, bitrate=self.bitrate, slope=self.slope,
-                                 left_y=self.vcan_lD, right_y=self.vcan_lD, f=self.f)
+                                 left_y=self.vcan_lD, right_y=self.vcan_lR, f=self.f)
         self.signal=np.add(self.pure,self.awgn(self.pure))
 
 class T00WF(canbusWF):
@@ -452,6 +452,7 @@ def wfstreamGen(mode:str='train',transition_stream:list=[],fsample:float=16e+6,b
     numberLoggedBit = 16
     subtitle="Fsample={} MHz Bitrate={} Kbit/sec SNR={} Db".format(round(fsample/10e+6,3), round(bitrate/10e3,2),
                                                                    round(snr,0))
+
     """ random number for logged packet in the stream """
     loggedPacket=random.randrange(0,len(transition_stream))
     sum_match_train  = 0
@@ -539,7 +540,7 @@ def wfstreamGen(mode:str='train',transition_stream:list=[],fsample:float=16e+6,b
     if mode=="train":
         msg2log(None, "\nTrain summary for SNR={} DB\nmatch: {} no match:{}".format(snr, sum_match_train, sum_no_match_train),
                 D_LOGS['train'])
-
+        bf.save(repository)
     if mode=="test":
         msg2log(None, "\nTest summary for SNR = {} DB\nmatch: {} no match:{}".format(snr,sum_match_test, sum_no_match_test),
                     D_LOGS['predict'])
@@ -563,9 +564,11 @@ def plotSignal(mode:str="train", signal:np.array=None, fsample:float=1.0, packet
     signal_png = Path(D_LOGS['plot'] / Path(title)).with_suffix(suffics)
 
     delta=1.0/fsample
-    t=np.arange(0.0, len(signal)*delta, delta)
+    t=np.arange(0.0, (len(signal)-1)*delta, delta)
+
+    n=min(len(t),len(signal))
     fig, ax = plt.subplots(figsize=(18, 5))
-    ax.plot(t,signal, color='r')
+    ax.plot(t[:n],signal[:n], color='r')
     ax.set_xlabel('time')
     ax.set_ylabel('Signal wavefors')
     ax.set_title(title)

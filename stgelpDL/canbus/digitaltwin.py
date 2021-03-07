@@ -31,7 +31,7 @@ D_STATUSES={STATUS_INIT:"empty model",STATUS_SET:"model was set",STATUS_COMP:"co
 class DigitalTwin(object):
 
     def __init__(self,name:str = "DigitalTwin",model_repository:str = "ckpt", f:object = None):
-        self.model=tf.keras.Sequential()
+        self.model=tf.keras.Sequential(name=name)
         self.name=name
         self.model_repository=model_repository
         self.f=f
@@ -310,15 +310,18 @@ def digitalTwinTrain(model:object=DigitalTwinMLP, name:str="DigitalTwinMLP", inp
     digital_twin.compile()
 
     """ fit process """
+    number_update=0
     if len(chunk_list)>1:
         for item in chunk_list[:-1]:
             x,y,_ = readChunk(item,f=f)
-            digital_twin.fit(x,y,batch_size=hyperprm['batch_size'],epochs=hyperprm['epochs'])
+            history = digital_twin.fit(x,y,batch_size=hyperprm['batch_size'],epochs=hyperprm['epochs'])
+            chart_loss(digital_twin.model.name, number_update, history)
+            number_update+=1
             log2All()
     else:
         x, y, _ = readChunk(chunk_list[0], f=f)
-        digital_twin.fit(x, y, batch_size=hyperprm['batch_size'], epochs=hyperprm['epochs'])
-
+        history = digital_twin.fit(x, y, batch_size=hyperprm['batch_size'], epochs=hyperprm['epochs'])
+        chart_loss(digital_twin.model.name, number_update, history)
     x, y, _ = readChunk(chunk_list[-1:][0], f=f)
     digital_twin.evaluate(x,y)
     digital_twin.saveModel()
@@ -339,19 +342,22 @@ def digitalTwinPredict(model:object=DigitalTwinMLP, name:str="DigitalTwinMLP",
             x,y,_ = readChunk(item,f=f)
             predicted_transitions =digital_twin.predict(x)
             title="Bit Transitions Anomaly State in {} th chunk".format(i)
-            plotTransitionStates(predicted_transitions=predicted_transitions, title=title)
+            # plotTransitionStates(predicted_transitions=predicted_transitions, title=title)
+            plotTransitionLabels(predicted_transitions=predicted_transitions, title=title+"_labels")
             i+=1
             log2All()
     else:
         x, y, _ = readChunk(chunk_list[0], f=f)
         predicted_transitions=digital_twin.predict(x)
         title = "Bit Transitions Anomaly State in the 0 chunk"
-        plotTransitionStates(predicted_transitions=predicted_transitions, title=title)
+        # plotTransitionStates(predicted_transitions=predicted_transitions, title=title)
+        plotTransitionLabels(predicted_transitions=predicted_transitions, title=title+"_labels")
         log2All()
     x, y, _ = readChunk(chunk_list[-1:][0], f=f)
     predicted_transitions=digital_twin.predict(x)
     title = "Bit Transitions Anomaly State in the last chunk"
-    plotTransitionStates(predicted_transitions=predicted_transitions, title=title)
+    # plotTransitionStates(predicted_transitions=predicted_transitions, title=title)
+    plotTransitionLabels(predicted_transitions=predicted_transitions, title=title+"_labels")
     log2All()
     return
 
@@ -369,9 +375,64 @@ def plotTransitionStates(predicted_transitions:np.array=None, fsample:float=1.0,
     ax.plot(t, high_bound, color='g')
     ax.set_xlabel('Bit number')
     ax.set_ylabel('Bit Transitions')
+
     ax.set_title(title)
     ax.grid(True)
     plt.savefig(pred_transitions_png)
+    plt.close("all")
+    return
+
+
+def plotTransitionLabels(predicted_transitions: np.array = None, fsample: float = 1.0, packetNumber: int = 0,
+                         title: str = "", subtitle: str = ""):
+    pass
+    suffics = '.png'
+    pred_transitions_png = Path(D_LOGS['plot'] / Path(title)).with_suffix(suffics)
+    labels=["no signal","no sig->'0'","'0'->no sig","no sig->'1'","'1'->no sig","'0'->'0'","'0'->'1'","'1'->'0'",
+            "'1'->'1'","anomaly"]
+    delta = 1.0 / fsample
+    t = np.arange(0.0, len(predicted_transitions) * delta, delta)
+    fig, ax = plt.subplots(figsize=(18, 5))
+    high_bound = np.array([T11 for i in range(len(predicted_transitions))])
+    ax.plot(t, predicted_transitions, color='r',marker='o', linestyle="None")
+    ax.plot(t, high_bound, color='g')
+    ax.set_xlabel('Bit number')
+    ax.set_ylabel('Bit Transitions')
+    plt.yticks([0,1,2,3,4,5,6,7,8,9],labels)
+    # plt.ytickslabels(labels)
+
+    ax.set_title(title)
+    ax.grid(True)
+    plt.savefig(pred_transitions_png)
+    plt.close("all")
+    return
+
+def chart_loss(name_model, number_update, history):
+    # Plot history: MAE
+
+    plt.style.use('seaborn-darkgrid')
+    palette = plt.get_cmap('Set1')
+    fig, ax = plt.subplots()
+    ind_palette=0
+    for key,value in history.history.items():
+        label = "{} (training data)".format(key)
+        if 'val_' in key:
+            label="{} (validation data)".format(key)
+        ax.plot(history.history[key], marker='',label=key, color=palette(ind_palette))
+        ind_palette+=1
+
+    # ax.plot(history.history['loss'], marker='', label='loss (training data)', color=palette(0))
+    # ax.plot(history.history['mean_squared_error'], marker='', label='MSE (training data)', color=palette(1))
+    # ax.plot(history.history['val_loss'], marker='', label='MAE (validation data)', color=palette(1))
+
+    plt.legend(loc=2, ncol=2)
+    ax.set_title('Loss {} after {} update'.format(name_model, number_update))
+    ax.set_xlabel("No. epoch")
+    ax.set_ylabel("Loss value")
+    # plt.show(block=stop_on_chart_show)
+    file_png = Path(D_LOGS['plot'])/Path("{}_update_{}".format(name_model,number_update)).with_suffix(".png")
+
+    plt.savefig(file_png)
     plt.close("all")
     return
 

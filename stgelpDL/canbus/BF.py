@@ -131,49 +131,49 @@ Already inserted items:         {self.item_count}
 if __name__=="__main__":
     pass
 
-    # words to be added
-    word_present = ['abound', 'abounds', 'abundance', 'abundant', 'accessable',
-                    'bloom', 'blossom', 'bolster', 'bonny', 'bonus', 'bonuses',
-                    'coherent', 'cohesive', 'colorful', 'comely', 'comfort',
-                    'gems', 'generosity', 'generous', 'generously', 'genial']
-
-    # word not added
-    word_absent = ['bluff', 'cheater', 'hate', 'war', 'humanity',
-                   'racism', 'hurt', 'nuke', 'gloomy', 'facebook',
-                   'geeksforgeeks', 'twitter']
-
-    with open("a.txt",'w') as ff:
-        bf=BF(filter_size=1024,fp_prob=0.05,f=ff)
-        print(bf)
-        for item in word_present:
-            bf.add_item(item)
-
-        shuffle(word_present)
-        shuffle(word_absent)
-        test_words = word_present[:10] + word_absent
-        shuffle(test_words)
-        for word in test_words:
-            if bf.check_item(word):
-                if word in word_absent:
-                    print("'{}' is a false positive!".format(word))
-                else:
-                    print("'{}' is probably present!".format(word))
-            else:
-                print("'{}' is definitely not present!".format(word))
-        print(bf)
-
-        bf.save("bf.json")
-        del bf
-        bf1=BF(filter_size=100,fp_prob=0.01,f=ff)
-        bf1.load("bf.json")
-        msg2log(None,bf1,ff)
-        for word in test_words:
-            if bf1.check_item(word):
-                if word in word_absent:
-                    print("'{}' is a false positive!".format(word))
-                else:
-                    print("'{}' is probably present!".format(word))
-            else:
-                print("'{}' is definitely not present!".format(word))
-
-
+    # # words to be added
+    # word_present = ['abound', 'abounds', 'abundance', 'abundant', 'accessable',
+    #                 'bloom', 'blossom', 'bolster', 'bonny', 'bonus', 'bonuses',
+    #                 'coherent', 'cohesive', 'colorful', 'comely', 'comfort',
+    #                 'gems', 'generosity', 'generous', 'generously', 'genial']
+    #
+    # # word not added
+    # word_absent = ['bluff', 'cheater', 'hate', 'war', 'humanity',
+    #                'racism', 'hurt', 'nuke', 'gloomy', 'facebook',
+    #                'geeksforgeeks', 'twitter']
+    #
+    # with open("a.txt",'w') as ff:
+    #     bf=BF(filter_size=1024,fp_prob=0.05,f=ff)
+    #     print(bf)
+    #     for item in word_present:
+    #         bf.add_item(item)
+    #
+    #     shuffle(word_present)
+    #     shuffle(word_absent)
+    #     test_words = word_present[:10] + word_absent
+    #     shuffle(test_words)
+    #     for word in test_words:
+    #         if bf.check_item(word):
+    #             if word in word_absent:
+    #                 print("'{}' is a false positive!".format(word))
+    #             else:
+    #                 print("'{}' is probably present!".format(word))
+    #         else:
+    #             print("'{}' is definitely not present!".format(word))
+    #     print(bf)
+    #
+    #     bf.save("bf.json")
+    #     del bf
+    #     bf1=BF(filter_size=100,fp_prob=0.01,f=ff)
+    #     bf1.load("bf.json")
+    #     msg2log(None,bf1,ff)
+    #     for word in test_words:
+    #         if bf1.check_item(word):
+    #             if word in word_absent:
+    #                 print("'{}' is a false positive!".format(word))
+    #             else:
+    #                 print("'{}' is probably present!".format(word))
+    #         else:
+    #             print("'{}' is definitely not present!".format(word))
+    #
+    #
