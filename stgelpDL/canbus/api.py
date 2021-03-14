@@ -14,8 +14,8 @@ from predictor.utility import msg2log
 from clustgelDL.auxcfg  import D_LOGS,log2All
 from canbus.BF import BF
 
-
-
+# number of randomly generated 'no signal' bits in bit stream
+INSERTED_NO_SIGNAL=5
 # phy layer state
 SIG_  = 0
 SIG_0 = 1
@@ -43,6 +43,7 @@ tr_names={T__:"no signal waveform",
           T11 : "transition one-one",
           TAN : "possible anomaly"
           }
+tr_labels={T__:"**", T_0:"*0",T0_:"0*",T_1:"*1",T1_:"1*",T00:"00",T01:"01",T10:"10",T11:"11",TAN:"XX"}
 
 
 
@@ -278,6 +279,7 @@ TR_DICT={T__: T__WF,
 }
 """
 def readChunkFromCanBusDump(offset_line:int =0, chunk_size:int=128,canbusdump:str=None, f:object=None)->list:
+
     parsed_list=[]
     if canbusdump is None or canbusdump=="" or not Path(canbusdump).exists():
         return parsed_list
@@ -320,6 +322,12 @@ def parseCanBusLine(line:str=None, f:object=None)->dict:
 
     bitstr_list =packet2bits(packet=itemPacket,f=f)
     bit_str=''.join(bitstr_list)
+    """ random generation 0-INSERTED_NO_SIGNAL 'no signal' bits marked as *"""
+    nrnd=random.randrange(0,INSERTED_NO_SIGNAL+1)
+    insnosigb=''.join(["*" for i in range(nrnd+1)])
+    if len(insnosigb)>0:
+        bit_str=bit_str+insnosigb
+
     return {'DateTime':itemDateTime,'IF':itemIF, 'ID':itemID,'Data':itemData,'Packet':itemPacket,
             'bitstr_list':bitstr_list,'bit_str':bit_str}
 
@@ -346,12 +354,24 @@ def packet2bits(packet:str=None,f:object=None)->list:
         start=start +step
     return bits_list
 
+""" Transform bit to  the state, the type of waveform being be generated, according by current bit and previous state
+                           st=R(bit, prev_st).
+The set of states is {T__,T_0,T_1,T0_.T1_,T00,T01,T10,T11}, the current bit belongs to { '0' , '1', '*'-no signal}. 
+"""
 def transitionRules(prev_state:int, current_bit:str)->(int, int):
+    """
+
+    :param prev_state:
+    :param current_bit:
+    :return:
+    """
     if prev_state==SIG_:
         if current_bit=='0':
             transition=T_0
         elif current_bit=='1':
             transition=T_1
+        elif current_bit=='*':
+            transition=T__
         else:
             transition=T__
 
@@ -360,6 +380,8 @@ def transitionRules(prev_state:int, current_bit:str)->(int, int):
             transition = T00
         elif current_bit == '1':
             transition = T01
+        elif current_bit == '*':
+            transition = T0_
         else:
             transition = T0_
     elif prev_state==SIG_1:
@@ -367,12 +389,16 @@ def transitionRules(prev_state:int, current_bit:str)->(int, int):
             transition = T10
         elif current_bit == '1':
             transition = T11
+        elif current_bit == '*':
+            transition = T1_
         else:
             transition = T1_
     if current_bit=='0':
         new_state=SIG_0
     elif current_bit=='1':
         new_state=SIG_1
+    elif current_bit == '*':
+        new_state=SIG_
     else:
         new_state=SIG_
     return transition, new_state

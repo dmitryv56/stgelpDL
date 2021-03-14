@@ -76,9 +76,10 @@ def train_pathDTWIN(canbusdump: str = "", chunk_size: int = 16, fsample: float =
             break
         title = "train_chunk_{}_snr_{}".format(n_chunk, snr)
 
-        chunk_list,input_size = wfstreamGenSLD(mode='train', transition_stream=transition_stream, source='wf', fsample=fsample,
-                       bitrate=bitrate, slope=slope, snr=snr, trwf_d=TR_DICT, title=title, repository=repository,
-                       start_chunk=train_chunk_start, dump_chunk_size = 512, f=D_LOGS['train'])
+        chunk_list,input_size = wfstreamGenSLD(mode='train', transition_stream=transition_stream, source='wf',
+                                               fsample=fsample, bitrate=bitrate, slope=slope, snr=snr, trwf_d=TR_DICT,
+                                               title=title, repository=repository, start_chunk=train_chunk_start,
+                                               dump_chunk_size = 512, lmd=0.001, snr_distortion=3.0, f=D_LOGS['train'])
         all_train_chunks=all_train_chunks + chunk_list
         train_chunk_start=train_chunk_start +len(chunk_list)
         offset_line = offset_line + chunk_size
@@ -182,7 +183,8 @@ def test_pathDTWIN(canbusdump: str = "", chunk_size: int = 16, fsample: float = 
         chunk_list, input_size = wfstreamGenSLD(mode='est', transition_stream=transition_stream, source='wf',
                                                 fsample=fsample, bitrate=bitrate, slope=slope, snr=snr, trwf_d=TR_DICT,
                                                 title=title, repository=repository,
-                                                start_chunk=test_chunk_start, dump_chunk_size=512, f=D_LOGS['train'])
+                                                start_chunk=test_chunk_start, dump_chunk_size=512,
+                                                lmd=0.01, snr_distortion=3.0, f=D_LOGS['train'])
         all_test_chunks = all_test_chunks + chunk_list
         test_chunk_start = test_chunk_start + len(chunk_list)
         offset_line = offset_line + chunk_size
