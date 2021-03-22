@@ -21,18 +21,19 @@ The internal structures fo this dictionary is following
 The dictionary is serialized in json format. The path to the dictionary  holds in the configuration file (cfg.py) and
 supports in Control Plane object.
 """
-import os
-from shutil import copyfile
-from datetime import datetime, timedelta
-from pathlib import Path
 import copy
-
+import os
+from datetime import datetime
+from pathlib import Path
 from pickle import dump, load
+from shutil import copyfile
+
 import pandas as pd
 from matplotlib import pyplot as plt
 
 from predictor.Statmodel import tsARIMA
 from predictor.utility import msg2log, cSFMT, PlotPrintManager
+
 
 class ControlPlane():
     r""" A class used to realize the control plane functionality of the short term predicting.
@@ -89,34 +90,31 @@ class ControlPlane():
     _hidden_neyrons = 16
     _dropout = 0.2
     _folder_control_log = None
-    _folder_train_log   = None
+    _folder_train_log = None
     _folder_predict_log = None
-    _folder_auto_log    = None
-    _folder_forecast    = None
+    _folder_auto_log = None
+    _folder_forecast = None
     _folder_rt_datasets = None
-    _folder_descriptor  = None
-    _file_descriptor    = None
-    _seasonaly_period   = 6
-    _predict_lag        = 4
-    _max_p              = 2
-    _max_q              = 2
-    _max_d              = 1
+    _folder_descriptor = None
+    _file_descriptor = None
+    _seasonaly_period = 6
+    _predict_lag = 4
+    _max_p = 3
+    _max_q = 2
+    _max_d = 2
 
     _scaled_data_4_auto = False
-    _start_date_4_auto  = None
-    _end_data_4_auto    = None
-    _time_trunc_4_auto  = 'hour'
-    _geo_limit_4_auto   = None
-    _geo_ids_4_auto     = None
-    _last_time_auto     = None
+    _start_date_4_auto = None
+    _end_data_4_auto = None
+    _time_trunc_4_auto = 'hour'
+    _geo_limit_4_auto = None
+    _geo_ids_4_auto = None
+    _last_time_auto = None
 
     _forecast_number_step = 0
 
-
-
-
     """ static members """
-    _number_of_plots     = 0
+    _number_of_plots = 0
     _max_number_of_plots = 5
 
     _mode_imbalance = 0
@@ -127,24 +125,21 @@ class ControlPlane():
     _ts_duration_days = 7
     _psd_segment_size = 512
 
-
-
     def __init__(self):
         """
 
         """
 
-        self.fc            = None
-        self.fp            = None
-        self.ft            = None
-        self.fa            = None
-        self.ff            = None
+        self.fc = None
+        self.fp = None
+        self.ft = None
+        self.fa = None
+        self.ff = None
 
-        self.state         = None
+        self.state = None
         self.drtDescriptor = {}
-        self.predictDF     = None
+        self.predictDF = None
         self.bundle_predictions_file = None
-
 
     @staticmethod
     def get_numberPlots():
@@ -156,26 +151,28 @@ class ControlPlane():
 
     @staticmethod
     def inc_numberPlots():
-        ControlPlane._number_of_plots +=1
+        ControlPlane._number_of_plots += 1
         return
 
     @staticmethod
     def set_modeImbalance(val):
-        ControlPlane._mode_imbalance=val
+        ControlPlane._mode_imbalance = val
+
     @staticmethod
     def get_modeImbalance():
         return ControlPlane._mode_imbalance
 
     @staticmethod
     def set_modeImbalanceNames(val):
-        (ControlPlane._imbalace_name, ControlPlane._programmed_name , ControlPlane._demand_name) = val
+        (ControlPlane._imbalace_name, ControlPlane._programmed_name, ControlPlane._demand_name) = val
+
     @staticmethod
     def get_modeImbalanceNames():
-        return  (ControlPlane._imbalace_name, ControlPlane._programmed_name , ControlPlane._demand_name)
+        return (ControlPlane._imbalace_name, ControlPlane._programmed_name, ControlPlane._demand_name)
 
     @staticmethod
     def set_ts_duration_days(val):
-        ControlPlane._ts_duration_days=val
+        ControlPlane._ts_duration_days = val
 
     @staticmethod
     def get_ts_duration_days():
@@ -567,21 +564,21 @@ class ControlPlane():
 
     forecast_number_step = property(get_forecast_number_step, set_forecast_number_step)
 
-
     """     common Control Plane methods    """
+
     def save_descriptor(self):
         folder_descr = Path(self.folder_descriptor)
         Path(folder_descr).mkdir(parents=True, exist_ok=True)
 
         file_pickle = Path(folder_descr, self.file_descriptor)
 
-        with open(file_pickle,'wb') as outfile:
+        with open(file_pickle, 'wb') as outfile:
             # json.dump(self.drtDescriptor, outfile)
-            dump(self.drtDescriptor,outfile)
-            msg="Descriptor had already serialized in {}".format(file_pickle)
+            dump(self.drtDescriptor, outfile)
+            msg = "Descriptor had already serialized in {}".format(file_pickle)
             msg2log(self.save_descriptor.__name__, msg, self.fc)
         with open(file_pickle, 'rb') as infile:
-            new_dict=load(infile)
+            new_dict = load(infile)
             print(new_dict == self.drtDescriptor)
             pass
         return
@@ -591,13 +588,13 @@ class ControlPlane():
         bRet = False
         try:
 
-            file_pickle=Path(self.folder_descriptor) / Path(self.file_descriptor)
-            if (not os.path.exists(file_pickle)) or (not os.path.isfile(file_pickle)) :
+            file_pickle = Path(self.folder_descriptor) / Path(self.file_descriptor)
+            if (not os.path.exists(file_pickle)) or (not os.path.isfile(file_pickle)):
                 msg = "No saved descriptors"
                 msg2log(self.load_descriptor.__name__, msg, self.fc)
                 return bRet
 
-            with open(file_pickle,'rb') as infile:
+            with open(file_pickle, 'rb') as infile:
                 # self.drtDescriptor =json.load(infile)
                 self.drtDescriptor = load(infile)
                 msg = "Descriptor had been deserialized from {}".format(file_pickle)
@@ -609,49 +606,48 @@ class ControlPlane():
         return bRet
 
     def logDescriptor(self):
-        for k,v in self.drtDescriptor.items():
+        for k, v in self.drtDescriptor.items():
             pass
             if type(v) is dict:
-                for k1,v1 in v:
-                    msg="{} : {} :{}".format(k,k1,v1)
-                    msg2log("",msg,self.f)
-            msg=("{} : {}".format( k,v))
+                for k1, v1 in v:
+                    msg = "{} : {} :{}".format(k, k1, v1)
+                    msg2log("", msg, self.f)
+            msg = ("{} : {}".format(k, v))
             msg2log("", msg, self.fc)
 
         return
-
 
     """
     Control Plane method for time series analysis
   
     """
+
     @staticmethod
     def isARIMAidentified():
         (p, d, q) = tsARIMA.get_ARIMA()
         (p1, d1, q1, P, D, Q) = tsARIMA.get_SARIMA()
-        if (p>-1 and d>-1 and q>-1 and p1>-1 and d1>-1 and q1>-1 and P>-1 and D>-1 and Q>-1 ):
-            return ((p,d,q), (p1,d1,q1), (P,D,Q))
+        if (p > -1 and d > -1 and q > -1 and p1 > -1 and d1 > -1 and q1 > -1 and P > -1 and D > -1 and Q > -1):
+            return ((p, d, q), (p1, d1, q1), (P, D, Q))
         else:
             return None
 
-    def ts_analysis(self,ds ):
+    def ts_analysis(self, ds):
         status = ControlPlane.isARIMAidentified()
         if status is None:
-
             arima = tsARIMA("control_seasonal_arima", "tsARIMA", 32, 100, self.fc)
-            arima.param =(0, 0, 0, self.max_p, self.max_d, self.max_q, self.seasonaly_period, self.predict_lag,
-                      self.discret, ds.df[self.rcpower_dset].values)
+            arima.param = (0, 0, 0, self.max_p, self.max_d, self.max_q, self.seasonaly_period, self.predict_lag,
+                           self.discret, ds.df[self.rcpower_dset].values)
 
             arima.path2modelrepository = self.path_repository
             arima.timeseries_name = self.rcpower_dset
             arima.nameModel = 'control_seasonal_arima'
             arima.control_arima()
-            arima.ts_analysis( ControlPlane.get_psd_segment_size())
+            arima.ts_analysis(ControlPlane.get_psd_segment_size())
 
             del arima
             arima1 = tsARIMA("control_best_arima", "tsARIMA", 32, 100, self.fc)
             arima1.param = (0, 0, 0, self.max_p, self.max_d, self.max_q, self.seasonaly_period, self.predict_lag,
-                           self.discret, ds.df[self.rcpower_dset].values)
+                            self.discret, ds.df[self.rcpower_dset].values)
 
             arima1.path2modelrepository = self.path_repository
             arima1.timeseries_name = self.rcpower_dset
@@ -660,7 +656,6 @@ class ControlPlane():
             del arima1
 
         return
-
 
     def createPredictDF(self, predict_dict, predict_date):
         """
@@ -672,7 +667,7 @@ class ControlPlane():
 
         self.predictDF = self._createPredictDF(predict_dict, predict_date)
 
-        message =f"""
+        message = f"""
         The final predict report started to be generated...
         It has following columns: {self.predictDF.columns}
         """
@@ -687,8 +682,8 @@ class ControlPlane():
         :return:
         """
         aux_dict = {}
-        aux_dict[self.dt_dset]= [predict_date]
-        aux_dict[self.rcpower_dset]= [None]
+        aux_dict[self.dt_dset] = [predict_date]
+        aux_dict[self.rcpower_dset] = [None]
 
         for k, v in predict_dict.items():
             aux_dict[k] = [v[0]]
@@ -711,8 +706,7 @@ class ControlPlane():
         :return:
         """
         df = self._createPredictDF(predict_dict, predict_date)
-        self.predictDF.at[len(self.predictDF)-1, self.rcpower_dset] =received_value
-
+        self.predictDF.at[len(self.predictDF) - 1, self.rcpower_dset] = received_value
 
         df1 = self.predictDF.append(df, ignore_index=True)
 
@@ -727,15 +721,15 @@ class ControlPlane():
 
         return
 
-    def getPredictDate(self,ds):
+    def getPredictDate(self, ds):
 
         date_time = ds.predict_date.strftime(cSFMT)
         return date_time
 
-    def getlastReceivedData(self,ds):
+    def getlastReceivedData(self, ds):
 
         last_len = len(ds.df[self.rcpower_dset])
-        value = ds.df[self.rcpower_dset][last_len-1]
+        value = ds.df[self.rcpower_dset][last_len - 1]
         return value
 
     def logPredictDF(self):
@@ -744,26 +738,25 @@ class ControlPlane():
         :return: file_for_forecast -csv -file
         """
 
-        suffics      = '.csv'
-        suffics_bak  = '.bak'
-        predictDFfile= 'BundleOfPredictions'
+        suffics = '.csv'
+        suffics_bak = '.bak'
+        predictDFfile = 'BundleOfPredictions'
         file_for_forecast = Path(self.folder_forecast, predictDFfile).with_suffix(suffics)
 
-
-        if os.path.exists(str(file_for_forecast)) :
+        if os.path.exists(str(file_for_forecast)):
             predictDFbak = predictDFfile + "_" + str(len(self.predictDF[self.dt_dset]))
             file_bak = Path(self.folder_forecast, predictDFbak).with_suffix(suffics_bak)
             copyfile(str(file_for_forecast), str(file_bak))
 
         self.predictDF.to_csv(file_for_forecast, index=False)
 
-        message =f"""
+        message = f"""
         The bundle of predictions saved to: {file_for_forecast} 
         Number of predictions             : {len(self.predictDF[self.rcpower_dset])}
         """
 
         msg2log(self.logPredictDF.__name__, message, self.fa)
-        self.bundle_predictions_file=file_for_forecast
+        self.bundle_predictions_file = file_for_forecast
         return file_for_forecast
 
     def plotPredictDF(self):
@@ -771,9 +764,10 @@ class ControlPlane():
         suffics = '.png'
 
         try:
-            bundle_predictions_png =Path(self.bundle_predictions_file).with_suffix(suffics)
-            bundle_predictions_png_=str(bundle_predictions_png).replace('.','_') +  datetime.now().strftime(cSFMT)+"_bak_"
-            bundle_predictions_png_bak = Path( bundle_predictions_png_ ).with_suffix(suffics)
+            bundle_predictions_png = Path(self.bundle_predictions_file).with_suffix(suffics)
+            bundle_predictions_png_ = str(bundle_predictions_png).replace('.', '_') + datetime.now().strftime(
+                cSFMT) + "_bak_"
+            bundle_predictions_png_bak = Path(bundle_predictions_png_).with_suffix(suffics)
             copyfile(str(bundle_predictions_png), str(bundle_predictions_png_bak))
             PlotPrintManager.addPng2Baklist(bundle_predictions_png_bak)
         except:
@@ -788,12 +782,12 @@ class ControlPlane():
             fig.suptitle("The bundle of {} predictions".format(self.rcpower_dset), fontsize=24)
 
             plt.savefig(bundle_predictions_png)
-            message=f"""
+            message = f"""
             The new predictions saved               : {self.bundle_predictions_file}
             The bundle of the predictions saved     : {bundle_predictions_png}
             Previous bundle of predictions backuped : {bundle_predictions_png_bak}
             """
-            msg2log(self.plotPredictDF.__name__,message, self.f)
+            msg2log(self.plotPredictDF.__name__, message, self.f)
         except:
             pass
         finally:

@@ -13,4 +13,3 @@ predictor.py
 Statmodel.py
 utility.py
 """
-

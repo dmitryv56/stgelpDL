@@ -1,40 +1,23 @@
 import pandas as pd
 import copy
 
+import pandas as pd
+import numpy as np
+import math
+from datetime import datetime,timedelta
+import matplotlib.pyplot as plt
 
-def ElHieroPlant_edit():
-    ds = pd.read_csv("~/LaLaguna/stgelpDL/dataLaLaguna/_ElHieroPowerPlantSummary2018_2020_DayIncrements.csv")
+def Forcast_imbalance_edit():
+    ds = pd.read_csv("~/LaLaguna/stgelpDL/dataLaLaguna/ElHiero_24092020_27102020.csv")
+    src_col_name = "Forcasting"
+    src1_col_name = "Real_demand"
+    dst_col_name = "FrcImbalance"
+    ds[dst_col_name] =[round(ds[src_col_name][i]-ds[src1_col_name][i],2)  for i in range(len(ds)) ]
 
 
-    dt_col_name='Date Time'
-    aux_col_name="Programmed_demand"
-    data_col_name="Demand"
-    v=ds[dt_col_name].values
-    for i in range (len(ds[dt_col_name].values)):
-        a=v[i].split('T')
-        b=a[0].split('-')
-        Year=b[2]
-        Month=b[1]
-        if len(Month)<2: Month='0'+Month
-        Day=b[0]
-        if len(Day)<2: Day='0'+Day
-        v[i]=Year +'-'+Month+'-'+Day+'T'+"00:00:00.000+02:00"
-
-    ds[dt_col_name]=copy.copy(v)
-
-    ds.to_csv("~/LaLaguna/stgelpDL/dataLaLaguna/ElHieroPowerPlantSummary2018_2020_DayIncrements.csv", index=False)
-
-    pass
-
-def Imbalance_edit():
-    ds = pd.read_csv("~/LaLaguna/stgelpDL/dataLaLaguna/ElHiero_24092020_20102020.csv")
-    second_col_name = "Programmed_demand"
-    first_col_name="Real_demand"
-    dest_col_name="Imbalance"
-    ds[dest_col_name]=ds[first_col_name] -ds[second_col_name]
-
-    ds.to_csv("~/LaLaguna/stgelpDL/dataLaLaguna/Imbalance_ElHiero_24092020_20102020.csv", index=False)
+    ds.to_csv("~/LaLaguna/stgelpDL/dataLaLaguna/ElHiero_24092020_27102020_CommonAnalyze.csv", index=False)
     return
+
 def WindTurbine_edit():
     ds = pd.read_csv("~/LaLaguna/stgelpDL/dataLaLaguna/ElHiero_24092020_20102020_WindGenPower.csv")
     aux_col_name = "Programmed_demand"
@@ -98,32 +81,72 @@ def powerSolarPlant_edit():
     ds.to_csv("~/LaLaguna/stgelpDL/dataLaLaguna/SolarPlantPowerGen_21012020_21012020.csv", index=False)
     pass
 
+def powerSolarPlant_Imbalance():
+    # ds = pd.read_csv("~/LaLaguna/stgelpDL/dataLaLaguna/__PowerGenOfSolarPlant_21012020.csv")
+    ds = pd.read_csv("~/LaLaguna/stgelpDL/dataLaLaguna/SolarPlantPowerGen_21012020.csv")
+    # col_name = 'lasts'
+    dt_col_name = 'Date Time'
+    aux_col_name = "Programmed_demand"
+    data_col_name = "PowerGen"
+    ds["Imbalance"] = [ds[aux_col_name].values[i]-ds[data_col_name].values[i] for i in range(len(ds)) ]
+
+
+    ds.to_csv("~/LaLaguna/stgelpDL/dataLaLaguna/SolarPlantPowerGen_21012020.csv", index=False)
+    pass
+
+
 def powerElHiero_edit():
 
-    ds = pd.read_csv("~/LaLaguna/stgelpDL/dataLaLaguna/_ElHiero_24092020_27102020.csv")
+    ds = pd.read_csv("~/LaLaguna/stgelpDL/dataLaLaguna/_ElHiero_24092020_20102020_additionalData.csv")
 
     dt_col_name = 'Date Time'
     aux_col_name = "Programmed_demand"
-    data_col_name = "Real_demand"
+    data_col_name = "PowerGen"
     v = ds[dt_col_name].values
     for i in range(len(ds[dt_col_name].values)):
         a = v[i].split(' ')
-        b=a[0].split('.')
-        if len(a[1])<5:
-            a[1]='0'+a[1]
-        v[i]='2020-'+b[1]+"-"+b[0]+'T'+a[1]+':00.000+02:00'
-
+        b = a[0].split('.')
+        if len(a[1]) < 5:
+            a[1] = '0' + a[1]
+        v[i] = '2020-' + b[1] + "-" + b[0] + 'T' + a[1] + ':00.000+02:00'
 
     ds[dt_col_name] = copy.copy(v)
 
 
-    ds.to_csv("~/LaLaguna/stgelpDL/dataLaLaguna/ElHiero_24092020_27102020.csv", index=False)
+    ds.to_csv("~/LaLaguna/stgelpDL/dataLaLaguna/ElHiero_24092020_20102020_additionalData.csv", index=False)
+    pass
+
+def datosElHiero_edit():
+    # ds = pd.read_csv("~/LaLaguna/stgelpDL/dataLaLaguna/__PowerGenOfSolarPlant_21012020.csv")
+    ds = pd.read_csv("~/LaLaguna/stgelpDL/dataLaLaguna/Datos_de_El_Hierro_2016.csv")
+    # col_name = 'lasts'
+    dt_col_name = 'Date Time'
+
+    v = ds[dt_col_name].values
+    for i in range(len(ds[dt_col_name].values)):
+        a = v[i].split(' ') #29-12-2016 3:00:00
+        b=a[0].split('-')   # dd mm year
+        a0new="{}-{}-{}".format(b[2],b[1],b[0])
+        c=a[1].split(':')  #h mm ss
+        if len(c[0])<2:
+            c[0]='0{}'.format(c[0])
+        a1new='{}:{}:{}.000+00:00'.format(c[0],c[1],c[2])
+
+        v[i]="{}T{}".format(a0new,a1new)
+
+    ds[dt_col_name] = copy.copy(v)
+
+
+    ds.to_csv("~/LaLaguna/stgelpDL/dataLaLaguna/Data_ElHierro_2016.", index=False)
     pass
 
 if __name__=="__main__":
     # privateHouse_edit()
-    #powerSolarPlant_edit()
-    powerElHiero_edit()
+    # powerSolarPlant_edit()
+    # powerElHiero_edit()
     #WindTurbine_edit()
-    # ElHieroPlant_edit()
+    # Forcast_imbalance_edit()
+    # powerSolarPlant_Imbalance()
+    # powerSolarPlant_analysis()
+    datosElHiero_edit()
     pass

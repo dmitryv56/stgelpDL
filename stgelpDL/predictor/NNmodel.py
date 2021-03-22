@@ -5,17 +5,18 @@ import copy
 
 import tensorflow as tf
 from tensorflow.keras import layers
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.layers import Bidirectional,TimeDistributed,Flatten
-from tensorflow.keras.layers import Conv1D
-from tensorflow.keras.layers import MaxPooling1D
 from tensorflow.keras import metrics, models
+from tensorflow.keras.layers import Bidirectional, TimeDistributed, Flatten
+from tensorflow.keras.layers import Conv1D
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import MaxPooling1D
+from tensorflow.keras.models import Sequential
 
 from predictor.predictor import Predictor
-from predictor.utility import msg2log,exec_time
+from predictor.utility import msg2log, exec_time
 
 """ NNmodel class is a base class for MLP, LSTM and CNN classes"""
+
 
 class NNmodel(Predictor):
     _param = ()
@@ -96,7 +97,7 @@ class NNmodel(Predictor):
         self.model.summary()
 
         if self.f is not None:
-            self.write('\n New model \n')
+            self.f.write('\n New model \n')
             self.model.summary(print_fn=lambda x: self.f.write(x + '\n'))
 
         return
@@ -174,6 +175,8 @@ class NNmodel(Predictor):
         xx_ = vec_data.reshape((1, vec_data.shape[0], 1))
         y_pred = self.model.predict(xx_)
         return y_pred
+
+
 ########################################################################################################################
 ########################################################################################################################
 class MLP(NNmodel):
@@ -223,6 +226,7 @@ class MLP(NNmodel):
         y_pred = self.model.predict(xx_)
         return y_pred
 
+
 class LSTM(NNmodel):
     pass
 
@@ -247,8 +251,9 @@ class LSTM(NNmodel):
         units, n_steps, n_features = self.param
         model = None
         model = Sequential()  # name=self.stacked_lstm.__name__)
-        model.add(tf.keras.layers.LSTM(units, activation='relu', return_sequences=True, input_shape=(n_steps, n_features),
-                                     name='Layer_0'))
+        model.add(
+            tf.keras.layers.LSTM(units, activation='relu', return_sequences=True, input_shape=(n_steps, n_features),
+                                 name='Layer_0'))
         model.add(tf.keras.layers.LSTM(units, activation='relu', name='Layer_1'))
         model.add(Dense(1, name='Layer_2'))
         try:
@@ -263,7 +268,7 @@ class LSTM(NNmodel):
         model = None
         model = Sequential()  # name=self.bidir_lstm.__name__)
         model.add(Bidirectional(tf.keras.layers.LSTM(units, activation='relu'), input_shape=(n_steps, n_features),
-                                    name='Layer_0'))
+                                name='Layer_0'))
         model.add(Dense(1, name='Layer_1'))
         try:
             model_name = self.bidir_lstm.__name__
@@ -277,7 +282,7 @@ class LSTM(NNmodel):
         model = None
         model = Sequential()  # name=self.cnn_lstm.__name__)
         model.add(TimeDistributed(Conv1D(filters=64, kernel_size=1, activation='relu'),
-                                      input_shape=(None, n_steps / 2, n_features), name='Layer_0'))
+                                  input_shape=(None, n_steps / 2, n_features), name='Layer_0'))
         model.add(TimeDistributed(MaxPooling1D(pool_size=2), name='Layer_1'))
         model.add(TimeDistributed(Flatten(), name='Layer_2'))
         model.add(tf.keras.layers.LSTM(units, activation='relu', name='Layer_3'))
@@ -311,4 +316,3 @@ class CNN(NNmodel):
         model.add(Dense(1, name='Layer_4'))
 
         return model
-

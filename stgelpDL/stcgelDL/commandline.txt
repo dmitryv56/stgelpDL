@@ -1,0 +1,27 @@
+Command-line parameters for  build desired data automatically
+
+--mode ddbld
+--csv_dataset "/home/dmitryv/LaLaguna/stgelpDL/dataLaLaguna/ElHiero_24092020_27102020.csv"
+ --endogen "Imbalance"
+ --exogen "Diesel_Power,WindTurbine_Power,HydrawlicTurbine_Power,Pump_Power,CO2"
+ --n_step 32
+ --num_clusters 10
+ --discret 10
+ --num_predicts 4 -v
+
+ Command-line parameters for  state ckassifications by using Deep Learning
+
+ --mode stcls  --csv_dataset "/home/dmitryv/LaLaguna/stgelpDL/dataLaLaguna/Imbalance_DesiredGen.csv"
+ --endogen "Imbalance"  --exogen "Diesel_Power,WindTurbine_Power,HydrawlicTurbine_Power,Pump_Power,CO2"  --label "desired"
+ --n_step 32  --num_clusters 10  --discret 10  --num_predicts 4 -v
+
+ --mode stcls
+ --csv_dataset "/home/dmitryv/LaLaguna/stgelpDL/dataLaLaguna/Imbalance_ElHiero_24092020_20102020.csv"
+ --endogen "Imbalance"
+ --exogen "Diesel_Power,WindTurbine_Power,HydrawlicTurbine_Power,Pump_Power,CO2"
+ --label "desired"
+ --n_step 32
+ --num_clusters 10
+ --discret 10
+ --num_predicts 4 -v
+

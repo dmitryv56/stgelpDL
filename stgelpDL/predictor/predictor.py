@@ -4,12 +4,11 @@ Statmodel classes.
 
 """
 
-import os
 import sys
 from pathlib import Path
-
-from tensorflow.keras.models import Sequential, save_model, load_model
 from pickle import dump, load
+
+from tensorflow.keras.models import save_model, load_model
 
 
 class Predictor():
@@ -19,7 +18,6 @@ class Predictor():
     _epochs = 0
     _path2modelRepository = 0
     _timeseries_name = None
-
 
     def __init__(self, nameModel, typeModel, steps, epochs, f=None):
         self.__class__._count += 1
@@ -79,7 +77,7 @@ class Predictor():
     def get_timeseries_name(self):
         return type(self)._timeseries_name
 
-    def set_timeseries_name(self,val):
+    def set_timeseries_name(self, val):
         type(self)._timeseries_name = val
 
     timeseries_name = property(get_timeseries_name, set_timeseries_name)
@@ -92,12 +90,13 @@ class Predictor():
         <model_type>_<model_name>_<dataset_name>
         """
         pass
+
     """
     The modes is saved in the folder <self.path2modelrepository>/<self.timeseries_name>/<self.typeModel>/<self.nameModel>
     """
+
     def save_model_wrapper(self):
         pass
-
 
         model_folder = Path(self.path2modelrepository) / self.timeseries_name / self.typeModel / self.nameModel
         Path(model_folder).mkdir(parents=True, exist_ok=True)
@@ -111,20 +110,22 @@ class Predictor():
             self.f.write("Model saved in {} ".format(model_folder))
             currDir = Path(model_folder)
             if not sys.platform == "win32":
-            # WindowsPath is not iterable
-            #     for currFile in currDir:
-            #         self.f.write("  {}\n".format(currFile))
+                # WindowsPath is not iterable
+                #     for currFile in currDir:
+                #         self.f.write("  {}\n".format(currFile))
                 pass
 
         return
+
     """
     TODO
     """
+
     def load_model_wrapper(self, ):
         pass
         status = False
 
-        model_folder = Path(self.path2modelrepository) / self.timeseries_name/self.typeModel/self.nameModel
+        model_folder = Path(self.path2modelrepository) / self.timeseries_name / self.typeModel / self.nameModel
         if not Path(model_folder).exists():
             if self.f is not None:
                 self.f.write("No found saved {} model \n".format(model_folder))

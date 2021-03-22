@@ -19,21 +19,22 @@ this module which will be retrieve the time series in the real time.
 
 """
 
+import json
 import os
 import time
-from pathlib import Path
-import dateutil.parser
-import requests
 from collections import OrderedDict
+from pathlib import Path
 
-import json
-import pandas as pd
-import matplotlib.pyplot as plt
+import dateutil.parser
 import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
+import pandas as pd
+import requests
 
-from predictor.api import show_autocorr,createDeltaList
-from predictor.utility import cSFMT,incDateStr,decDateStr,msg2log, PlotPrintManager
+from predictor.api import show_autocorr, createDeltaList
 from predictor.control import ControlPlane
+from predictor.utility import msg2log, PlotPrintManager
+
 
 class DataAdapter():
     r""" The base class DataAdapter.
@@ -41,7 +42,7 @@ class DataAdapter():
 
     """
 
-    def __init__(self, f = None):
+    def __init__(self, f=None):
         self.f = f
         pass
 
@@ -66,9 +67,9 @@ class DemandWidget(DataAdapter):
     _url_apidatos = 'https://apidatos.ree.es/en/datos/demanda/demanda-tiempo-real?'
     _title = None
     _type_id = None
-    _scaled_data =False
+    _scaled_data = False
 
-    def __init__(self, scaled__data,start__date, end__date, time__trunc, geo__limit, geo__ids, f=None):
+    def __init__(self, scaled__data, start__date, end__date, time__trunc, geo__limit, geo__ids, f=None):
         r"""
 
 
@@ -94,11 +95,10 @@ class DemandWidget(DataAdapter):
         self.names = []
         self.last_time = None
         self.url = None
-        self.one_word_title=""
+        self.one_word_title = ""
         super().__init__(f)
 
         pass
-
 
     @staticmethod
     def ISO8601toPyStr(ISO8601str):
@@ -139,6 +139,7 @@ class DemandWidget(DataAdapter):
         return ourdatetime.isoformat()
 
     """ getter/setter """
+
     def set_start_date(self, val):
         type(self)._start_date = val
 
@@ -196,7 +197,7 @@ class DemandWidget(DataAdapter):
     title = property(get_title, set_title)
 
     def set_type_id(self, val):
-        type(self)._type_id= val
+        type(self)._type_id = val
 
     def get_type_id(self):
         return type(self)._type_id
@@ -212,6 +213,7 @@ class DemandWidget(DataAdapter):
     scaled_data = property(get_scaled_data, set_scaled_data)
 
     """ methods """
+
     def set_url(self):
         r"""
         This method forms the url for GET-request. the site is
@@ -240,13 +242,12 @@ class DemandWidget(DataAdapter):
                                                                           sgeo_limit,
                                                                           sgeo_ids)
 
-        msg ="GET {}".format(self.url)
+        msg = "GET {}".format(self.url)
         msg2log(self.set_url.__name__, msg, self.f)
 
         return
 
-
-    def getDemandRT(self, requested_widget = None ):
+    def getDemandRT(self, requested_widget=None):
         r"""
         This method sends parameterized GET-request to 'https://apidatos.ree.es/en/datos/demanda/demanda-tiempo-real '
         site, parses received widget in json-format and creates DataFrame object for received time series.
@@ -299,8 +300,8 @@ class DemandWidget(DataAdapter):
         sizes_equal, short_size, ts_sizes = self.logRequestedWidgetTimeSeries(requested_widget)
 
         self.n_ts = len(requested_widget['included'])  # number of time series
-        if self.n_ts!=3 or short_size == 0 or short_size is None:
-            msg=f"""
+        if self.n_ts != 3 or short_size == 0 or short_size is None:
+            msg = f"""
                     For this Data Adapter, we expect to get three time series of  non-zero length ( Demand,Programmed, 
                     Forecast) on every GET-request. The received widget has two time series< so the widget is discarded.
                     The GET-reuest will be repeated after short time-out.
@@ -312,13 +313,12 @@ class DemandWidget(DataAdapter):
 
         self.ts_size = short_size  # time series size
 
-
-        self.names[1] = self.names[1].replace(' ','_')
+        self.names[1] = self.names[1].replace(' ', '_')
         self.names[2] = self.names[2].replace(' ', '_')
         self.names[3] = self.names[3].replace(' ', '_')
 
-        (imbalance_dset,programmed_dset, demand_dset) = ControlPlane.get_modeImbalanceNames()
-        mode_imbalance =ControlPlane.get_modeImbalance()
+        (imbalance_dset, programmed_dset, demand_dset) = ControlPlane.get_modeImbalanceNames()
+        mode_imbalance = ControlPlane.get_modeImbalance()
         if mode_imbalance:
             self.names.append(imbalance_dset)
 
@@ -349,10 +349,8 @@ class DemandWidget(DataAdapter):
         print(self.df)
 
         if mode_imbalance:
-
-            deltaList=createDeltaList(self.df[programmed_dset], self.df[demand_dset])
-            self.df[self.names[4]]=deltaList
-
+            deltaList = createDeltaList(self.df[programmed_dset], self.df[demand_dset])
+            self.df[self.names[4]] = deltaList
 
         if self.f is not None:
             self.logDF()
@@ -382,8 +380,8 @@ class DemandWidget(DataAdapter):
         :return:
         """
 
-        self.title   = requested_widget['data']['attributes']['title']
-        self.one_word_title=self.title.replace(' ','_')
+        self.title = requested_widget['data']['attributes']['title']
+        self.one_word_title = self.title.replace(' ', '_')
         self.type_id = {requested_widget['data']['type']}
         if self.scaled_data:
             self.title = "{} scaled between 0-1".format(self.title)
@@ -462,13 +460,13 @@ class DemandWidget(DataAdapter):
         stemplate = "{:<5s} {:<20s} "
         if self.scaled_data:
             self.f.write("{0:^60s}\n".format(self.title))
-            for i in range(1,len(self.names)):
+            for i in range(1, len(self.names)):
                 stemplate = stemplate + "{:>15.5f} "
 
             # stemplate = "{:<5s} {:<20s} {:>15.5f} {:>15.5f} {:>15.5f}\n"
         else:
             self.f.write("{0:^60s} (MW)\n".format(self.title))
-            for i in range(1,len(self.names)):
+            for i in range(1, len(self.names)):
                 stemplate = stemplate + "{:>15d} "
             # stemplate = "{:<5s} {:<20s} {:>15d} {:>15d} {:>15d}\n"
         stemplate = stemplate + "\n"
@@ -493,7 +491,7 @@ class DemandWidget(DataAdapter):
             else:
                 self.f.write(
                     stemplate.format(str(i), self.df.values[i][0], self.df.values[i][1], self.df.values[i][2],
-                                     self.df.values[i][3] ))
+                                     self.df.values[i][3]))
 
         return
 
@@ -506,15 +504,15 @@ class DemandWidget(DataAdapter):
         """
         plt.style.use('seaborn-darkgrid')
         palette = plt.get_cmap('Set1')
-        fig,ax=plt.subplots()
-        num=0
+        fig, ax = plt.subplots()
+        num = 0
         df1 = self.df.copy(deep=True)
         years = mdates.YearLocator()
         months = mdates.MonthLocator()
         year_fmt = mdates.DateFormatter('%Y')
         for column in df1.drop(['Date Time'], axis=1):
-            num+=1
-            ax.plot(df1['Date Time'], df1[column], marker='',color=palette(num), label=column)
+            num += 1
+            ax.plot(df1['Date Time'], df1[column], marker='', color=palette(num), label=column)
         plt.legend(loc=2, ncol=2)
         ax.set_title('{}'.format(self.title))
         fig.autofmt_xdate()
@@ -530,13 +528,12 @@ class DemandWidget(DataAdapter):
         ax.set_xlabel("Time")
         ax.set_ylabel("Power (MW)")
         if self.scaled_data:
-             plt.ylabel("Power (0 - 1)")
+            plt.ylabel("Power (0 - 1)")
 
-        #plt.show(block=stop_on_chart_show)
-
+        # plt.show(block=stop_on_chart_show)
 
         sfile = "{}.png".format(self.title.replace(' ', '_'))
-        sFolder =PlotPrintManager.get_ControlLoggingFolder()
+        sFolder = PlotPrintManager.get_ControlLoggingFolder()
         filePng = Path(sFolder) / (sfile)
 
         plt.savefig(filePng)
@@ -559,28 +556,28 @@ class DemandWidget(DataAdapter):
         show_autocorr(x, (int)(len(x) / 4), self.title, logfolder, stop_on_chart_show, self.f)
         return
 
-    def to_csv(self,path_to_serfile):
+    def to_csv(self, path_to_serfile):
         """
 
         :param path_to_serfile:
         :return:
         """
         self.df.to_csv(path_to_serfile, index=False)
-        nloops=0
+        nloops = 0
         while not os.path.exists(path_to_serfile):
             time.sleep(1)
-            nloops +=1
-            if nloops>32 :
+            nloops += 1
+            if nloops > 32:
                 break
 
-        if (not os.path.exists(path_to_serfile)) or (not os.path.isfile(path_to_serfile)) :
+        if (not os.path.exists(path_to_serfile)) or (not os.path.isfile(path_to_serfile)):
             msg = "{} file is not ready".format(path_to_serfile)
-            msg2log(self.to_csv.__name__, msg,self.f)
+            msg2log(self.to_csv.__name__, msg, self.f)
             raise ValueError(msg)
             return None
 
-        msg="DataFrame serialized to file {}".format(path_to_serfile)
-        msg2log(self.to_csv.__name__, msg,self.f)
+        msg = "DataFrame serialized to file {}".format(path_to_serfile)
+        msg2log(self.to_csv.__name__, msg, self.f)
         return path_to_serfile
 
     def concat_with_df_from_csv(self, path_to_serfile):
@@ -590,7 +587,7 @@ class DemandWidget(DataAdapter):
         :return:
         """
 
-        df_old=pd.read_csv(path_to_serfile)
+        df_old = pd.read_csv(path_to_serfile)
 
         message = f"""
                                 Old DataFrame (Odf) TS size    : {len(df_old)}
@@ -599,8 +596,8 @@ class DemandWidget(DataAdapter):
                                 Udf TS names                   : {self.names}
                                 Udf Last Time                  : {self.last_time}
                     """
-        msg2log(self.concat_with_df_from_csv.__name__, message,self.f)
-        df_new_reindex=pd.concat([df_old, self.df], ignore_index=True)
+        msg2log(self.concat_with_df_from_csv.__name__, message, self.f)
+        df_new_reindex = pd.concat([df_old, self.df], ignore_index=True)
         self.ts_size = len(df_new_reindex)
         message = f"""
                                 New DataFrame (Ndf) TS size    : {len(df_new_reindex)}
@@ -611,6 +608,7 @@ class DemandWidget(DataAdapter):
         msg2log(self.concat_with_df_from_csv.__name__, message, self.f)
 
         return df_new_reindex
+
 
 if __name__ == "__main__":
     with open("abc.log", 'w') as flog:

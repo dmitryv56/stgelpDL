@@ -24,8 +24,6 @@ from predictor.cfg import MAGIC_SEED
 from predictor.stgelpDL import main
 
 if __name__ == "__main__":
-
-
     random.set_seed(MAGIC_SEED)
     main(len(sys.argv), sys.argv)
 
