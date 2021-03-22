@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import sys
 import copy
 from pathlib import Path
 import re
@@ -8,6 +9,7 @@ import math
 import numpy as np
 import random
 import pandas as pd
+import subprocess
 
 
 from predictor.utility import msg2log
@@ -137,6 +139,7 @@ class canbusWF():
         self.density = None
         pass
 
+    """ Additive white Gaussian noise  (awgn)"""
     def awgn(self,signal:np.array=None):
 
         sigpower = sum([math.pow(abs(signal[i]),2) for i in range (len(signal))])
@@ -149,6 +152,38 @@ class canbusWF():
         self.hist,_ = np.histogram(self.signal, self.bins, density=False)
         self.density, _ = np.histogram(self.signal, self.bins, density=True)
         return
+
+    """ Random  signal waveform shift along t-axisto simulate the random latency in  bit stream.
+    Max. shift is 10% from bit waveform period. shift_n -the number of signal samples by which the shift occurs is randomly 
+    generated. shift_direction - the direction of the shift forward or back is randomized too.
+    """
+    def rndshift(self):
+        if self.signal is None:
+            return
+
+        n,=self.signal.shape
+        n_dist=int(n*0.1)
+        shift_n=np.random.randint(n_dist,size=1)
+        shift_direction = np.random.randint(3, size=1)
+        signal_list=self.signal.tolist()
+        if shift_direction ==0: # left shift, append
+            for i in range(shift_n):
+                signal_list.pop(0)
+                signal_list.append(signal_list[-1])
+        elif shift_direction==1: #right shift, insert at 0
+            for i in range(shift_n):
+                signal_list.pop(-1)
+                signal_list.insert(0,signal_list[0])
+        elif shift_direction == 2:
+            for i in range(shift_n):
+                signal_list.pop(-1)
+                signal_list.insert(0, self.vcan_lR )
+
+        del self.signal
+        self.signal=np.array(signal_list)
+        return
+
+
 
 class T__WF(canbusWF):
 
@@ -603,8 +638,38 @@ def plotSignal(mode:str="train", signal:np.array=None, fsample:float=1.0, packet
     plt.close("all")
     return
 
+""" Get number of lines in dump file.
+This function is executed ib the subprocess"""
+def file_len(fname)->int:
 
+    n=-1
+    if Path(fname).exists():
+        if sys.platform.startswith('ln'):
+            try:
+                p = subprocess.Popen(['wc', '-l', fname], stdout=subprocess.PIPE,
+                                                          stderr=subprocess.PIPE)
+                result, err = p.communicate()
+                if p.returncode != 0:
+                    #    we will not raise any exception , raise IOError(err)
+                    n= -2
+                n= int(result.strip().split()[0])
+            except:
+                pass
+            finally:
+                pass
+        elif sys.platform.startswith('win'):
+            fr=open(fname,'r')
+            n=0
+            while 1:
+                line=fr.readline()
+                if line is None:
+                    break
+                n+=1
+            fr.close()
+        else:
+            n=-3
 
+    return n
 
 
 
@@ -646,3 +711,5 @@ if __name__=="__main__":
         plt.show()
 
     ft.close()
+
+
