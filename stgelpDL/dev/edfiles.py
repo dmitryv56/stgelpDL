@@ -139,6 +139,140 @@ def datosElHiero_edit():
 
     ds.to_csv("~/LaLaguna/stgelpDL/dataLaLaguna/Data_ElHierro_2016.", index=False)
     pass
+def datosElHiero_PerDay():
+    src_csv="~/LaLaguna/stgelpDL/dataLaLaguna/Data_ElHierro_2016.csv"
+    dst_csv="~/LaLaguna/stgelpDL/dataLaLaguna/Data_ElHierro_2016_Days.csv"
+    ds = pd.read_csv(src_csv)
+    # col_name = 'lasts'
+    dt_col_name = 'Date Time'
+    data_col_name = 'Real_demand'
+    v=ds[data_col_name].values
+    n_v=len(v)
+    col_names=["{}:{}".format(int(i/6), (i%6)*10) for i in range(144)]
+    v_dict = {col_names[i]:[] for i in range(144)}
+    # d_dict = {"Date Time": [ds[dt_col_name][i] for i in range(0, n_v, 144)]}
+    # d_dict={"Date": [pd.to_datetime(ds[dt_col_name][i],dayfirst=True).date() for i in range(0,n_v,144)]}
+    d_dict = {"Date": [pd.to_datetime(ds[dt_col_name][i], dayfirst=True).date().strftime('%Y-%m-%d') for i in range(0, n_v, 144)]}
+
+    for i in range(n_v):
+        v_dict[col_names[i%144]].append(v[i])
+    # last list 365-size, we add v[0]
+
+    d={**d_dict,**v_dict}
+    ds1=pd.DataFrame(d)
+    ds1.to_csv(dst_csv)
+    return
+
+def datosElHiero_PerTimeStamps():
+    src_csv="~/LaLaguna/stgelpDL/dataLaLaguna/Data_ElHierro_2016.csv"
+    dst_csv="~/LaLaguna/stgelpDL/dataLaLaguna/Data_ElHierro_2016_TimeStamps.csv"
+    ds = pd.read_csv(src_csv)
+    # col_name = 'lasts'
+    dt_col_name = 'Date Time'
+    data_col_name = 'Real_demand'
+    v=ds[data_col_name].values
+    n_v=len(v)
+    col_names= [pd.to_datetime(ds[dt_col_name][i], dayfirst=True).date().strftime('%Y-%m-%d') for i in
+                       range(0, n_v, 144)]
+    row_names=["{}:{}".format(int(i/6), (i%6)*10) for i in range(144)]
+    v_dict={}
+    # v_dict = {item:[] for item in col_names}
+    # d_dict = {"Date Time": [ds[dt_col_name][i] for i in range(0, n_v, 144)]}
+    # d_dict={"Date": [pd.to_datetime(ds[dt_col_name][i],dayfirst=True).date() for i in range(0,n_v,144)]}
+    d_dict = {"Date": [pd.to_datetime(ds[dt_col_name][i], dayfirst=True).date().strftime('%Y-%m-%d') for i in range(0, n_v, 144)]}
+    d_dict = {"Timestamp": row_names}
+    n_start=0
+    n_series=144  # obsefvation points
+    n_features=366 # days
+    for icol in col_names:
+        v_dict[icol]=v[n_start:n_start+n_series].tolist()
+        n_start=n_start+n_series
+    # last list 365-size, we add v[0]
+
+    d={**d_dict,**v_dict}
+    ds1=pd.DataFrame(d)
+    ds1.to_csv(dst_csv)
+    return
+
+def datosElHiero_PerTimeStamps():
+    dst_csv="~/LaLaguna/stgelpDL/dataLaLaguna/Data_ElHierro_2016-Est.csv"
+    src_csv="~/LaLaguna/stgelpDL/dataLaLaguna/Data_ElHierro_2016_TimeStamps.csv"
+    ds = pd.read_csv(src_csv)
+    # col_name = 'lasts'
+    dt_col_name = 'Timestamp'
+
+
+    d_dst={}
+
+
+    vts=ds['Timestamp'].values.tolist()
+    vts.append('ave')
+    vts.append('std')
+    vts.append('min')
+    vts.append('max')
+    d_dst["RowName"]=vts
+    for col in ds.columns:
+        if 'Unnamed' in col or 'Timestamp' in col: continue
+        v=ds[col].values.tolist()
+        a=np.array(v)
+        ave=a.mean()
+        std=a.std()
+        minv=a.min()
+        maxv=a.max()
+        v.append(round(ave,3))
+        v.append(round(std,3))
+        v.append(round(minv,2))
+        v.append(round(maxv,2))
+        d_dst[col]=v
+
+    ds1 = pd.DataFrame(d_dst)
+    n_ds1=len(ds1)
+
+    ave = []
+    std = []
+    minv = []
+    maxv = []
+    for i in range(n_ds1):
+
+        v=[]
+        for col in ds1.columns[1:]:
+            v.append(ds1[col][i])
+        a=np.array(v)
+        ave.append(round(a.mean(),3))
+        std.append(round(a.std(),3))
+        minv.append(round(a.min(),2))
+        maxv.append(round(a.max(),2))
+    ds1['ave']=ave
+    ds1['std'] = std
+    ds1['min'] = minv
+    ds1['max'] = maxv
+
+
+    ds1.to_csv(dst_csv)
+    return
+
+""" transform time series (feature in source dataset) matrix Nrows * Mcols.
+
+The source dataset must comprise  a timestamp feature(column) named 'dt_col_name' or index column. The 'data_col_name'-
+feature must be a time series are ordered by  index ot timestamp feature('dt_col_name') , that is, the observation must 
+be equidistant and without gaps. Additional, the beginning timestamp must be 00:00:00 (or 0 for index).
+The 'period' and 'direction' determine the formation of the matrix. If the 'direction' is along the X- axis, then the 
+segments of the time series corresponding to the 'period' are the rows of the matrix. Column names are derived from 
+observation times within a period, for example, "00: 00,00: 10, ..., 23:50" to 10 minutes discretization and a period 
+of 1 day. 
+ 
+
+"""
+def timeseries2matrix(source_csv:str=None, dest_csv:str=None, dt_col_name:str="Date Time",
+                      data_col_name:str='Real_demand', discret:int=10,period:object=None, direction:str='x',
+                      row_name:str="rowNames",title:str="",f:object=None):
+
+    pass
+
+
+
+
+
 
 if __name__=="__main__":
     # privateHouse_edit()
@@ -148,5 +282,8 @@ if __name__=="__main__":
     # Forcast_imbalance_edit()
     # powerSolarPlant_Imbalance()
     # powerSolarPlant_analysis()
-    datosElHiero_edit()
+    # datosElHiero_edit()
+    # datosElHiero_PerDay()
+    # datosElHiero_PerTimeStamps()
+    datosElHiero_PerTimeStamps()
     pass
