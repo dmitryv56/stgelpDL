@@ -17,7 +17,8 @@ from scipy.stats import poisson
 
 from predictor.utility import msg2log
 from clustgelDL.auxcfg  import D_LOGS,listLogSet, closeLogs,log2All,exec_time,logList
-from canbus.api import readChunkFromCanBusDump,file_len
+from canbus.api import readChunkFromCanBusDump,file_len,dict2csv,dict2pkl, pkl2dict,mleexp,manageDB,DB_NAME,fillQuery,\
+getSerializedModelData,KL_decision
 from canbus.clparser import parserPrAnFapTL,strParamPrAnFapTL
 
 
@@ -38,7 +39,20 @@ def parseUnixTimestamp(ftstamp:float=None,tzone:str="local")->str:
 
     return stime
 
-""" Dictionary replenisment with taken packet data"""
+""" Dictionary replenisment with taken packet data.-
+The source_dict comprises parsed data from arrived packet 
+{'DateTime':itemDateTime,
+ 'IF':itemIF, 
+ 'ID':itemID,
+ 'Data':itemData,
+ 'Packet':itemPacket,  
+ 'bitstr_list':bitstr_list,
+ 'bit_str':bit_str}
+they have been extracted from the dump file line (see parseCanBusLine() -function).
+For arrived packet its 'match_key' is checked in {match_key:[time from start in microsec]} dictionary. If match, time 
+delta is added tothe list of values. If no match, new pair {key:[time delta] is created.
+ The length of value list is increased (set to 1 for new key) in 'len_dict' dictionary.
+ """
 def refillDict(target_dict:dict=None,key_list:list=[], len_dict:dict= {}, source_dict:dict= None,match_key:str='ID',
                start_timestamp:float=0.0,f:object=None):
 
@@ -51,9 +65,12 @@ def refillDict(target_dict:dict=None,key_list:list=[], len_dict:dict= {}, source
         target_dict[sKey]=[delta]
         key_list.append(sKey)
         len_dict[sKey]=1
-""" Read ICsimdump and fill a target_dict with pairs {<match_key>: [timestamps ].
-Where match_key is one of fields 'ID,'Data' or 'Packet'. The list ot timestamps is filled by timestamps when packet 
-matched with  'match_key' key appeared in the dump.
+
+    return
+
+""" Read ICsimdump and fill a target_dict with pairs {<match_key>: [ packet arrival times ].
+'match_key' is one of fields 'ID,'Data' or 'Packet'. The packet arrival time is a delta between first packet od dump
+fille arrival time and currrent packet arrival time (microSec).
 On base this list the probability model of key appearing is estimated.
 """
 def gendict(canbusdump:str="",target_dict:dict=None,match_key:str='ID', f:object=None):
@@ -157,17 +174,7 @@ def createDataset(target_dict:dict=None,n_samples:int=1, match_key:str='ID', tit
 
 
 
-def dict2csv(d:dict=None, folder:str="", title:str="", match_key:str='ID', f:object=None):
-    if d is None:
-        msg2log(None,"No dictionary {} {} for saving".format(title,match_key),f)
-        return
 
-    file_csv=Path(Path(folder)/Path("{}_{}".format(title,match_key))).with_suffix(".csv")
-    df=pd.DataFrame(d)
-    df.to_csv(file_csv)
-    msg2log(None,"{} dictionary for {} saved in {}".format(title,match_key,str(file_csv)),f)
-
-    return
 
 poisson_prob = lambda n,poisson_lambda: poisson.pmf(n,poisson_lambda)
 
@@ -315,7 +322,8 @@ lv11
 
 
 
-def testFreqModel(canbusdump:str= None, match_key:str='ID', repository:str=None, dset_name:str=None, title:str="", f:object=None):
+def testFreqModel(canbusdump:str= None, match_key:str='ID', repository:str=None, dset_name:str=None, title:str="",
+                  f:object=None):
     pass
     """ check canbus dump """
     if not Path(canbusdump).exists():
@@ -323,8 +331,20 @@ def testFreqModel(canbusdump:str= None, match_key:str='ID', repository:str=None,
     """ check database (dataset)"""
     if dset_name is None or not Path(dset_name).exists():
         return
+    """ check data base they should comprice tarined model"""
+    # find pkl serialized file
+    d_query = fillQuery(dump_log=canbusdump, match_key=match_key, method="MLE",  repository=repository,  f=f)
+    d_res = manageDB(repository=repository, db=DB_NAME, op='select', d_query=d_query, f=f)
+
+    train_mleexp_dict= getSerializedModelData(d= d_res, f=f)
+    if train_mleexp_dict is None or len(train_mleexp_dict)==0:
+        msg2log(None,"Train data was not found. The test satge termibaned.", f=f)
+        return
+
     """ read, parse dump and create dictionary"""
     target_dict = {}
+    mleexp_dict ={}
+    n_min = 5
     difftstamp = gendict(canbusdump=canbusdump, target_dict=target_dict, match_key=match_key, f=f)
     n_samples = len(difftstamp) + 1
     print(len(target_dict))
@@ -333,6 +353,11 @@ def testFreqModel(canbusdump:str= None, match_key:str='ID', repository:str=None,
     """ check packet appearing probability based on the poisson process """
     pass
     findAnomaly(canbusdump= canbusdump, match_key=match_key, repository= repository, f=f)
+
+    mleexp(target_dicе=target_dict, mleexp_dict=mleexp_dict, n_min=n_min, title=title, f=f)
+
+    list_anomaly = KL_decision(train_mleexp = train_mleexp_dict, test_mleexp = mleexp_dict,
+                               title = "Anomaly packet checked by Exponential model", f=f)
     return
 
 def trainFreqModel(canbusdump:str= None, match_key:str='ID', repository:str=None, title:str="",
@@ -346,6 +371,8 @@ def trainFreqModel(canbusdump:str= None, match_key:str='ID', repository:str=None
         msg2log(None, msg, D_LOGS['control'])
         return
     target_dict = {}
+    mleexp_dict = {}
+    n_min=5
     difftstamp = gendict(canbusdump=canbusdump, target_dict=target_dict, match_key=match_key, f=D_LOGS['control'])
     n_samples = len(difftstamp) + 1
     print(len(target_dict))
@@ -354,8 +381,15 @@ def trainFreqModel(canbusdump:str= None, match_key:str='ID', repository:str=None
 
     createDataset(target_dict=target_dict, n_samples=n_samples, match_key=match_key, title=title, folder=repository,
                   f=f)
+    mleexp(target_dict= target_dict, mleexp_dict=mleexp_dict, n_min= n_min, title= title, f=f)
 
-    return
+    pkl_stem,pathPkl = dict2pkl(d= mleexp_dict, folder= repository, title= title, match_key= match_key, f=f)
+    # add train to DB
+    d_query = fillQuery( dump_log= canbusdump, match_key= match_key, method= "MLE", pkl=pkl_stem,
+                         repository= repository,  misc= "", f=f)
+    manageDB(repository = repository, db=DB_NAME, op = 'insert', d_query= d_query, f=f)
+
+    return pkl_stem,pathPkl
 
 
 """
@@ -408,9 +442,10 @@ def main(arc,argv):
     subtitle = "{}_{}".format(mode,match_key)
     dset_name=Path( Path(folder_repository) / Path("train_{}".format(match_key))).with_suffix(".csv")
     if mode != 'test':
-        subtitle="{}_{}".format()
+
         trainFreqModel(canbusdump= canbusdump, match_key=match_key, repository=str(folder_repository), title= subtitle,
                    f=D_LOGS['train'])
+
     if mode != 'train':
         testFreqModel(canbusdump= canbusdump, match_key=match_key, repository=str(folder_repository),
                       dset_name=str(dset_name), title= subtitle, f=D_LOGS['predict'])

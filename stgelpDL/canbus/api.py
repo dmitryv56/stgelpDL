@@ -3,6 +3,7 @@
 import sys
 import copy
 from pathlib import Path
+from datetime import datetime,timedelta
 import re
 import matplotlib.pyplot as plt
 import math
@@ -10,11 +11,25 @@ import numpy as np
 import random
 import pandas as pd
 import subprocess
+from pickle import dump,load
 
 
 from predictor.utility import msg2log
 from clustgelDL.auxcfg  import D_LOGS,log2All
 from canbus.BF import BF
+
+DB_NAME="canbas"
+""" DB in repository.
+DB fields are following:  
+"""
+DT="Date Time"
+DUMP="Dump"
+MATCH_KEY="Match_key"
+METHOD="Method"
+PKL="PKL"
+REPOSITORY="Repository"
+MISC="Misc"
+DB_COLS=[DT, DUMP, MATCH_KEY, METHOD, PKL, REPOSITORY, MISC]
 
 # number of randomly generated 'no signal' bits in bit stream
 INSERTED_NO_SIGNAL=5
@@ -644,7 +659,7 @@ def file_len(fname)->int:
 
     n=-1
     if Path(fname).exists():
-        if sys.platform.startswith('ln'):
+        if sys.platform.startswith('linux'):
             try:
                 p = subprocess.Popen(['wc', '-l', fname], stdout=subprocess.PIPE,
                                                           stderr=subprocess.PIPE)
@@ -672,7 +687,188 @@ def file_len(fname)->int:
     return n
 
 
+def dict2csv(d:dict=None, folder:str="", title:str="", match_key:str='ID', f:object=None):
+    if d is None:
+        msg2log(None,"No dictionary {} {} for saving".format(title,match_key),f)
+        return
 
+    file_csv=Path(Path(folder)/Path("{}_{}".format(title,match_key))).with_suffix(".csv")
+    df=pd.DataFrame(d)
+    df.to_csv(file_csv)
+    msg2log(None,"{} dictionary for {} saved in {}".format(title,match_key,str(file_csv)),f)
+
+    return
+
+def dict2pkl(d:dict=None, folder:str="", title:str="", match_key:str='ID', f:object=None)->(str,str):
+    if d is None:
+        msg2log(None,"No dictionary {} {} for saving".format(title,match_key),f)
+        return
+
+    file_pkl=Path(Path(folder)/Path("{}_{}".format(title,match_key))).with_suffix(".pkl")
+    f_pkl=open(str(file_pkl),"wb")
+    dump(d,f_pkl)
+
+    msg2log(None,"{} dictionary for {} saved in {}".format(title,match_key,str(file_pkl)),f)
+    pkl_stem=file_pkl.stem
+    return pkl_stem, str(file_pkl)
+
+
+def pkl2dict( folder: str = "", title: str = "", match_key: str = 'ID', pkl_stem:str="", f: object = None):
+
+
+
+    file_pkl = Path(Path(folder) / Path("{}".format(pkl_stem))).with_suffix(".pkl")
+    if not file_pkl.exists():
+        msg="Serialized dictionary {} for {} -match key was not found in {} repository".format(pkl_stem,
+                                                                                               match_key,folder)
+        msg2log(None,msg,f)
+        return None
+    f_pkl = open(str(file_pkl), "rb")
+    d=load(f_pkl)
+
+    msg2log(None, "{} dictionary for {} loaded from {}".format(title, match_key, str(file_pkl)), f)
+
+    return d
+
+"""" statistical estimation for observed data"""
+
+def mleexp(target_dict:dict=None, mleexp_dict:dict=None, n_min:int=5, title:str="Train path", f:object=None):
+
+    msg="{}\n,Rare packets, no maximum likelihood estimation for exponential distribution of time gaps between " +\
+        " packets appearing.".format(title)
+    msg2log(None, msg, D_LOGS['cluster'])
+    for key,vlist in target_dict.items():
+        if len(vlist)<n_min:
+            msg=f"""Packet with matched mey: {key}  is rare event: {len(vlist)} appearings"""
+            msg2log(None,msg,D_LOGS['cluster'])
+            continue
+        l_duration=[vlist[i]-vlist[i-1] for i in range(1,len(vlist))]
+        n=len(l_duration)
+        sum_items=float(sum(l_duration))/1e06   # in seconds
+        mle_lambda=float(n)/sum_items
+        mle_var_lambda=(mle_lambda*mle_lambda)/float(n)
+        mleexp_dict[key]={"n":n,"mle":mle_lambda,"var":mle_var_lambda,"sample":l_duration}
+    return
+
+def KL_decision(train_mleexp:dict=None, test_mleexp:dict=None, title:str="Anomaly packet",f:object=None)->list:
+
+    trainSet=set(train_mleexp)
+    testSet=set(test_mleexp)
+    anomaly_list=[]
+    chi2_1_05=3.84
+    for key in trainSet.intersection(testSet):
+        anomaly_counter=0
+        train_val=train_mleexp[key]
+        test_val=test_mleexp[key]
+        lst_val=train_val['sample']+test_val['sample']
+        xmean=np.array(lst_val).mean()
+        xtrain=np.array(train_mleexp['sample'])
+        xtest = np.array(test_mleexp['sample'])
+        ntrain=train_mleexp['n']
+        ntest = test_mleexp['n']
+        KL2I12=ntrain*(xtrain-xmean)*(xtrain-xmean)/xmean + ntest*(xtest-xmean)*(xtest-xmean)/xmean
+        KLJ12 =0.5*KL2I12 + 0.5 *( ntrain * (xtrain - xmean) * (xtrain - xmean) / xtrain + ntest * (xtest - xmean) * (
+                    xtest - xmean) / xtest)
+
+        if KL2I12>chi2_1_05:
+            anomaly_counter+=1
+        if KLJ12 > chi2_1_05:
+            anomaly_counter+=1
+        if anomaly_counter>0:
+            anomaly_list.append({'matched_key':key,"2I(1:2)":KL2I12,"J(1,2)":KLJ12, "chi2(1,0.05)":chi2_1_05,
+                                 "train":train_val,"test":test_val,})
+
+    return anomaly_list
+
+def manageDB(repository:str=None, db:str=None,op:str='select',d_query:dict={}, f:object=None)->dict:
+    file_db=Path(Path(repository)/Path(db)).with_suffix(".csv")
+    if not file_db.exists():
+        createDB(file_db=file_db, f=f)
+    if op=='select':
+        d_res = selectDB(file_db=file_db, d_query=d_query,f=f)
+    elif op=='insert':
+        d_res = insertDB(file_db= file_db, d_query = d_query, f = f)
+        pass
+    elif op=='update':
+        pass
+    elif op=='log':
+        pass
+    else:
+        pass
+
+    return
+
+def createDB(file_db:str=None, f:object=None):
+    df=pd.DataFrame(columns=DB_COLS)
+    df.to_csv(file_db,index=False)
+    msg2log(None,"DB created {}".format(file_db),)
+    return
+
+def selectDB(file_db:str=None, d_query:dict=None,f:object=None)->dict:
+    if file_db is None or not Path(file_db).exists() or d_query is None or len(d_query)==0:
+        return None
+
+
+    d_res={}
+    l_res=[]   #list of dict
+    df=pd.read_csv(file_db)
+    for index,row in df.iterrows():
+        keys=list(row.keys())
+        if dictIndict(row,d_query,f=f):
+            l_res.append(row)
+
+    if len(l_res)>0:
+        msg=f"""
+Query: {d_query}
+Selected: {l_res}
+"""
+        msg2log(None,msg,f)
+        d_res=l_res[-1]  # select lat item in list
+    return d_res
+
+def insertDB(file_db:str=None, d_query:dict=None,f:object=None)->dict:
+    if file_db is None or not Path(file_db).exists() or d_query is None or len(d_query)==0:
+        return None
+
+    keys=list(d_query.keys())
+    d_insert={item:"" for item in DB_COLS}
+    for item in keys:
+        d_insert[item]=d_query[item]
+    d_insert[DT]=pd.Timestamp.now()
+    df1=pd.DataFrame(d_insert,index=[0])
+
+
+    df = pd.read_csv(file_db)
+    df=df.append(df1,ignore_index=True)
+    df.to_csv(file_db)
+    msg2log(None,"Insert {}.\nAdded {} to DB in {} file".format(d_query,d_insert,file_db),f)
+
+    return None
+
+def fillQuery(dt:object="", dump_log:str="", match_key:str="ID", method:str="", pkl:str="", repository:str="",
+              misc:str="", f:object=None)->dict:
+
+    d_query={DUMP:dump_log,MATCH_KEY:match_key,METHOD:method,PKL:pkl,REPOSITORY:repository,MISC:misc}
+    d_query[DT]="" if dt is None else dt
+
+    msg2log(None, "Filling query {}".format(d_query),f)
+    return d_query
+
+def getSerializedModelData(d:dict=None, f:object=None)->dict:
+
+    return pkl2dict(folder=d[REPOSITORY], title=d[METHOD], match_key= d[MATCH_KEY], pkl_stem= d[PKL], f=f)
+
+
+def dictIndict(row:dict,d_query:dict,f:object=None)->bool:
+    keys=list(d_query.keys())
+    match=False
+    for item in keys:
+        if row[item]==d_query[item]:
+            match=True
+        else:
+            match=False
+            break
+    return match
 
 
 if __name__=="__main__":
