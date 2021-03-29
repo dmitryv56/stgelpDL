@@ -12,13 +12,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import math
-from scipy.stats import poisson
+from scipy.stats import poisson,ks_2samp
 
 
 from predictor.utility import msg2log
 from clustgelDL.auxcfg  import D_LOGS,listLogSet, closeLogs,log2All,exec_time,logList
 from canbus.api import readChunkFromCanBusDump,file_len,dict2csv,dict2pkl, pkl2dict,mleexp,manageDB,DB_NAME,fillQuery,\
-getSerializedModelData,KL_decision
+fillQuery2Test,getSerializedModelData,KL_decision
 from canbus.clparser import parserPrAnFapTL,strParamPrAnFapTL
 
 
@@ -130,9 +130,12 @@ For each pair <match_key>:[timestamps for packets with matched key] performed a 
 The <target_dict> is saved as pandas DataFrame to csv-dataset and deleted. 
 """
 def createDataset(target_dict:dict=None,n_samples:int=1, match_key:str='ID', title:str=None, folder:str="",
-                  f:object=None):
+                  dset_name:str=None, f:object=None):
 
-    pass
+    if dset_name is None or len(dset_name)<1:
+        msg2log(None, "dataset name is not set correctly {}".format(dset_name), f=f)
+        return
+
     """ <match_key>,<est.probability>,<[bins]>,<[hist]>"""
     df_dict={}
     m_key=[]
@@ -167,7 +170,7 @@ def createDataset(target_dict:dict=None,n_samples:int=1, match_key:str='ID', tit
     del target_dict
     target_dict=None
     df_dict={match_key:m_key,'prob':prob, 'mean':mean, 'std':std,'hist':hist,'bins':bins}
-    dict2csv(d = df_dict, folder= folder, title= title, match_key=match_key, f=f)
+    dict2csv(d = df_dict, folder= folder, title= title, dset_name=dset_name,match_key=match_key, f=f)
     del df_dict
 
     return
@@ -180,15 +183,17 @@ poisson_prob = lambda n,poisson_lambda: poisson.pmf(n,poisson_lambda)
 
 """ Find anomaly algorithm comprises following steps:
 1) create DataFrame object from repository dataset. The file name is <repository>/train_<match_key>.csv
-2) read ICsim tes dump file,parse lines, create test_dictionary {match_key:[timestamps]
+2) read ICsim test dump file,parse lines, create test_dictionary {match_key:[timestamps]
 3) transform DataFrame to dict {match_key:{'prob':<value>,'mean':<list[value]>,'std':<list[value]>,'hist':<list>,
 'bins':<list>}}. The rows with empty 'hist' in DataFrame are ignored.
 4) intersection dictionary via their sets
 """
-def findAnomaly(canbusdump:str="",match_key:str='ID', repository:str="", f:object=None):
+def findAnomaly(canbusdump:str="",match_key:str='ID', dset_name:str=None, repository:str="", f:object=None)->list:
+    anomaly_match_key=[]
     pass
     """ Repository dataset , DataFrame and dict """
     ds_name=Path(Path(repository)/Path("train_{}".format(match_key))).with_suffix(".csv")
+    ds_name = Path(dset_name)
     if not ds_name.exists():
         msg="{} not found in Repository, the test stage finished.".format(str(ds_name))
         log2All(msg)
@@ -219,17 +224,52 @@ def findAnomaly(canbusdump:str="",match_key:str='ID', repository:str="", f:objec
         p=[]
         for n in range(0,n_appears+1):
             p.append(poisson_prob(n,poisson_lambda))
-        poissonPlot(p=p,title=match_key,png_name=match_key,f=f)
+        png_name=str(Path(Path(D_LOGS['plot'])/key).with_suffix(".png"))
+        poissonPlot(p=p,title=match_key,png_name=png_name,f=f)
 
         msg="{:>4d} {:<22s} {:<10.4f} {:<10.4f} {:>5d} {:<10.4f} {:<10.4f}".format(ikey,key,key_prb,poisson_lambda, n_appears,
                                     poisson_prob(n,poisson_lambda),float(n_appears/n_test))
         msg2log(None,msg,D_LOGS['predict'])
+        D,ks_stat,prb = histCompare(train_dict[key], test_dict[key], f=f)
+        if prb*100 <5.0 :
+            msg=f"""Warning! {key} : D={D},ks_stat={ks_stat}, prb={prb*100} <5% , 
+            The train and test distributions may be differs!"""
+            msg2log(None,msg,D_LOGS['control'] )
+            anomaly_match_key.append(key)
         ikey+=1
 
-    return
+    return anomaly_match_key
+
+def histCompare(train_dict_key:dict,test_dict_key:list, f:object=None)->(float,float,float):
+    n1 = len(train_dict_key['hist'])
+    if n1<10:
+        return 0.0,0.0,0.6
+    s1 = sum([train_dict_key['hist'][i] for i in range(len(train_dict_key['hist']))])
+    hist,bin = np.histogram(np.array(test_dict_key))
+    n2=len(hist)
+    if n2<10:
+        return 0.0, 0.0, 0.6
+
+    n=min(n1,n2)
+    s2=sum([hist[i] for i in range(len(hist))])
+    D=max([abs( float(train_dict_key['hist'][i]/s1)-float(hist[i]/s2)) for i in range( n)])
+    ks_stat,prb = ks_2samp(np.array(train_dict_key['hist'])/s1,np.array(hist)/s2)
+    return D,ks_stat,prb
+
+
+
 
 def poissonPlot(p:list=[],title:str="",png_name:str="",f:object=None):
-    pass
+    if len(p)<20:
+        return
+    plt.plot([i for i in range(len(p))], p, color='red',label='Poisson prb.')
+    plt.legend()
+    plt.savefig(png_name)
+    plt.close("all")
+    return
+
+
+
 """ Read ICsimdump and fill a test_dict with pairs {<match_key>: [timestamps ].
 Where match_key is one of fields 'ID,'Data' or 'Packet'. The list ot timestamps is filled by timestamps when packet 
 matched with  'match_key' key appeared in the dump.
@@ -327,19 +367,20 @@ def testFreqModel(canbusdump:str= None, match_key:str='ID', repository:str=None,
     pass
     """ check canbus dump """
     if not Path(canbusdump).exists():
-        return
+        return None
     """ check database (dataset)"""
     if dset_name is None or not Path(dset_name).exists():
-        return
+        return None
     """ check data base they should comprice tarined model"""
     # find pkl serialized file
-    d_query = fillQuery(dump_log=canbusdump, match_key=match_key, method="MLE",  repository=repository,  f=f)
+    d_query = fillQuery2Test(match_key=match_key, method="MLE",  repository= repository, f=f)
+
     d_res = manageDB(repository=repository, db=DB_NAME, op='select', d_query=d_query, f=f)
 
     train_mleexp_dict= getSerializedModelData(d= d_res, f=f)
     if train_mleexp_dict is None or len(train_mleexp_dict)==0:
         msg2log(None,"Train data was not found. The test satge termibaned.", f=f)
-        return
+        return None
 
     """ read, parse dump and create dictionary"""
     target_dict = {}
@@ -352,15 +393,37 @@ def testFreqModel(canbusdump:str= None, match_key:str='ID', repository:str=None,
     msg2log(None, (len(target_dict)), f)
     """ check packet appearing probability based on the poisson process """
     pass
-    findAnomaly(canbusdump= canbusdump, match_key=match_key, repository= repository, f=f)
+    list_anomaly0= findAnomaly(canbusdump= canbusdump, match_key=match_key, repository= repository, dset_name=dset_name,
+                               f=f)
 
-    mleexp(target_dicе=target_dict, mleexp_dict=mleexp_dict, n_min=n_min, title=title, f=f)
+    mleexp(target_dict=target_dict, mleexp_dict=mleexp_dict, n_min=n_min, title=title, f=f)
 
-    list_anomaly = KL_decision(train_mleexp = train_mleexp_dict, test_mleexp = mleexp_dict,
+    list_anomaly1 = KL_decision(train_mleexp = train_mleexp_dict, test_mleexp = mleexp_dict,
                                title = "Anomaly packet checked by Exponential model", f=f)
+
+    printPossibleAnomalies(list_anomaly0, list_anomaly1, f=f)
     return
 
-def trainFreqModel(canbusdump:str= None, match_key:str='ID', repository:str=None, title:str="",
+def printPossibleAnomalies(anomaly1,anomaly2,f:object=None):
+    pass
+    if anomaly1 is None:
+        msg2log(None,"KS anomaly is not set",f)
+        return
+    if anomaly2 is None:
+        msg2log(None,"MLE anomaly is not set",f)
+        return
+    possible_anomalies=list(set.intersection(set(anomaly1),
+                                             set([anomaly2[i]['matched_key'] for i in range(len(anomaly2))])))
+
+    msg="List of possible anomalies detected by KS-statistic amd KL-divergence for exponential distributions"
+    msg2log(None,msg,D_LOGS['main'])
+    for item in possible_anomalies:
+        msg2log(None,item,D_LOGS['main'])
+
+
+
+
+def trainFreqModel(canbusdump:str= None, match_key:str='ID', repository:str=None, dset_name:str=None, title:str="",
                    f:object=None):
     if canbusdump is None or canbusdump=="" or not Path(canbusdump).exists():
         msg="canbus dump log {} does not exist".format("" if canbusdump is None else canbusdump)
@@ -380,7 +443,7 @@ def trainFreqModel(canbusdump:str= None, match_key:str='ID', repository:str=None
     msg2log(None, (len(target_dict)), f)
 
     createDataset(target_dict=target_dict, n_samples=n_samples, match_key=match_key, title=title, folder=repository,
-                  f=f)
+                  dset_name=dset_name, f=f)
     mleexp(target_dict= target_dict, mleexp_dict=mleexp_dict, n_min= n_min, title= title, f=f)
 
     pkl_stem,pathPkl = dict2pkl(d= mleexp_dict, folder= repository, title= title, match_key= match_key, f=f)
@@ -414,7 +477,7 @@ def main(arc,argv):
     fp_prob = float(argparse.cl_bfprob)
     match_key=argparse.cl_match_key
 
-    title1 = "{}_{}_{}_{}".format(title.replace(' ', '_'), mode, method, date_time)
+    title1 = "{}_{}_{}_key_is_{}".format(title.replace(' ', '_'), mode, method, match_key)
 
     """ create log and repository folders """
     dir_path = path.dirname(path.realpath(__file__))
@@ -439,16 +502,17 @@ def main(arc,argv):
     n_samples=file_len(canbusdump)
     s_samples=n_samples if n_samples>0 else '0'
     msg2log(None,"\n{} lines in {}\n\n".format(s_samples, canbusdump))
-    subtitle = "{}_{}".format(mode,match_key)
-    dset_name=Path( Path(folder_repository) / Path("train_{}".format(match_key))).with_suffix(".csv")
+    subtitle = "{}".format(mode)
+    dset_name=Path( Path(folder_repository) / Path("{}_{}".format("dataset",match_key))).with_suffix(".csv")
     if mode != 'test':
 
         trainFreqModel(canbusdump= canbusdump, match_key=match_key, repository=str(folder_repository), title= subtitle,
-                   f=D_LOGS['train'])
+                   dset_name=str(dset_name), f=D_LOGS['train'])
 
     if mode != 'train':
         testFreqModel(canbusdump= canbusdump, match_key=match_key, repository=str(folder_repository),
                       dset_name=str(dset_name), title= subtitle, f=D_LOGS['predict'])
+
 
 
     message1 = "Time execution logging finished at {}\n\n".format(datetime.now().strftime("%d %m %y %H:%M:%S"))

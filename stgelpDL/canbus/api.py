@@ -687,15 +687,17 @@ def file_len(fname)->int:
     return n
 
 
-def dict2csv(d:dict=None, folder:str="", title:str="", match_key:str='ID', f:object=None):
+def dict2csv(d:dict=None, folder:str="", title:str="", dset_name:str=None, match_key:str='ID', f:object=None):
     if d is None:
         msg2log(None,"No dictionary {} {} for saving".format(title,match_key),f)
         return
+    if dset_name is None or len(dset_name)<1 or ".csv" not in dset_name:
+        msg2log(None,"Dtaset name is not set correctly {}".format(dset_name),f)
+        return
 
-    file_csv=Path(Path(folder)/Path("{}_{}".format(title,match_key))).with_suffix(".csv")
     df=pd.DataFrame(d)
-    df.to_csv(file_csv)
-    msg2log(None,"{} dictionary for {} saved in {}".format(title,match_key,str(file_csv)),f)
+    df.to_csv(dset_name)
+    msg2log(None,"{} dictionary for {} saved in {}".format(title,match_key,dset_name),f)
 
     return
 
@@ -762,19 +764,16 @@ def KL_decision(train_mleexp:dict=None, test_mleexp:dict=None, title:str="Anomal
         test_val=test_mleexp[key]
         lst_val=train_val['sample']+test_val['sample']
         xmean=np.array(lst_val).mean()
-        xtrain=np.array(train_mleexp['sample'])
-        xtest = np.array(test_mleexp['sample'])
-        ntrain=train_mleexp['n']
-        ntest = test_mleexp['n']
+        xtrain=np.array(train_val['sample']).mean()
+        xtest = np.array(test_val['sample']).mean()
+        ntrain=train_val['n']
+        ntest = test_val['n']
         KL2I12=ntrain*(xtrain-xmean)*(xtrain-xmean)/xmean + ntest*(xtest-xmean)*(xtest-xmean)/xmean
         KLJ12 =0.5*KL2I12 + 0.5 *( ntrain * (xtrain - xmean) * (xtrain - xmean) / xtrain + ntest * (xtest - xmean) * (
                     xtest - xmean) / xtest)
 
-        if KL2I12>chi2_1_05:
+        if KL2I12>chi2_1_05 or KLJ12 > chi2_1_05:
             anomaly_counter+=1
-        if KLJ12 > chi2_1_05:
-            anomaly_counter+=1
-        if anomaly_counter>0:
             anomaly_list.append({'matched_key':key,"2I(1:2)":KL2I12,"J(1,2)":KLJ12, "chi2(1,0.05)":chi2_1_05,
                                  "train":train_val,"test":test_val,})
 
@@ -796,7 +795,7 @@ def manageDB(repository:str=None, db:str=None,op:str='select',d_query:dict={}, f
     else:
         pass
 
-    return
+    return d_res
 
 def createDB(file_db:str=None, f:object=None):
     df=pd.DataFrame(columns=DB_COLS)
@@ -823,7 +822,7 @@ Query: {d_query}
 Selected: {l_res}
 """
         msg2log(None,msg,f)
-        d_res=l_res[-1]  # select lat item in list
+        d_res=dict(l_res[-1] ) # select last item in list. The item gas Series -type and so it should be casted to dict.
     return d_res
 
 def insertDB(file_db:str=None, d_query:dict=None,f:object=None)->dict:
@@ -852,6 +851,14 @@ def fillQuery(dt:object="", dump_log:str="", match_key:str="ID", method:str="", 
     d_query[DT]="" if dt is None else dt
 
     msg2log(None, "Filling query {}".format(d_query),f)
+    return d_query
+
+def fillQuery2Test( match_key:str="ID", method:str="",repository:str="", f:object=None)->dict:
+
+    d_query={MATCH_KEY:match_key,METHOD:method,REPOSITORY:repository}
+
+
+    msg2log(None, "Filling query for 'Test stage' : {}".format(d_query),f)
     return d_query
 
 def getSerializedModelData(d:dict=None, f:object=None)->dict:

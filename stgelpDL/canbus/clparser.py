@@ -131,7 +131,7 @@ def parserPrAnFapTL()->(argparse.ArgumentParser, str):
 
     smodeHelp          = " Supervised model anomaly detection (train path) or using trained models for anomaly " + \
                         "detection (test path). The 'debug' path comprises both 'train' and 'test' paths, the dump is" +\
-                        " split by set cut points."
+                        " split by cut point."
     smethodHelp         = " 'ppd' - poisson probability distribution  for fast anomaly detection. By default is 'ppd'."
     sICSimDumpHelp      = "Absolute path to a ICSim dump file. "
     sMatchedKeyHelp     = "'ID', 'data' or 'packet', i.e.'ID||data' fields from CANbus packet are may use for " + \
