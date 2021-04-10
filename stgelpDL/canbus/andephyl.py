@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-""" andephyl is a program for anomaly detection in the virtual model (Digital Twin -DTWIN) of the Can Bus.
+""" 'andephyl' is a program for anomaly detection in the virtual model (Digital Twin -DTWIN) of the Can Bus.
  This one comprises a several modules :
  api - common api ICSim dump parsing, waveform generations and etc.
  BF - Bloom filter implementation.
@@ -11,15 +11,13 @@
 
 from os import path
 import sys
-import argparse
 from datetime import datetime
 from pathlib import Path
-
 
 from canbus.drive import train_path,test_path
 from canbus.BF import BF
 from canbus.clparser import parser, strParam
-from clustgelDL.auxcfg  import D_LOGS,listLogSet, closeLogs,log2All,exec_time,logList
+from clustgelDL.auxcfg import D_LOGS,listLogSet, closeLogs,log2All,exec_time,logList
 from predictor.utility import msg2log,PlotPrintManager
 
 def main(argc,argv)->int:
@@ -55,8 +53,8 @@ def main(argc,argv)->int:
     Path(folder_dtwin).mkdir(parents=True, exist_ok=True)
     d_repositories={"BF":folder_bf, "DTWIN":folder_dtwin}
 
-    param =  (title, mode, method, n_train, n_test, canbusdump, fsample, bitrate, snr, \
-              slope, chunk_size, filter_size, fp_prob, batch_size, epochs, folder_for_logging, d_repositories)
+    param = (title, mode, method, n_train, n_test, canbusdump, fsample, bitrate, snr, slope, chunk_size, filter_size,
+             fp_prob, batch_size, epochs, folder_for_logging, d_repositories)
     message2=strParam(param)
     hyperparam=(batch_size,epochs)
     """ init logs """
@@ -88,7 +86,7 @@ def main(argc,argv)->int:
 
         train_path(method=method, canbusdump=canbusdump, bf=bf, chunk_size=chunk_size, fsample=fsample,
                 bitrate=bitrate, slope=slope, snr=snr, repository=d_repositories, hyperparam=hyperparam,
-                f=D_LOGS['control'] )
+                f=D_LOGS['control'])
 
     if mode == "test" or mode == "debug":
         strHeader = "\n Test path  \n"

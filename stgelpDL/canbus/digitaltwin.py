@@ -117,7 +117,7 @@ class DigitalTwin(object):
         n,=classes.shape
         classes=classes.reshape((n,1))
         logMatrix(classes, title="Predictions: argmax solution", f=D_LOGS['predict'])
-        print(classes)
+        # print(classes)
         return classes
 
 
@@ -145,6 +145,22 @@ class DigitalTwinMLP(DigitalTwin):
             self.model.add(layers.Dense(n_classes,activation=activation))
         self.status = STATUS_SET
 
+class DigitalTwinMLPids(DigitalTwinMLP):
+
+    def __init__(self,name:str = "DigitalTwinMLPids",model_repository:str = "ckpt", f:object = None):
+        super().__init__(name=name,model_repository=model_repository, f=f)
+
+    def saveModel(self, key:str="", model_saving_path:str=None ):
+        pass
+        if self.status<STATUS_FIT:
+            msg2log(None,"{} model for {} is not fitted. The saving terminated.".format(self.name,key), self.f)
+            return None
+
+
+        self.model.save(model_saving_path)
+        msg2log(None, "{} model for {} saved in {} ".format(self.name, key,model_saving_path), self.f)
+        self.status = STATUS_SAVE
+        return model_saving_path
 """ API for Digital Twins  """
 
 def get_normalize(x:np.array)->preprocessing.Normalization:
