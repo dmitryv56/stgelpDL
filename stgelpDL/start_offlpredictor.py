@@ -33,12 +33,14 @@
 """
 
 import sys
+
 from tensorflow import random
 from predictor.cfg import MAGIC_SEED
 from offlinepred.stgelopDL import main
 
 if __name__ == "__main__":
+
     random.set_seed(MAGIC_SEED)
     main(len(sys.argv), sys.argv)
 
-    exit(0)
+    sys.exit(0)

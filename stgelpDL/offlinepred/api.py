@@ -111,7 +111,7 @@ class tsSLD(object):
         self.predict_lag=PREDICT_LAG
         self.psd_segment_size=min(512, 2**(len(bin(int(self.n/4)-1))-2))
 
-        self.in_sample_start = -1  # It affects on ARIMA model forecasting
+        self.in_sample_start = None #  -1  # It affects on ARIMA model forecasting
         self.predict_date=self.tlabs.max()
         pass
 
@@ -905,9 +905,20 @@ def bundlePredict(sld:tsSLD, dict_predict:dict, obs:np.array = None,addtitle:str
         X=[]
         for k in range(sld.predict_lag):
             row = []
-            """ These au[iliary transformations due to problem in the console launching."""
+
+            """ These auxiliary transformations due to problem in the console launching."""
             tm1=sld.predict_date
-            tm2=timedelta(minutes=k * sld.discret)
+            kk=(k+1)*sld.discret
+            tm2=timedelta(minutes=kk)
+
+            if sld.__class__.__name__ == "hmaggSLD":
+                # tm1 = sld.predict_date + timedelta(days=1, hours=0, minutes=0)
+                tm1 = sld.predict_date + pd.to_timedelta('1 days 0 hours 0 minutes 0 seconds')
+                tm1 = tm1.replace(hour=0, minute=0)
+                # tm2=timedelta(days=k, hours=sld.hour,minutes=sld.minute)
+                ss="{} days {} hours {} minutes 0 seconds".format(k,sld.hour,sld.minute)
+                tm2=pd.to_timedelta(ss)
+
             stm1=str(tm1)
             pstm=parser.parse(stm1)
             dtm = pstm + tm2
@@ -918,7 +929,7 @@ def bundlePredict(sld:tsSLD, dict_predict:dict, obs:np.array = None,addtitle:str
                 row.append(val[k])
             if sld.in_sample_start is not None:
                 msg2log(bundlePredict.__name__, "sld.in_sample_start={} k= {} y= {}".format(sld.in_sample_start, k,sld.y[sld.in_sample_start+k]),
-                        D_LOGS['except'])
+                        D_LOGS['predict'])
                 row.append(sld.y[sld.in_sample_start+k])
             X.append(row)
     except:
