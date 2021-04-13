@@ -637,7 +637,59 @@ Below the SLD matrix
 The path to dataset repository is <dset_name>/<feature_type> or <repository>/data/<feature_type>.
 The path to SLD dataset is <dset_name>/<feature_type>/ID_<ID>.csv. 
 """
-def genSLD(train_target_dict:dict=None, mult_koef:int=8, p_intrusion:float=0.1, dset_name:str=None,
+def genSLD(train_target_dict:dict=None, mult_koef:int=2, p_intrusion:float=0.1, dset_name:str=None,
+           feature_type:str='one',f:object=None )->dict:
+
+
+    rng=np.random.default_rng()
+    l_ID=[]
+    l_dset=[]
+    for key,val in train_target_dict.items():
+        n=len(val) # number rows
+        msg2log(genSLD.__name__,"Key :{} {} rows was read from dict".format(key,n), D_LOGS['block'])
+        log2All()
+        l_ID.append(key)
+        p = p_intrusion
+        samples = rng.binomial(1, p, n)
+        val1=[]
+        for i in range(n):
+            if samples[i]==0: # correct
+                continue
+            else:
+                v=copy.copy(val[i])
+                v[-1]=1  # intrusion packet
+                for k in range(len(v)-1):
+                    if feature_type == 'prb':
+                        v[k] = round(rng.uniform(0, 1, 1)[0], 3)
+                    else:
+                        r = round(rng.uniform(0, 32, 1)[0], 3)
+                        v[k] = int(r)
+            val1.append(v)
+        val=val+val1
+
+        a=np.array(val)
+        (n_row,n_col)=a.shape
+        index=[str(i) for i in range(n_row)]
+        temp_d={'bit_{}'.format(col):a[:,col] for col in range(n_col-1)}
+        temp_d['y']=a[:,n_col-1]
+        dataset=pd.DataFrame(temp_d,index=index)
+        path_to=Path(Path(dset_name)/Path("{}".format(feature_type)))
+        if not path_to.exists():
+            path_to.mkdir(parents=True, exist_ok=True)
+        file_csv=path_to/Path("ID_{}".format(key)).with_suffix(".csv")
+        dataset.to_csv(file_csv)
+        l_dset.append(file_csv)
+        msg2log(genSLD.__name__, "For {} added {} intrusions".format(key,samples.sum()), D_LOGS['block'])
+        del val
+        val=None
+        del a
+        a=None
+    pass
+    dset_dict={DB_DSET_KEY:l_ID,DB_DSET_VAL:l_dset}
+    del train_target_dict
+    train_target_dict={}
+    return dset_dict
+def genSLD__(train_target_dict:dict=None, mult_koef:int=2, p_intrusion:float=0.1, dset_name:str=None,
            feature_type:str='one',f:object=None )->dict:
 
 
@@ -655,6 +707,7 @@ def genSLD(train_target_dict:dict=None, mult_koef:int=8, p_intrusion:float=0.1, 
             N=mult_koef
             p=p_intrusion
             samples=rng.binomial(1,p,N)
+            msg2log(genSLD.__name__, "Row {} : generated {}".format(i, samples), D_LOGS['block'])
             for s in samples:
 
                 if s==0:  #correct packet
@@ -692,6 +745,7 @@ def genSLD(train_target_dict:dict=None, mult_koef:int=8, p_intrusion:float=0.1, 
 
                 val1.append(s)
                 val.append(val1)
+            msg2log(genSLD.__name__, "Row {} updated".format(i), D_LOGS['block'])
         a=np.array(val)
         (n_row,n_col)=a.shape
         index=[str(i) for i in range(n_row)]
@@ -704,7 +758,7 @@ def genSLD(train_target_dict:dict=None, mult_koef:int=8, p_intrusion:float=0.1, 
         file_csv=path_to/Path("ID_{}".format(key)).with_suffix(".csv")
         dataset.to_csv(file_csv)
         l_dset.append(file_csv)
-
+        msg2log(genSLD.__name__, "key {} values are multiplied".format(key), D_LOGS['block'])
         del val
         val=None
         del a
