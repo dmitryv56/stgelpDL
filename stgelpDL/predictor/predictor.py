@@ -7,8 +7,11 @@ Statmodel classes.
 import sys
 from pathlib import Path
 from pickle import dump, load
+import logging
 
 from tensorflow.keras.models import save_model, load_model
+
+logger=logging.getLogger(__name__)
 
 
 class Predictor():

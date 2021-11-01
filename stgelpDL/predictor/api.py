@@ -10,12 +10,15 @@ import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
+import logging
 
 from predictor.NNmodel import MLP, LSTM, CNN
 from predictor.Statmodel import tsARIMA
 from predictor.control import ControlPlane
 from predictor.utility import msg2log, chunkarray2log, svld2log, vector_logging, shift, exec_time, PlotPrintManager, \
     dataset_properties2log
+
+logger=logging.getLogger(__name__)
 
 
 def chart_MAE(name_model, name_time_series, history, n_steps, logfolder, stop_on_chart_show=False):

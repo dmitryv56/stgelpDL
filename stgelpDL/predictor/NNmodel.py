@@ -2,6 +2,7 @@
 """ This module contains the NeuronNet Model implementations."""
 
 import copy
+import logging
 
 import tensorflow as tf
 from tensorflow.keras import layers
@@ -14,6 +15,8 @@ from tensorflow.keras.models import Sequential
 
 from predictor.predictor import Predictor
 from predictor.utility import msg2log, exec_time
+
+logger=logging.getLogger(__name__)
 
 """ NNmodel class is a base class for MLP, LSTM and CNN classes"""
 

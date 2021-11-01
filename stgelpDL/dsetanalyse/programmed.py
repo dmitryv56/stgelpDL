@@ -25,15 +25,10 @@ PUMP_PWR    = "Pump_Power"
 D_EUIP_PWR ={DIESEL_PWR:1.02, REAL_DEMAND:1.0, WIND_PWR:1.0,TURBINE_PWR:1.0,PUMP_PWR:0.5}
 
 
-def main(src_csv:str=None,repository:Path=None):
+def main(src_csv:str = None,repository:Path = None):
     data_col_names = [DIESEL_PWR, REAL_DEMAND,  WIND_PWR, TURBINE_PWR,PUMP_PWR]
     discret = 10
-
-
-
     test_size = 144
-
-
     dt_col_name = "Date Time"
     data_col_name = "Diesel_Power"
     state_col_name = "State_{}".format(data_col_name)
@@ -46,7 +41,7 @@ def main(src_csv:str=None,repository:Path=None):
 
     # split HYDRTRB_PWR to TURBINE_PWR and PUMP_PWR
     v=df[HYDRTRB_PWR]
-    v1=[df[HYDRTRB_PWR][i] if df[HYDRTRB_PWR][i]>=0.0 else 0.0 for i in range(n) ]
+    v1=[df[HYDRTRB_PWR][i] if df[HYDRTRB_PWR][i]>=0.0 else 0.0 for i in range(n)]
     v2 = [-df[HYDRTRB_PWR][i] if df[HYDRTRB_PWR][i] < 0.0 else 0.0 for i in range(n)]
     df[TURBINE_PWR]= v1
     df[PUMP_PWR]   = v2
@@ -60,7 +55,7 @@ def main(src_csv:str=None,repository:Path=None):
             equip_pwr=D_EUIP_PWR[item]
             equip_pwrKwt = D_EUIP_PWR[item]*1000.0
 
-            if (item==HYDRTRB_PWR):
+            if item==HYDRTRB_PWR:
                 v=[]
                 for i in range(n):
                     vv=df[item].values[i]
@@ -70,19 +65,18 @@ def main(src_csv:str=None,repository:Path=None):
                         equip=0.5
 
                     v.append(int(round(int(round(vv/equip)) * equip)))
-
-
             else:
-                v=[ int(round(int(round(df[item].values[i]/equip_pwr)) * equip_pwr))  for i in range(n)]
+                v=[int(round(int(round(df[item].values[i]/equip_pwr)) * equip_pwr)) for i in range(n)]
 
-                # v = [ round((int(round((df[item].values[i]*1000.0) / equip_pwrKwt)) * equip_pwrKwt)/1000,0) for i in range(n)]
+                # v = [ round((int(round((df[item].values[i]*1000.0) / equip_pwrKwt)) * equip_pwrKwt)/1000,0)
+                # for i in range(n)]
             df[programmed_item]=v
 
             v_3pnts=threePointsSmooth(v_src=v, f=ff)
             df[programmed_item_3pnts] = v_3pnts
             v_3pnts=[]
 
-            if (item != HYDRTRB_PWR):
+            if item != HYDRTRB_PWR:
 
                 # v_hmm=hmmSmooth(v_src=v, v_observations=df[item].values, item=item, f=ff)
 
@@ -96,9 +90,9 @@ def main(src_csv:str=None,repository:Path=None):
 
     return
 
-def mergeHydroTurbine(df:pd.DataFrame=None,item:str=HYDRTRB_PWR, item1:str=TURBINE_PWR,item2:str=PUMP_PWR,
-                      tmpl_list:list =["Programmed_","Programmed_3pnts_","Programmed_hmm_"],
-                      f:object=None)->pd.DataFrame:
+def mergeHydroTurbine(df:pd.DataFrame = None,item:str = HYDRTRB_PWR, item1:str = TURBINE_PWR,item2:str = PUMP_PWR,
+                      tmpl_list:list = ["Programmed_","Programmed_3pnts_","Programmed_hmm_"],
+                      f:object = None)->pd.DataFrame:
 
     n=len(df)
     for tmpl in tmpl_list:
@@ -117,7 +111,7 @@ def mergeHydroTurbine(df:pd.DataFrame=None,item:str=HYDRTRB_PWR, item1:str=TURBI
 
     return df
 
-def threePointsSmooth(v_src:list=None, f:object=None)->list:
+def threePointsSmooth(v_src:list = None, f:object = None)->list:
 
     v=copy.copy(v_src)
     n=len(v)
@@ -127,17 +121,12 @@ def threePointsSmooth(v_src:list=None, f:object=None)->list:
 
     return v
 
-def hmmSmooth(v_src:list=None,v_observations:list=None, item:str="pwr",f:object=None)->list:
-
-
+def hmmSmooth(v_src:list = None,v_observations:list = None, item:str = "pwr",f:object = None)->list:
     vmin, vmax, n, dn, states,v, vv_observations= fillMissedStates(v_src=v_src, v_observations = v_observations, f=f)
-
     shmm = simpleHMM(name="{}_HMM".format(item), states=states, num_steps=n, f=f)
-
     shmm.setInit(train_states_seq=v)
     shmm.setTransition(train_states_seq=v)
     shmm.setEmission(train_states_seq=v, train_observations=vv_observations)
-
     shmm.createModel()
     shmm.fitModel(observations=vv_observations)
     posterior_mode = shmm.viterbiPath(observations=vv_observations)
@@ -150,12 +139,12 @@ def hmmSmooth(v_src:list=None,v_observations:list=None, item:str="pwr",f:object=
             vv=np.delete(vv,-1)
     return vv.tolist()
 
-def phmmSmooth(v_src:list=None,v_observations:list=None, item:str="pwr",f:object=None)->list:
+def phmmSmooth(v_src:list = None,v_observations:list = None, item:str = "pwr",f:object = None)->list:
 
     lambdas=[]
     vmin, vmax, n, dn, states,v, vv_observations= fillMissedStates(v_src=v_src, v_observations = v_observations, f=f)
 
-    #coding observations
+    # coding observations
     for i in range(n):
 
         vv_observations[i]=round(vv_observations[i]*10,0)
@@ -180,7 +169,7 @@ def phmmSmooth(v_src:list=None,v_observations:list=None, item:str="pwr",f:object
     return vv.tolist()
 
 
-def fillMissedStates(v_src:list=None, v_observations:list=None, f:object=None)->(int, int, int, int, np.array,
+def fillMissedStates(v_src:list = None, v_observations:list = None, f:object = None)->(int, int, int, int, np.array,
                                                                                  np.array,np.array):
     v = np.array(v_src).astype("int")
     n, = v.shape
@@ -210,8 +199,6 @@ def fillMissedStates(v_src:list=None, v_observations:list=None, f:object=None)->
 
     states, count_states = np.unique(v, return_counts=True)
     return vmin, vmax, n1,n1-n, states,v, v_observations
-
-
 
 if __name__== "__main__":
     pass

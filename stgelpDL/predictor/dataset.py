@@ -3,12 +3,13 @@
 
 import copy
 from datetime import timedelta
-
 import pandas as pd
+import logging
 
 from predictor.api import get_scaler4train, scale_sequence, TimeSeries2SupervisedLearningData
 from predictor.utility import tsBoundaries2log, tsSubset2log, dataset_properties2log, exec_time
 
+logger=logging.getLogger(__name__)
 
 class Dataset():
     df = None  # pandas DataFrame

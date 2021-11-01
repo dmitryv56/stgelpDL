@@ -5,6 +5,7 @@ import copy
 import sys
 from pathlib import Path
 from pickle import dump, load
+import logging
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -13,6 +14,8 @@ from pmdarima.model_selection import train_test_split
 
 from predictor.predictor import Predictor
 from predictor.utility import exec_time, msg2log, PlotPrintManager, psd_logging, logDictArima, vector_logging
+
+logger=logging.getLogger(__name__)
 
 """ Statmodel class """
 

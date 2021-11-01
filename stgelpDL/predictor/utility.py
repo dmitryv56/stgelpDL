@@ -11,6 +11,9 @@ from time import perf_counter, sleep
 
 import dateutil.parser
 import numpy as np
+import logging
+
+logger=logging.getLogger(__name__)
 
 """ constants """
 cSFMT = "%Y-%m-%d %H:%M:%S"
@@ -30,6 +33,7 @@ def isCLcsvExists(cl_csv):
              The program should be terminated.\n   
         """
         print(msg)
+        logger.error(msg)
     return ret
 
 
@@ -72,6 +76,7 @@ def tsBoundaries2log(title, df, dt_dset, rcpower_dset, f=None):
 
     """
     msg2log(tsBoundaries2log.__name__, message, f)
+    logging.info(message)
 
     return
 
@@ -80,33 +85,39 @@ def tsSubset2log(dt_dset, rcpower_dset, df_train, df_val=None, df_test=None, f=N
     pass
     msg = '    Train dataset\nTrain dates: {} to {}'.format(df_train[dt_dset].min(), df_train[dt_dset].max())
     msg2log(tsSubset2log.__name__, msg, f)
+    logging.info(msg)
 
     if PlotPrintManager.isNeedPrintDataset():
         for i in range(len(df_train)):
             msg = '{} {}'.format(df_train[dt_dset][i], df_train[rcpower_dset][i])
             msg2log(" ", msg, f)
+            logging.debug(msg)
 
     if df_val is not None:
 
         msg = '\n    Validation dataset\nValidation dates: {} to {}'.format(df_val[dt_dset].min(),
                                                                             df_val[dt_dset].max())
         msg2log(tsSubset2log.__name__, msg, f)
+        logging.debug(msg)
 
         if PlotPrintManager.isNeedPrintDataset():
             for i in range(len(df_train), len(df_train) + len(df_val)):
                 msg = '{} {}'.format(df_val[dt_dset][i], df_val[rcpower_dset][i])
                 msg2log(" ", msg, f)
+                logging.debug(msg)
 
     if df_test is not None:
 
         msg = '\n     Test dataset\nTest dates: {} to {}'.format(df_test[dt_dset].min(), df_test[dt_dset].max())
         msg2log(tsSubset2log.__name__, msg, f)
+        logging.debug(msg)
 
         start = len(df_train) if df_val is None else len(df_train) + len(df_val)
         stop = len(df_train) + len(df_test) if df_val is None else len(df_train) + len(df_val) + len(df_test)
         for i in range(start, stop):
             msg = '{} {}\n'.format(df_test[dt_dset][i], df_test[rcpower_dset][i])
             msg2log(" ", msg, f)
+            logging.debug(msg)
     return
 
 
@@ -188,6 +199,7 @@ def dataset_properties2log(csv_path, dt_dset, rcpower_dset, discret, test_cut_of
 
     """
     msg2log(dataset_properties2log.__name__, message, f)
+    logging.info(message)
 
     return
 

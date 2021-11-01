@@ -63,24 +63,31 @@ if sys.platform == 'win32':
     PATH_REPOSITORY = Path(Path(Path(getcwd()).drive) / '/' / "model_Repository")
     PATH_DATASET_REPOSITORY = Path(Path(Path(getcwd()).drive) / '/' / "dataset_Repository")
     PATH_DESCRIPTOR_REPOSITORY = Path(Path(Path(getcwd()).drive) / '/' / "descriptor_Repository")
+    PATH_MAIN_LOG = Path(Path(Path(getcwd()).drive) / '/' / "stgelpDL_logs")
 elif sys.platform == 'linux':
     PATH_REPOSITORY = Path(Path.home() / "model_Repository")
     PATH_DATASET_REPOSITORY = Path(Path.home() / "dataset_Repository")
     PATH_DESCRIPTOR_REPOSITORY = Path(Path.home() / "descriptor_Repository")
+    PATH_MAIN_LOG = Path(Path.home() /  "stgelpDL_logs")
 else:
     PATH_REPOSITORY = Path(Path(Path(getcwd()).drive) / '/' / "model_Repository")
     PATH_DATASET_REPOSITORY = Path(Path(Path(getcwd()).drive) / '/' / "dataset_Repository")
     PATH_DESCRIPTOR_REPOSITORY = Path(Path(Path(getcwd()).drive) / '/' / "descriptor_Repository")
+    PATH_MAIN_LOG = Path(Path(Path(getcwd()).drive) / '/' / "stgelpDL_logs")
 
-    print('{} \n{} \n{}'.format(PATH_REPOSITORY, PATH_DATASET_REPOSITORY, PATH_DESCRIPTOR_REPOSITORY))
-    Path.mkdir(PATH_DATASET_REPOSITORY, parents=True, exist_ok=True)
-    Path.mkdir(PATH_DESCRIPTOR_REPOSITORY, parents=True, exist_ok=True)
+print('{} \n{} \n{}'.format(PATH_REPOSITORY, PATH_DATASET_REPOSITORY, PATH_DESCRIPTOR_REPOSITORY))
+Path.mkdir(PATH_DATASET_REPOSITORY, parents=True, exist_ok=True)
+Path.mkdir(PATH_DESCRIPTOR_REPOSITORY, parents=True, exist_ok=True)
+Path.mkdir(PATH_MAIN_LOG, parents=True, exist_ok=True)
 
 ALL_MODELS = {'MLP': [(0, "mlp_1"), (1, "mlp_2")], 'CNN': [(2, 'univar_cnn')], \
               'LSTM': [(3, 'vanilla_lstm'), (4, 'stacked_lstm'), (5, 'bidir_lstm')], \
               'tsARIMA': [(6, 'seasonal_arima'), (7, 'best_arima')]}
 
 # ALL_MODELS = {'tsARIMA':[(6,'seasonal_arima'),(7,'best_arima')]}
+# main log rotating
+MAX_LOG_SIZE_BYTES=10*1024*1024
+BACKUP_COUNT=2
 
 # training model
 EPOCHS = 100

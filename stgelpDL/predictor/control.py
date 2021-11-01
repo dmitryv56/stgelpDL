@@ -30,10 +30,12 @@ from shutil import copyfile
 
 import pandas as pd
 from matplotlib import pyplot as plt
+import logging
 
 from predictor.Statmodel import tsARIMA
 from predictor.utility import msg2log, cSFMT, PlotPrintManager
 
+logger=logging.getLogger(__name__)
 
 class ControlPlane():
     r""" A class used to realize the control plane functionality of the short term predicting.

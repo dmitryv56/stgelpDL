@@ -7,12 +7,14 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
+import logging
+from logging.handlers import RotatingFileHandler
 
 from predictor.api import prepareDataset
 from predictor.cfg import AUTO_PATH, TRAIN_PATH, PREDICT_PATH, CONTROL_PATH, MODES, CSV_PATH, DT_DSET, \
     RCPOWER_DSET_AUTO, DISCRET, \
     TEST_CUT_OFF, VAL_CUT_OFF, LOG_FILE_NAME, STOP_ON_CHART_SHOW, PATH_REPOSITORY, \
-    PATH_DATASET_REPOSITORY, PATH_DESCRIPTOR_REPOSITORY, ALL_MODELS, \
+    PATH_DATASET_REPOSITORY, PATH_DESCRIPTOR_REPOSITORY, PATH_MAIN_LOG, MAX_LOG_SIZE_BYTES, BACKUP_COUNT, ALL_MODELS, \
     EPOCHS, N_STEPS, N_FEATURES, UNITS, FILTERS, KERNEL_SIZE, POOL_SIZE, HIDDEN_NEYRONS, DROPOUT, \
     SEASONALY_PERIOD, PREDICT_LAG, MAX_P, MAX_Q, MAX_D, \
     FILE_DESCRIPTOR, MODE_IMBALANCE, IMBALANCE_NAME, PROGRAMMED_NAME, DEMAND_NAME, \
@@ -22,6 +24,21 @@ from predictor.dataset import Dataset
 from predictor.utility import msg2log, exec_time, PlotPrintManager, OutVerbose, isCLcsvExists
 
 __version__ = '2.0.3'
+
+main_log = Path(PATH_MAIN_LOG, Path(__file__).stem + "_main").with_suffix(".log")
+
+size_handler=RotatingFileHandler(main_log, mode='a', maxBytes=MAX_LOG_SIZE_BYTES, backupCount=BACKUP_COUNT )
+
+logger=logging.getLogger()
+
+logger.setLevel(logging.DEBUG)
+log_formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s %(funcName)s(%(lineno)d) %(message)s',
+                                  '%m/%d/%Y %I:%M:%S %p')
+size_handler.setFormatter(log_formatter)
+logger.addHandler(size_handler)
+
+
+
 """
 This Control Plane function creates a dataset and runs specified plane functions (Train plane or Predict Plane)
 """
@@ -62,7 +79,9 @@ def main(argc, argv):
     parser.add_argument('--verbose', '-v', action='count', dest='cl_verbose', default=0)
     parser.add_argument('--version', action='version', version='%(prog)s {}'.format(__version__))
     args = parser.parse_args()
-    print("\n\n\n{}".format(args.cl_mode))
+    msg="args: mode {}".format(args.cl_mode)
+    print("\n\n\n{}".format(msg))
+    logger.info(msg)
     OutVerbose.set_verbose_level(args.cl_verbose)
 
     # command-line parser
@@ -71,7 +90,9 @@ def main(argc, argv):
     date_time = now.strftime("%d_%m_%y__%H_%M_%S")
 
     with open("execution_time.log", 'w') as fel:
-        fel.write("Time execution logging started at {}\n\n".format(datetime.now().strftime("%d %m %y %H:%M:%S")))
+        msg="Time execution logging started at {}\n\n".format(datetime.now().strftime("%d %m %y %H:%M:%S"))
+        fel.write(msg)
+        logger.info(msg)
 
     dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -153,7 +174,9 @@ def main(argc, argv):
         cp.rcpower_dset = RCPOWER_DSET
         cp.log_file_name = LOG_FILE_NAME
     else:
+        msg ="Undefined mode. Exit 1"
         print("Undefined mode. Exit 1")
+        logger.error(msg)
         fc.close()
         fp.close()
         ft.close()
@@ -217,9 +240,13 @@ def main(argc, argv):
     title2 = "started at"
     msg = "{}\n".format(date_time)
     msg2log("{} (Control Plane) {} ".format(title1, title2), msg, fc)
+    logger.info("{} (Control Plane) {} : {}".format(title1, title2, msg))
     msg2log("{} (Train Plane) {} ".format(title1, title2), msg, ft)
+    logger.info("{} (Train Plane) {} : {}".format(title1, title2, msg))
     msg2log("{} (Predict Plane) {} ".format(title1, title2), msg, fp)
+    logger.info("{} (Predict Plane) {} : {}".format(title1, title2, msg))
     msg2log("{} (Auto Management Plane) {} ".format(title1, title2), msg, fa)
+    logger.info("{} (Auto Management Plane) {} : {}".format(title1, title2, msg))
 
     drive_STGELPDL(cp)
 
@@ -229,9 +256,13 @@ def main(argc, argv):
     date_time = now.strftime("%d_%m_%y__%H_%M_%S")
     msg = "{}\n".format(date_time)
     msg2log("{} Control Plane {}".format(title1, title2), msg, fc)
+    logger.info("{} (Control Plane) {} : {}".format(title1, title2, msg))
     msg2log("{} Train Plane {}".format(title1, title2), msg, ft)
+    logger.info("{} (Train Plane) {} : {}".format(title1, title2, msg))
     msg2log("{} Predict Plane {}".format(title1, title2), msg, fp)
+    logger.info("{} (Predict Plane) {} : {}".format(title1, title2, msg))
     msg2log("{} Auto Management Plane {}".format(title1, title2), msg, fa)
+    logger.info("{} (Auto Management Plane) {} : {}".format(title1, title2, msg))
 
     fc.close()
     fp.close()
@@ -240,8 +271,9 @@ def main(argc, argv):
     ff.close()
 
     with open("execution_time.log", 'a') as fel:
-        fel.write("Time execution logging finished at {}\n\n".format(datetime.now().strftime("%d %m %y %H:%M:%S")))
-
+        msg="Time execution logging finished at {}\n\n".format(datetime.now().strftime("%d %m %y %H:%M:%S"))
+        fel.write(msg)
+        logger.info(msg)
     return
 
 

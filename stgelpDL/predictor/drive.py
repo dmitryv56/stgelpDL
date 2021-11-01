@@ -11,6 +11,7 @@ from datetime import datetime, timedelta as td
 from pathlib import Path
 from shutil import copyfile
 from time import sleep
+import logging
 
 from predictor.Statmodel import tsARIMA
 from predictor.api import d_models_assembly, fit_models, save_modeles_in_repository, get_list_trained_models, \
@@ -20,6 +21,8 @@ from predictor.control import ControlPlane
 from predictor.dataset import Dataset
 from predictor.demandwidget import DemandWidget
 from predictor.utility import exec_time, msg2log, PlotPrintManager, cSFMT, incDateStr, PERIOD_MODEL_RETRAIN
+
+logger=logging.getLogger(__name__)
 
 """ State Machine for UpdateChecker"""
 

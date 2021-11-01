@@ -4,10 +4,10 @@ The module contains a base class DataAdapter  and derived class DemandWidget are
 Now we have limited access to  RED Electrica De Espana
             https://www.https://www.ree.es/en/datos/todate
 through REData Information access API that provides a simple REST service to allow third parties to access the baсkend
-data used in REData application. By using this API , we can be able to retrieve data fom the REData widgets and use tn
+data used in REData application. By using this API , we can be able to retrieve data from the REData widgets and use
 for the short term prediction by using Deep Learning and Statistcal models.
-The use of this service is simply. Onle GET requests are allowed since he purpose of this API is provide data related
-to REData app. Each widget is set up bye series indicators time series) which provide data related to particular
+The use of this service is simply. Only GET requests are allowed since the purpose of this API is provide data related
+to REData app. Each widget is set up by series indicators ( time series) which provide data related to particular
 category. The detailed form of the URI can be found on the site
             https://www.ree.es/en/apidatos
 
@@ -30,10 +30,13 @@ import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import pandas as pd
 import requests
+import logging
 
 from predictor.api import show_autocorr, createDeltaList
 from predictor.control import ControlPlane
 from predictor.utility import msg2log, PlotPrintManager
+
+logger=logging.getLogger(__name__)
 
 
 class DataAdapter():
@@ -251,7 +254,7 @@ class DemandWidget(DataAdapter):
         r"""
         This method sends parameterized GET-request to 'https://apidatos.ree.es/en/datos/demanda/demanda-tiempo-real '
         site, parses received widget in json-format and creates DataFrame object for received time series.
-        The recived request is an object comprises two dictionares 'data' and 'included' .
+        The received request is an object contains two dictionares 'data' and 'included' .
         The 'data' is a header while 'included' comprises the time series of the demand in MWatt and scale time series
         with values between 0 and 1.
 
