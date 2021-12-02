@@ -123,10 +123,16 @@ def chart_predict(dict_predict, n_predict, cp, ds, title, Y_label):
     # times = mdates.drange (ds.df[ds.dt_dset][len(ds.df[ds.dt_dset])].to_pydatetime(),
     #                        ds.df[ds.dt_dset][len(ds.df[ds.dt_dset] + n_predict)].to_pydatetime(),
     #                                    timedelta(minutes=cp.discret))
+    # times = mdates.drange(
+    #     (ds.df[ds.dt_dset][len(ds.df[ds.dt_dset]) - 1] + timedelta(minutes=cp.discret)).to_pydatetime(),
+    #     (ds.df[ds.dt_dset][len(ds.df[ds.dt_dset]) - 1] + timedelta(
+    #         minutes=cp.discret * (n_predict + 1))).to_pydatetime(),
+    #     timedelta(minutes=cp.discret))
+
     times = mdates.drange(
-        (ds.df[ds.dt_dset][len(ds.df[ds.dt_dset]) - 1] + timedelta(minutes=cp.discret)).to_pydatetime(),
+        (ds.df[ds.dt_dset][len(ds.df[ds.dt_dset]) - 1] + timedelta(minutes=cp.discret)),
         (ds.df[ds.dt_dset][len(ds.df[ds.dt_dset]) - 1] + timedelta(
-            minutes=cp.discret * (n_predict + 1))).to_pydatetime(),
+            minutes=cp.discret * (n_predict + 1))),
         timedelta(minutes=cp.discret))
     ndelta = len(times) - n_predict
 

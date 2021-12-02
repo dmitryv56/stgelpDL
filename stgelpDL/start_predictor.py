@@ -17,6 +17,8 @@
 """
 
 import sys
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 from tensorflow import random
 
