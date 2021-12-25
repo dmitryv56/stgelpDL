@@ -59,6 +59,11 @@ stgelpDL v.2.0.1 published at 27/09/2020
 stgelpDL v.2.0.3 published at 28/10/2020
 
 RELEASE NOTES
+In next v.3.0.1 , stgelpDL predictor will have a microservice architecture instead of monolithic one.
+The server requests data via REDApi of ree.es.
+The client forecasts the Imbalance process.
+Another client shows the forecast on the GUI
+In future the web -service should be added.
 
 In Development
 -Simple Regression Analysis.
