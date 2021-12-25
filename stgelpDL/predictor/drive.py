@@ -21,6 +21,8 @@ from predictor.control import ControlPlane
 from predictor.dataset import Dataset
 from predictor.demandwidget import DemandWidget
 from predictor.utility import exec_time, msg2log, PlotPrintManager, cSFMT, incDateStr, PERIOD_MODEL_RETRAIN
+from msrvcpred.src.api import ClientDemandWidget
+
 
 logger=logging.getLogger(__name__)
 
@@ -41,6 +43,7 @@ sm_dict = {SM_CP_CREATE_DATASET: 'CP sends first "GET"-request, receives data an
            SM_TP_MODEL_UPDATING: 'TP updates the models and saves them in the repository',
            SM_CP_DATA_WAITING: 'CP waits when data will be available',
            SM_INVALID_STATE: 'Invalid State...'}
+
 
 
 class ISubject(ABC):
@@ -576,10 +579,13 @@ class ControlPlaneObserver(IObserver):
         start_time_t = end_time_t - td(days=ControlPlane.get_ts_duration_days())
         start_time = start_time_t.strftime(cSFMT)
 
-        dmwdg = DemandWidget(scaled_data, start_time, end_time, 'hour', None, None, self.f)
-        dmwdg.set_url()
-
-        print(dmwdg.url)
+        dmwdg = None
+        if ControlPlane._magic_app_number == 222:
+            dmwdg = ClientDemandWidget(scaled_data, start_time, end_time, 'hour', None, None, self.f)
+        else:
+            dmwdg = DemandWidget(scaled_data, start_time, end_time, 'hour', None, None, self.f)
+            dmwdg.set_url()
+            print(dmwdg.url)
 
         requested_widget = dmwdg.getDemandRT(None)
         print("Requested widget has type {}".format(type(requested_widget)))
@@ -607,13 +613,21 @@ class ControlPlaneObserver(IObserver):
         scaled_data = False
         start_time = incDateStr(cp.drtDescriptor['lastTime'], minutes=cp.discret)
         end_time = datetime.now().strftime(cSFMT)
-        dmwdg = DemandWidget(scaled_data, start_time, end_time, 'hour', None, None, self.f)
-        dmwdg.set_url()
-        print(dmwdg.url)
+
+        dmwdg = None
+        if ControlPlane._magic_app_number == 222:
+            start_time = incDateStr(cp.drtDescriptor['lastTime'], minutes=cp.discret * 4)
+            dmwdg = ClientDemandWidget(scaled_data, start_time, end_time, 'hour', None, None, self.f)
+        else:
+            dmwdg = DemandWidget(scaled_data, start_time, end_time, 'hour', None, None, self.f)
+            dmwdg.set_url()
+            print(dmwdg.url)
 
         requested_widget = dmwdg.getDemandRT(None)
         if requested_widget is None:
             nRet = -1
+            if ControlPlane._magic_app_number == 222:
+                nRet = 0
 
         if ControlPlane.get_modeImbalance():
             (imbalance_dset, programmed_dst, demand_dset) = ControlPlane.get_modeImbalanceNames()

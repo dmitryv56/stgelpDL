@@ -749,7 +749,7 @@ def mleexp(target_dict:dict=None, mleexp_dict:dict=None, n_min:int=5, title:str=
         sum_items=float(sum(l_duration))/1e06   # in seconds
         mle_lambda=float(n)/sum_items
         mle_var_lambda=(mle_lambda*mle_lambda)/float(n)
-        mleexp_dict[key]={"n":n,"mle":mle_lambda,"var":mle_var_lambda,"sample":l_duration}
+        mleexp_dict[key]={"n":n,"mle":mle_lambda,"var":mle_var_lambda,"SamplePackage":l_duration}
     return
 
 def KL_decision(train_mleexp:dict=None, test_mleexp:dict=None, title:str="Anomaly packet",f:object=None)->list:
@@ -762,10 +762,10 @@ def KL_decision(train_mleexp:dict=None, test_mleexp:dict=None, title:str="Anomal
         anomaly_counter=0
         train_val=train_mleexp[key]
         test_val=test_mleexp[key]
-        lst_val=train_val['sample']+test_val['sample']
+        lst_val=train_val['SamplePackage']+test_val['SamplePackage']
         xmean=np.array(lst_val).mean()
-        xtrain=np.array(train_val['sample']).mean()
-        xtest = np.array(test_val['sample']).mean()
+        xtrain=np.array(train_val['SamplePackage']).mean()
+        xtest = np.array(test_val['SamplePackage']).mean()
         ntrain=train_val['n']
         ntest = test_val['n']
         KL2I12=ntrain*(xtrain-xmean)*(xtrain-xmean)/xmean + ntest*(xtest-xmean)*(xtest-xmean)/xmean

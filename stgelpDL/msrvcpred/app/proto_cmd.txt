@@ -1,0 +1,32 @@
+This file contains the command for microservices_pb2.py and microservices_pb2_grps.py generation by using
+grpc_tools.protoc.
+If the file structure of the project shall be changed  you shaln change the paths in the command.
+
+For now,
+
+msrvcpred is the root folder of the project
+         /app
+              microservices_pb2.py
+              microservices_pb2_grpc.py
+              /clients
+                      client_Predict.py
+                      client_Train.py
+              /server
+                      server_Predictor.py
+         /src
+              .... files ...
+         /protobuf
+               microservices.proto
+         /log
+             ... log files ...
+         /repository
+             ... saved models ...
+         /data
+             ... saved datasets
+
+
+In order to *_pb2.y and *_pb2_grpc.py files generation, You have to enter the following command line
+
+
+(venv) dmitry@dmitryv:~/LaLaguna/stgelpDL/stgelpDL/mservpred$
+python -m grpc_tools.protoc -I protobuf --python_out=app --grpc_python_out=app protobuf/microservices.proto

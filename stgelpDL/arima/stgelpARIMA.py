@@ -42,7 +42,7 @@ def parser()->(argparse.ArgumentParser, str):
     schunkHelp          = "The chunk size for long TS. ARIMA parameters are estimated over this tail chunk. "+ \
                           "The statistics like as mean,std,autocorrelation are estimated over all TS."
     sdiscretHelp        = "TS sampling discretization(minutes)"
-    snum_predictsHelp   = "Predict period for forecasting or out-of-sample predicting."
+    snum_predictsHelp   = "Predict period for forecasting or out-of-SamplePackage predicting."
     spmaxHelp           = "Max  order (number of time lags) of the autoregressive model (AR)."
     sdmaxHelp           = "Max degree of differencing (the number of times the data have had past values subtracted)."
     sqmaxHelp           = "Max  order  of the moving-average model (MA)."
@@ -50,7 +50,7 @@ def parser()->(argparse.ArgumentParser, str):
     sPmaxHelp           = "Max  order (number of time lags) of the season autoregressive model (AR)."
     sDmaxHelp           = "Max degree of season differencing."
     sQmaxHelp           = "Max  order  of the season moving-average model (MA)."
-    sinsampleHelp       = "Offset from end of TS for in-sample predicting."
+    sinsampleHelp       = "Offset from end of TS for in-SamplePackage predicting."
     stitleHelp          = "Title, one word using as log folder name."
 
 
@@ -95,8 +95,8 @@ Exogenous features in dataset      : {args.cl_exogen}
 Timestamp in dataset               : {args.cl_timestamp}
 Chunk for ARIMA estimation size    : {args.cl_chunk}  
 Discretization (min)               : {args.cl_discret}
-Out sample forecast periods        : {args.cl_out_sample}
-In sample predict periods          : {args.cl_in_sample}
+Out SamplePackage forecast periods        : {args.cl_out_sample}
+In SamplePackage predict periods          : {args.cl_in_sample}
 ARIMA                              : ({args.cl_p_max},{args.cl_d_max},{args.cl_q_max})
 ARIMAS                             : ({args.cl_P_max},{args.cl_D_max},{args.cl_Q_max}) {args.cl_S}
 
@@ -126,8 +126,8 @@ TS duration               : D{days}:H{hours}:M{minutes}
 Chunk size                : {chunk_size}
 Chunk starts at           : {chunk_start}
 Forecast periods          : {forecast_period}
-In sample predict         : {in_sample_size}
-In sample predict starts  : {in_sample_start}
+In SamplePackage predict         : {in_sample_size}
+In SamplePackage predict starts  : {in_sample_start}
 Max ARIMA x ARIMAS orders : {max_order} x {max_seasonal_order}
 Log folder                : {log_folder}
 

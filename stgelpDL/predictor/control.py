@@ -20,6 +20,11 @@ The internal structures fo this dictionary is following
 
 The dictionary is serialized in json format. The path to the dictionary  holds in the configuration file (cfg.py) and
 supports in Control Plane object.
+
+
+NOTE: _magic_app_number added to recocognite which application created this ControlPlane class.
+The 'magic value' for old stgelpDL is 111, for microservice predictor  is 222.
+
 """
 import copy
 import os
@@ -126,6 +131,7 @@ class ControlPlane():
 
     _ts_duration_days = 7
     _psd_segment_size = 512
+    _magic_app_number = None
 
     def __init__(self):
         """
@@ -565,6 +571,14 @@ class ControlPlane():
         return type(self)._forecast_number_step
 
     forecast_number_step = property(get_forecast_number_step, set_forecast_number_step)
+
+    def set_magic_app_number(self,val):
+        type(self)._magic_app_number=val
+
+    def get_magic_app_number(self):
+        return type(self)._magic_app_number
+
+    magic_app_number = property(get_magic_app_number, set_magic_app_number)
 
     """     common Control Plane methods    """
 

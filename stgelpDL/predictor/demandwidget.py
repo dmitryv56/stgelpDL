@@ -2,7 +2,7 @@
 r""" This module 'demandwidget' allows the Control Plane functionality.
 The module contains a base class DataAdapter  and derived class DemandWidget are used for real time a dataset creating.
 Now we have limited access to  RED Electrica De Espana
-            https://www.https://www.ree.es/en/datos/todate
+            https://www.ree.es/en/datos/todate
 through REData Information access API that provides a simple REST service to allow third parties to access the baсkend
 data used in REData application. By using this API , we can be able to retrieve data from the REData widgets and use
 for the short term prediction by using Deep Learning and Statistcal models.
@@ -47,7 +47,7 @@ class DataAdapter():
 
     def __init__(self, f=None):
         self.f = f
-        pass
+        self._log = logger
 
 
 class DemandWidget(DataAdapter):

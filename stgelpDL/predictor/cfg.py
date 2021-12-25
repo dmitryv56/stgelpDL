@@ -8,7 +8,7 @@ import sys
 from os import getcwd
 from pathlib import Path
 
-from predictor.drive import drive_auto, drive_train, drive_predict, drive_control
+# from predictor.drive import drive_auto, drive_train, drive_predict, drive_control
 
 MAGIC_SEED = 1956
 # Title for planes
@@ -16,8 +16,8 @@ AUTO_PATH = 'auto'
 TRAIN_PATH = 'train'
 PREDICT_PATH = 'predict'
 CONTROL_PATH = 'control'
-
-MODES = {AUTO_PATH: drive_auto, TRAIN_PATH: drive_train, PREDICT_PATH: drive_predict, CONTROL_PATH: drive_control}
+# MODES moved in stgelpDL.py
+# MODES = {AUTO_PATH: drive_auto, TRAIN_PATH: drive_train, PREDICT_PATH: drive_predict, CONTROL_PATH: drive_control}
 ACTUAL_MODE = AUTO_PATH
 """
 # Dataset properties. Can be replaced by command-line parameters.
