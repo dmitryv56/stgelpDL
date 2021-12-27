@@ -45,7 +45,6 @@ sm_dict = {SM_CP_CREATE_DATASET: 'CP sends first "GET"-request, receives data an
            SM_INVALID_STATE: 'Invalid State...'}
 
 
-
 class ISubject(ABC):
     """
     interface to Subject
@@ -489,7 +488,6 @@ class ControlPlaneObserver(IObserver):
             msg2log(self.update.__name__, message, self.f)
             return
 
-
         elif subject.state == SM_CP_UPDATE_DATASET:
             subject.notification_received += 1
             status = self.updateDataset(dct)
@@ -528,7 +526,6 @@ class ControlPlaneObserver(IObserver):
                         """
             msg2log(self.update.__name__, message, self.f)
             return
-
 
         elif subject.state == SM_CP_DATA_WAITING:
             subject.notification_received += 1
@@ -877,7 +874,8 @@ def drive_auto(cp, ds):
             deltat = next_run_time - curr_time
             sleep_in_sec = deltat.seconds
             # some transitions are immediately carried out
-            if subject.state == SM_TP_MODEL_TRAINING or subject.state == SM_PP_PREDICTING or subject.state == SM_TP_MODEL_UPDATING:
+            if subject.state == SM_TP_MODEL_TRAINING or subject.state == SM_PP_PREDICTING or \
+                    subject.state == SM_TP_MODEL_UPDATING:
                 sleep_in_sec = 0
                 next_run_time = curr_time
 

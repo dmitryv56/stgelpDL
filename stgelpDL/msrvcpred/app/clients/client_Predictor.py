@@ -18,21 +18,20 @@ grpc.insecure_channel('localhost:50051', options=(('grpc.enable_http_proxy', 0),
 
 import grpc
 import logging
-import numpy as np
-from io import BytesIO
-import microservices_pb2
-import microservices_pb2_grpc
+# import numpy as np
+# from io import BytesIO
+
+from msrvcpred.app import microservices_pb2, microservices_pb2_grpc
 import time
 from datetime import datetime, timedelta
 
 from predictor.utility import cSFMT
-from msrvcpred.cfg import MAGIC_TRAIN_CLIENT, MAGIC_PREDICT_CLIENT,GRPC_PORT,GRPC_IP
+from msrvcpred.cfg import MAGIC_TRAIN_CLIENT, MAGIC_PREDICT_CLIENT, GRPC_PORT, GRPC_IP
 
-
-
-logger =logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 BREAK_AQUISATION = -999
+
 
 class PredictorClient(object):
     """
@@ -43,15 +42,15 @@ class PredictorClient(object):
         # configure the host and the
         # the port to which the client should connect
         # to.
-        self.host = GRPC_IP          # 'localhost'
-        self.server_port = GRPC_PORT # 46001
+        self.host = GRPC_IP           # 'localhost'
+        self.server_port = GRPC_PORT  # 46001
         self._log = logger
         self.end_time = datetime.now().strftime(cSFMT)
-        self.start_time=(datetime.now()-timedelta(days=7)).strftime(cSFMT)
+        self.start_time = (datetime.now()-timedelta(days=7)).strftime(cSFMT)
 
         # instantiate a communication channel
         self.channel = grpc.insecure_channel(
-            '{}:{}'.format(self.host, self.server_port), options=(('grpc.enable_http_proxy',0),))
+            '{}:{}'.format(self.host, self.server_port), options=(('grpc.enable_http_proxy', 0), ))
 
         # bind the client to the server channel
         self.stub = microservices_pb2_grpc.ObtainDataStub(self.channel)
@@ -61,42 +60,44 @@ class PredictorClient(object):
         Client function to call the rpc for SendData
         """
         # get_data_message =microservices_pb2.DataRequest(clientid=777,region='ElHierro')
-        response = self.stub.SendData(microservices_pb2.DataRequest(clientid=MAGIC_PREDICT_CLIENT,region='ElHierro'))
+        response = self.stub.SendData(microservices_pb2.DataRequest(clientid=MAGIC_PREDICT_CLIENT, region='ElHierro'))
         print(response)
-        logger.info("Get predict data: timestamp :{} status:{} real_demand: {}".format(response.timestamp,
-                                                                        response.status,response.real_demand))
+        logger.info(
+            "Get predict data: timestamp :{} status:{} real_demand: {}".format(response.timestamp, response.status,
+                                                                               response.real_demand))
         return response
 
     # function to invoke our newly implemented RPC
-    def get_streaming_data(self, message)->(list,list,list,list):
+    def get_streaming_data(self, message) -> (list, list, list, list):
         """
         Client function to call the rpc for SendStreamData
         """
         logger.info(message)
 
-        get_data_message =microservices_pb2.TrainDataRequest(clientid=MAGIC_TRAIN_CLIENT, start_time=self.start_time,
-                                                            end_time=self.end_time,region="ElHierro")
+        get_data_message = microservices_pb2.TrainDataRequest(clientid=MAGIC_TRAIN_CLIENT, start_time=self.start_time,
+            end_time=self.end_time, region="ElHierro")
         list_requests = self.stub.SendStreamData(get_data_message)
-        data_list=[]
-        dt=[]
-        real_demand=[]
-        programmed_demand=[]
-        forecast_demand=[]
+        data_list = []
+        dt = []
+        real_demand = []
+        programmed_demand = []
+        forecast_demand = []
 
         for request in list_requests:
             print(request)
 
-            ret = self.request_parse(request,dt, real_demand, programmed_demand,forecast_demand)
+            ret = self.request_parse(request, dt, real_demand, programmed_demand, forecast_demand)
 
             if ret == BREAK_AQUISATION:
                 break
 
+        return dt, real_demand, programmed_demand, forecast_demand
 
-        return dt, real_demand,programmed_demand, forecast_demand
     """ Parse request (TrainDataReply or DataReply, see in microservices_pb2_gprc.py).
     Parsing process is broken when 'real_demand' missed in the request.
     """
-    def request_parse(self,request:object,dt:list, real_demand:list, programmed_demand:list,forecast_demand:list)->int:
+    def request_parse(self, request: object, dt: list, real_demand: list, programmed_demand: list,
+                      forecast_demand: list) -> int:
 
         list_attr = dir(request)
         if 'status' in list_attr:
@@ -130,6 +131,7 @@ class PredictorClient(object):
 #         print("client received: {}".format(response))
 #         logger.info("client 777   received: {}".format(response))
 #
+
 
 if __name__ == '__main__':
     currs_client = PredictorClient()

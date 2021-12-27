@@ -21,32 +21,28 @@ import logging
 from logging.handlers import RotatingFileHandler
 import time
 from datetime import datetime
-
-
 import grpc
-from io import BytesIO
-import microservices_pb2
-import microservices_pb2_grpc
+# from io import BytesIO
+from msrvcpred.app import microservices_pb2, microservices_pb2_grpc
 
-# from  msrvcpred.src.readdata import get_data_for_train, get_data_for_predict
-from  src.readdata import get_data_for_train, get_data_for_predict
-from msrvcpred.cfg import MAX_LOG_SIZE_BYTES, BACKUP_COUNT , PATH_SERVER_LOG, MAGIC_TRAIN_CLIENT, MAGIC_PREDICT_CLIENT,\
-    GRPC_PORT,GRPC_IP
+from msrvcpred.src.readdata import get_data_for_train, get_data_for_predict
+from msrvcpred.cfg import MAX_LOG_SIZE_BYTES, BACKUP_COUNT, PATH_SERVER_LOG, MAGIC_TRAIN_CLIENT, MAGIC_PREDICT_CLIENT,\
+    GRPC_PORT
 from predictor.utility import cSFMT
 
 # set logger
 
-size_handler=RotatingFileHandler(PATH_SERVER_LOG, mode='a', maxBytes =MAX_LOG_SIZE_BYTES, backupCount=BACKUP_COUNT )
-logger=logging.getLogger()
+size_handler = RotatingFileHandler(PATH_SERVER_LOG, mode='a', maxBytes=MAX_LOG_SIZE_BYTES, backupCount=BACKUP_COUNT)
+logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 log_formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s %(funcName)s(%(lineno)d) %(message)s',
                                   '%m/%d/%Y %I:%M:%S %p')
 size_handler.setFormatter(log_formatter)
 logger.addHandler(size_handler)
 
-logger=logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
-CRITICAL_MESSAGE ="No data received from data provider!!!!"
+CRITICAL_MESSAGE = "No data received from data provider!!!!"
 
 
 class ObtainData(microservices_pb2_grpc.ObtainDataServicer):
@@ -54,7 +50,7 @@ class ObtainData(microservices_pb2_grpc.ObtainDataServicer):
         gRPC server for Obtain Data Service
     """
     def __init__(self, *args, **kwargs):
-        self.server_port = GRPC_PORT #46001
+        self.server_port = GRPC_PORT  # 46001
 
     def SendData(self, request, context):
         """
@@ -62,7 +58,7 @@ class ObtainData(microservices_pb2_grpc.ObtainDataServicer):
                 file above.
         """
         logger.info("Server: Predict client  {}".format(request))
-        list_results = get_data_for_predict(start_time=request.start_time,end_time=request.end_time)
+        list_results = get_data_for_predict(start_time=request.start_time, end_time=request.end_time)
         result = {}
         if list_results is None:
             logger.critical(CRITICAL_MESSAGE)
@@ -71,11 +67,10 @@ class ObtainData(microservices_pb2_grpc.ObtainDataServicer):
                       'forecast_demand': 0.0, 'status': -1, 'statusmsg': "can not get requested data"}
             logger.error("Server sends {} {}".format(request.clientid, result))
         else:
-            result=list_results[-1]  # last item
-            logger.info("Server sends {} {}".format(request.clientid,result))
+            result = list_results[-1]  # last item
+            logger.info("Server sends {} {}".format(request.clientid, result))
 
         return microservices_pb2.DataReply(**result)
-
 
     def SendStreamData(self, request, context):
         """
@@ -83,11 +78,10 @@ class ObtainData(microservices_pb2_grpc.ObtainDataServicer):
         """
         logger.info("Server: Train client  {}".format(request))
 
-
-        list_results =get_data_for_train(start_time=request.start_time,end_time=request.end_time)
+        list_results = get_data_for_train(start_time=request.start_time, end_time=request.end_time)
         if list_results is None:
             logger.critical(CRITICAL_MESSAGE)
-            timestamp=datetime.now().strftime(cSFMT)
+            timestamp = datetime.now().strftime(cSFMT)
             result = {'timestamp': timestamp, 'real_demand': 0.0, 'programmed_demand': 0.0,
                       'forecast_demand': 0.0, 'status': -1, 'statusmsg': "can not get requested data"}
             logger.error("Server sends {}: {}".format(request.clientid, result))
@@ -108,14 +102,14 @@ class ObtainData(microservices_pb2_grpc.ObtainDataServicer):
         data_server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
 
         # This line can be ignored
-        microservices_pb2_grpc.add_ObtainDataServicer_to_server(ObtainData(),data_server)
+        microservices_pb2_grpc.add_ObtainDataServicer_to_server(ObtainData(), data_server)
 
         # bind the server to the port defined above
         data_server.add_insecure_port('[::]:{}'.format(self.server_port))
 
         # start the server
         data_server.start()
-        print ('Data Server running ...')
+        print('Data Server running ...')
         logger.info('Data Server running ...')
 
         try:
@@ -163,11 +157,8 @@ class ObtainData(microservices_pb2_grpc.ObtainDataServicer):
 #     server.wait_for_termination()
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
 
     # serve()
     curr_server = ObtainData()
     curr_server.start_server()
-
-
-

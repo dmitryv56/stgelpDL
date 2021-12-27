@@ -22,7 +22,7 @@ cSFMT = "%Y-%m-%d %H:%M:%S"
 PERIOD_MODEL_RETRAIN = 4
 
 
-def isCLcsvExists(cl_csv):
+def isCLcsvExists(cl_csv) -> bool:
     ret = False
     csvPath = Path(cl_csv)
     if csvPath.exists() and csvPath.is_file():

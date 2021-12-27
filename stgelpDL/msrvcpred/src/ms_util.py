@@ -7,40 +7,40 @@ import sys
 import argparse
 import logging
 from pathlib import Path
-from datetime import datetime,timedelta
+from datetime import datetime
 
 from msrvcpred.version import __version__
 from predictor.control import ControlPlane
-from predictor.utility import msg2log, exec_time, PlotPrintManager, OutVerbose, isCLcsvExists
-from msrvcpred.cfg import MAGIC_SEED, MAGIC_TRAIN_CLIENT,MAGIC_PREDICT_CLIENT,GRPC_PORT,GRPC_IP, AUTO_PATH,TRAIN_PATH,\
-    PREDICT_PATH,CONTROL_PATH,ACTUAL_MODE,DT_DSET, RCPOWER_DSET, RCPOWER_DSET_AUTO, MODE_IMBALANCE, IMBALANCE_NAME, \
-    PROGRAMMED_NAME, DEMAND_NAME, LOG_FOLDER_NAME, MAIN_SYSTEM_LOG, SERVER_LOG, MAX_LOG_SIZE_BYTES, BACKUP_COUNT , \
+from predictor.utility import msg2log, PlotPrintManager, OutVerbose, isCLcsvExists
+from msrvcpred.cfg import MAGIC_SEED, MAGIC_TRAIN_CLIENT, MAGIC_PREDICT_CLIENT, GRPC_PORT, GRPC_IP, AUTO_PATH, \
+    TRAIN_PATH,\
+    PREDICT_PATH, CONTROL_PATH, ACTUAL_MODE, DT_DSET, RCPOWER_DSET, RCPOWER_DSET_AUTO, MODE_IMBALANCE, IMBALANCE_NAME, \
+    PROGRAMMED_NAME, DEMAND_NAME, LOG_FOLDER_NAME, MAIN_SYSTEM_LOG, SERVER_LOG, MAX_LOG_SIZE_BYTES, BACKUP_COUNT, \
     EPOCHS, N_STEPS, N_FEATURES, UNITS, FILTERS, KERNEL_SIZE, POOL_SIZE, HIDDEN_NEYRONS, DROPOUT, SEASONALY_PERIOD, \
     PREDICT_LAG, MAX_P, MAX_Q, MAX_D, DISCRET, TEST_CUT_OFF, VAL_CUT_OFF, TS_DURATION_DAYS, SEGMENT_SIZE, \
     FILE_DESCRIPTOR, SCALED_DATA_FOR_AUTO, START_DATE_FOR_AUTO, END_DATE_FOR_AUTO, TIME_TRUNC_FOR_AUTO, \
     GEO_LIMIT_FOR_AUTO, GEO_IDS_FOR_AUTO, STOP_ON_CHART_SHOW,\
-    CSV_PATH, LOG_FILE_NAME, PATH_LOG_FOLDER, PATH_MAIN_LOG, PATH_REPOSITORY, PATH_DATASET_REPOSITORY, \
+    CSV_PATH, LOG_FILE_NAME, PATH_LOG_FOLDER, PATH_REPOSITORY, PATH_DATASET_REPOSITORY, \
     PATH_DESCRIPTOR_REPOSITORY, ALL_MODELS
 from predictor.drive import drive_auto, drive_train, drive_predict, drive_control
 
 MODES = {AUTO_PATH: drive_auto, TRAIN_PATH: drive_train, PREDICT_PATH: drive_predict, CONTROL_PATH: drive_control}
 
-logger=logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
-TITLE="Microservices Short-Term (Green) Energy Load Predictor"
+TITLE = "Microservices Short-Term (Green) Energy Load Predictor"
 
-logger.info(MAGIC_SEED, MAGIC_TRAIN_CLIENT,MAGIC_PREDICT_CLIENT,GRPC_PORT,GRPC_IP, AUTO_PATH,TRAIN_PATH,\
-    PREDICT_PATH,CONTROL_PATH,ACTUAL_MODE, DT_DSET, RCPOWER_DSET, RCPOWER_DSET_AUTO, MODE_IMBALANCE, IMBALANCE_NAME, \
-    PROGRAMMED_NAME, DEMAND_NAME, LOG_FOLDER_NAME, MAIN_SYSTEM_LOG, SERVER_LOG, MAX_LOG_SIZE_BYTES, BACKUP_COUNT, \
-    N_STEPS, N_FEATURES, UNITS, FILTERS, KERNEL_SIZE, POOL_SIZE, HIDDEN_NEYRONS, DROPOUT, SEASONALY_PERIOD, \
-    PREDICT_LAG, MAX_P, MAX_Q, MAX_D, DISCRET, TEST_CUT_OFF, VAL_CUT_OFF, TS_DURATION_DAYS, SEGMENT_SIZE, \
-    FILE_DESCRIPTOR, SCALED_DATA_FOR_AUTO, START_DATE_FOR_AUTO, END_DATE_FOR_AUTO, TIME_TRUNC_FOR_AUTO, \
+logger.info(MAGIC_SEED, MAGIC_TRAIN_CLIENT, MAGIC_PREDICT_CLIENT, GRPC_PORT, GRPC_IP, AUTO_PATH, TRAIN_PATH,
+    PREDICT_PATH, CONTROL_PATH, ACTUAL_MODE, DT_DSET, RCPOWER_DSET, RCPOWER_DSET_AUTO, MODE_IMBALANCE, IMBALANCE_NAME,
+    PROGRAMMED_NAME, DEMAND_NAME, LOG_FOLDER_NAME, MAIN_SYSTEM_LOG, SERVER_LOG, MAX_LOG_SIZE_BYTES, BACKUP_COUNT,
+    N_STEPS, N_FEATURES, UNITS, FILTERS, KERNEL_SIZE, POOL_SIZE, HIDDEN_NEYRONS, DROPOUT, SEASONALY_PERIOD,
+    PREDICT_LAG, MAX_P, MAX_Q, MAX_D, DISCRET, TEST_CUT_OFF, VAL_CUT_OFF, TS_DURATION_DAYS, SEGMENT_SIZE,
+    FILE_DESCRIPTOR, SCALED_DATA_FOR_AUTO, START_DATE_FOR_AUTO, END_DATE_FOR_AUTO, TIME_TRUNC_FOR_AUTO,
     GEO_LIMIT_FOR_AUTO, GEO_IDS_FOR_AUTO)
 
 
-
 # command-line parser
-def cli_parser()->object:
+def cli_parser() -> object:
     sDescriptor = '{} using Deep Learning and Statistical Time Series methods'.format(TITLE)
     sCSVhelp = "Absolute path to a source dataset (csv-file). The dataset header and content must meet " + \
                "the requriments README"
@@ -63,24 +63,26 @@ def cli_parser()->object:
     return args
 
 
-def timeExecutionLog(date_time:str,title:str):
-    fname=str(Path(PATH_LOG_FOLDER/'execution_time').with_suffix('.log'))
+def timeExecutionLog(date_time: str, title: str):
+    fname = str(Path(PATH_LOG_FOLDER/'execution_time').with_suffix('.log'))
     with open(fname, 'a') as fw:
-        msg = "{} {}\n".format(title,date_time)
+        msg = "{} {}\n".format(title, date_time)
         fw.write(msg)
         logger.info(msg)
 
 
 """ Set ControlPlane params"""
-def createControlPlane(args)->ControlPlane:
+
+
+def createControlPlane(args) -> ControlPlane:
     now = datetime.now()
     date_time = now.strftime("%d_%m_%y__%H_%M_%S")
     timeExecutionLog(date_time, "Client Microservice started at ")
 
     folder_for_train_logging = Path(PATH_LOG_FOLDER / TRAIN_PATH / date_time)
-    folder_for_predict_logging = Path(PATH_LOG_FOLDER/ PREDICT_PATH / date_time)
+    folder_for_predict_logging = Path(PATH_LOG_FOLDER / PREDICT_PATH / date_time)
     folder_for_control_logging = Path(PATH_LOG_FOLDER / CONTROL_PATH / date_time)
-    folder_for_auto_logging = Path(PATH_LOG_FOLDER/ AUTO_PATH / date_time)
+    folder_for_auto_logging = Path(PATH_LOG_FOLDER / AUTO_PATH / date_time)
     folder_for_forecast = Path(PATH_LOG_FOLDER / "Forecast" / date_time)
 
     folder_for_rt_datasets = Path(PATH_DATASET_REPOSITORY)
@@ -95,10 +97,8 @@ def createControlPlane(args)->ControlPlane:
     PlotPrintManager.set_Logfolders(folder_for_control_logging, folder_for_predict_logging)
 
     suffics = ".log"
-    if args.cl_tsname is not None:
-        RCPOWER_DSET = args.cl_tsname
+    sRCPOWER_DSET = RCPOWER_DSET if args.cl_tsname is None else args.cl_tsname
 
-    sRCPOWER_DSET = RCPOWER_DSET
     if args.cl_mode == AUTO_PATH:  # if ACTUAL_MODE == AUTO_PATH:
         sRCPOWER_DSET = RCPOWER_DSET_AUTO.replace(' ', '_')
     # if args.cl_tsname is not None:
@@ -141,7 +141,7 @@ def createControlPlane(args)->ControlPlane:
         else:
 
             cp.csv_path = args.cl_dset
-            if False == isCLcsvExists(cp.csv_path):
+            if not isCLcsvExists(cp.csv_path):
                 logger.error("No csv -dataset. Exit 2")
                 fc.close()
                 fp.close()
@@ -213,13 +213,14 @@ def createControlPlane(args)->ControlPlane:
     ControlPlane.set_psd_segment_size(SEGMENT_SIZE)
 
     logger.info("ControlPlane() initialized")
-    auxLogHeaderPrint(cp, date_time, status_title:= "started at ")
+    auxLogHeaderPrint(cp, date_time, status_title="started at ")
 
     return cp
 
-def auxLogHeaderPrint(cp:ControlPlane, date_time:str, status_title:str="started at "):
+
+def auxLogHeaderPrint(cp: ControlPlane, date_time: str, status_title: str = "started at "):
     pass
-    title1 = "{} {} ".format(TITLE,cp.actual_mode)
+    title1 = "{} {} ".format(TITLE, cp.actual_mode)
     title2 = status_title
     msg = "{}\n".format(date_time)
     msg2log("{} (Control Plane) {} ".format(title1, title2), msg, cp.fc)
@@ -231,7 +232,8 @@ def auxLogHeaderPrint(cp:ControlPlane, date_time:str, status_title:str="started 
     msg2log("{} (Auto Management Plane) {} ".format(title1, title2), msg, cp.fa)
     logger.info("{} (Client Microservice) {} : {}".format(title1, title2, msg))
 
-def destroyControlPlane(cp:ControlPlane):
+
+def destroyControlPlane(cp: ControlPlane):
     title1 = "Short Term Green Energy Load Predictor "
     title2 = " finished at "
     now = datetime.now()
@@ -252,7 +254,5 @@ def destroyControlPlane(cp:ControlPlane):
     cp.fa.close()
     cp.ff.close()
     timeExecutionLog(date_time, "Client Microservice finished at ")
-    #TODO - destroy cp-object
+    # TODO - destroy cp-object
     return
-
-

@@ -50,16 +50,16 @@ fi
 echo ""
 echo "PYTHONPATH: ${PYTHONPATH}"
 
-echo $PYTHONPATH | grep -q "${PREDICTOR_SOFTWARE_PATH}"
-# echo "Result: $?"
-if [ $? -ne 0 ]; then
-    PYTHONPATH=${PYTHONPATH}:${PREDICTOR_SOFTWARE_PATH}
-    export PYTHONPYTH
-fi
-
-echo ""
-echo "PYTHONPATH: ${PYTHONPATH}"
-
+#echo $PYTHONPATH | grep -q "${PREDICTOR_SOFTWARE_PATH}"
+## echo "Result: $?"
+#if [ $? -ne 0 ]; then
+#    PYTHONPATH=${PYTHONPATH}:${PREDICTOR_SOFTWARE_PATH}
+#    export PYTHONPYTH
+#fi
+#
+#echo ""
+#echo "PYTHONPATH: ${PYTHONPATH}"
+#
 echo $PYTHONPATH | grep -q "${MSRVCPRED_SOFTWARE_PATH}"
 # echo "Result: $?"
 if [ $? -ne 0 ]; then
@@ -108,7 +108,7 @@ server_service() {
      is_server_predictor_not_running
     ret_code=$?
     echo "ret_code: ${ret_code}"
-    if [ ${ret_code} -eq 0 ]; then
+    if [ ${ret_code} -eq 1 ]; then
       echo ""
       echo "ERROR: Msrvcpred server Service is Running.  Stop before start!"
       echo ""
@@ -123,4 +123,10 @@ server_service() {
     else
         python3 ${MSRVCPRED_SERVER_SERVICE_PATH}
     fi
+}
+
+predictor_service() {
+  python3 ${STGELPDL_SOFTWARE_PATH}/msrvcpred/src/pred_service.py -m auto -t Imbalance &
+  local ret=$!
+  echo " Predictor service started... ${ret}"
 }
