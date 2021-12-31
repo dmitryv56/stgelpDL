@@ -45,9 +45,10 @@ def getItems(section_: str, dict_items: dict = None) -> tuple:
 """
 
 section = 'DEFAULT'
-(MAGIC_SEED, MAGIC_TRAIN_CLIENT, MAGIC_PREDICT_CLIENT, GRPC_PORT, GRPC_IP) = getItems(section, dict_items={
-    'MAGIC_SEED': 'int', 'MAGIC_TRAIN_CLIENT': 'int', 'MAGIC_PREDICT_CLIENT': 'int', 'GRPC_PORT': 'int',
-    'GRPC_IP': 'str'})
+(MAGIC_SEED, MAGIC_TRAIN_CLIENT, MAGIC_PREDICT_CLIENT, MAGIC_CHART_CLIENT, MAGIC_WEB_CLIENT, GRPC_PORT, GRPC_IP) = \
+    getItems(section, dict_items={
+    'MAGIC_SEED': 'int', 'MAGIC_TRAIN_CLIENT': 'int', 'MAGIC_PREDICT_CLIENT': 'int', 'MAGIC_CHART_CLIENT': 'int',
+    'MAGIC_WEB_CLIENT': 'int', 'GRPC_PORT': 'int', 'GRPC_IP': 'str'})
 
 section = 'MODES'
 (AUTO_PATH, TRAIN_PATH, PREDICT_PATH, CONTROL_PATH, ACTUAL_MODE) = getItems(section, dict_items={'AUTO_PATH': 'str',
@@ -55,6 +56,9 @@ section = 'MODES'
                                                                                                  'PREDICT_PATH': 'str',
                                                                                                  'CONTROL_PATH': 'str',
                                                                                                  'ACTUAL_MODE': 'str'})
+section = 'PROGRAMS'
+(PREDICTOR_ID, MICROSERVICES_PREDICTOR_ID) = getItems(section, dict_items={'PREDICTOR_ID': 'int',
+                                                                           'MICROSERVICES_PREDICTOR_ID': 'int'})
 
 section = 'IMBALANCE'
 (DT_DSET, RCPOWER_DSET, RCPOWER_DSET_AUTO, MODE_IMBALANCE, IMBALANCE_NAME, PROGRAMMED_NAME, DEMAND_NAME) = getItems(
@@ -62,9 +66,9 @@ section = 'IMBALANCE'
                          'IMBALANCE_NAME': 'str', 'PROGRAMMED_NAME': 'str', 'DEMAND_NAME': 'str'})
 
 section = 'LOG'
-(LOG_FOLDER_NAME, MAIN_SYSTEM_LOG, SERVER_LOG, MAX_LOG_SIZE_BYTES, BACKUP_COUNT) = getItems(section, dict_items={
-    'LOG_FOLDER_NAME': 'str', 'MAIN_SYSTEM_LOG': 'str', 'SERVER_LOG': 'str', 'MAX_LOG_SIZE_BYTES': 'eval',
-    'BACKUP_COUNT': 'int'})
+(LOG_FOLDER_NAME, MAIN_SYSTEM_LOG, SERVER_LOG, CHART_LOG, MAX_LOG_SIZE_BYTES, BACKUP_COUNT) = getItems(
+    section, dict_items={'LOG_FOLDER_NAME': 'str', 'MAIN_SYSTEM_LOG': 'str', 'SERVER_LOG': 'str', 'CHART_LOG': 'str',
+                         'MAX_LOG_SIZE_BYTES': 'eval', 'BACKUP_COUNT': 'int'})
 
 section = 'ANN'
 (EPOCHS, N_STEPS, N_FEATURES, UNITS, FILTERS, KERNEL_SIZE, POOL_SIZE, HIDDEN_NEYRONS, DROPOUT) = getItems(section,
@@ -86,7 +90,8 @@ section = 'REQUEST'
                                                           'GEO_LIMIT_FOR_AUTO': 'None', 'GEO_IDS_FOR_AUTO': 'None'})
 
 section = 'MIX'
-(STOP_ON_CHART_SHOW) = getItems(section, dict_items={'STOP_ON_CHART_SHOW': 'bool'})
+(STOP_ON_CHART_SHOW, MMV, BREAK_AQUISATION) = getItems(section, dict_items={'STOP_ON_CHART_SHOW': 'bool',
+                                                                            'MMV': 'float', 'BREAK_AQUISATION': 'int'})
 
 """
 # Dataset properties. Can be replaced by command-line parameters.
@@ -109,6 +114,7 @@ PATH_LOG_FOLDER = Path(PATH_ROOT_FOLDER/LOG_FOLDER_NAME)
 PATH_LOG_FOLDER.mkdir(parents=True, exist_ok=True)
 PATH_MAIN_LOG = Path(PATH_LOG_FOLDER/MAIN_SYSTEM_LOG).with_suffix(".log")
 PATH_SERVER_LOG = Path(PATH_LOG_FOLDER/SERVER_LOG).with_suffix(".log")
+PATH_CHART_LOG = Path(PATH_LOG_FOLDER/CHART_LOG).with_suffix(".log")
 
 PATH_REPOSITORY = Path(PATH_ROOT_FOLDER / "model_Repository")
 PATH_REPOSITORY.mkdir(parents=True, exist_ok=True)

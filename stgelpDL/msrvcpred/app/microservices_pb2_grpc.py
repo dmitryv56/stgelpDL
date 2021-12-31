@@ -25,6 +25,26 @@ class ObtainDataStub(object):
                 request_serializer=microservices__pb2.TrainDataRequest.SerializeToString,
                 response_deserializer=microservices__pb2.TrainDataReply.FromString,
                 )
+        self.SaveTitle = channel.unary_unary(
+                '/msrvcpred.ObtainData/SaveTitle',
+                request_serializer=microservices__pb2.SaveTitleRequest.SerializeToString,
+                response_deserializer=microservices__pb2.SaveTitleReply.FromString,
+                )
+        self.SavePredicts = channel.unary_unary(
+                '/msrvcpred.ObtainData/SavePredicts',
+                request_serializer=microservices__pb2.SavePredictsRequest.SerializeToString,
+                response_deserializer=microservices__pb2.SavePredictsReply.FromString,
+                )
+        self.GetTitle = channel.unary_unary(
+                '/msrvcpred.ObtainData/GetTitle',
+                request_serializer=microservices__pb2.GetTitleRequest.SerializeToString,
+                response_deserializer=microservices__pb2.GetTitleReply.FromString,
+                )
+        self.GetPredicts = channel.unary_stream(
+                '/msrvcpred.ObtainData/GetPredicts',
+                request_serializer=microservices__pb2.PredictsDataRequest.SerializeToString,
+                response_deserializer=microservices__pb2.PredictsDataReply.FromString,
+                )
 
 
 class ObtainDataServicer(object):
@@ -44,6 +64,33 @@ class ObtainDataServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def SaveTitle(self, request, context):
+        """Save on the server the report headers and predict values they are should be read by another clients
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def SavePredicts(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetTitle(self, request, context):
+        """Another clients ask the report headers and predict values to show these predicts on the dialog or web or
+        draw the charts.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetPredicts(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_ObtainDataServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -56,6 +103,26 @@ def add_ObtainDataServicer_to_server(servicer, server):
                     servicer.SendStreamData,
                     request_deserializer=microservices__pb2.TrainDataRequest.FromString,
                     response_serializer=microservices__pb2.TrainDataReply.SerializeToString,
+            ),
+            'SaveTitle': grpc.unary_unary_rpc_method_handler(
+                    servicer.SaveTitle,
+                    request_deserializer=microservices__pb2.SaveTitleRequest.FromString,
+                    response_serializer=microservices__pb2.SaveTitleReply.SerializeToString,
+            ),
+            'SavePredicts': grpc.unary_unary_rpc_method_handler(
+                    servicer.SavePredicts,
+                    request_deserializer=microservices__pb2.SavePredictsRequest.FromString,
+                    response_serializer=microservices__pb2.SavePredictsReply.SerializeToString,
+            ),
+            'GetTitle': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetTitle,
+                    request_deserializer=microservices__pb2.GetTitleRequest.FromString,
+                    response_serializer=microservices__pb2.GetTitleReply.SerializeToString,
+            ),
+            'GetPredicts': grpc.unary_stream_rpc_method_handler(
+                    servicer.GetPredicts,
+                    request_deserializer=microservices__pb2.PredictsDataRequest.FromString,
+                    response_serializer=microservices__pb2.PredictsDataReply.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -99,5 +166,73 @@ class ObtainData(object):
         return grpc.experimental.unary_stream(request, target, '/msrvcpred.ObtainData/SendStreamData',
             microservices__pb2.TrainDataRequest.SerializeToString,
             microservices__pb2.TrainDataReply.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def SaveTitle(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/msrvcpred.ObtainData/SaveTitle',
+            microservices__pb2.SaveTitleRequest.SerializeToString,
+            microservices__pb2.SaveTitleReply.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def SavePredicts(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/msrvcpred.ObtainData/SavePredicts',
+            microservices__pb2.SavePredictsRequest.SerializeToString,
+            microservices__pb2.SavePredictsReply.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetTitle(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/msrvcpred.ObtainData/GetTitle',
+            microservices__pb2.GetTitleRequest.SerializeToString,
+            microservices__pb2.GetTitleReply.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetPredicts(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(request, target, '/msrvcpred.ObtainData/GetPredicts',
+            microservices__pb2.PredictsDataRequest.SerializeToString,
+            microservices__pb2.PredictsDataReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

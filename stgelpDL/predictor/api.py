@@ -189,7 +189,7 @@ def chart_predict(dict_predict, n_predict, cp, ds, title, Y_label):
 
 """
 Prints the table of forecasts where the columns are actual model names and rows are forecasted values at t+1, t+2,...
-
+Added: returns date and predicts for send to server
 """
 
 

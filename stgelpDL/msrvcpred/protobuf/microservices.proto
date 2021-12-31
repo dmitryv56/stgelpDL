@@ -21,10 +21,17 @@ service ObtainData {
    // Sends a data
    rpc SendData(DataRequest) returns (DataReply) {}
    rpc SendStreamData(TrainDataRequest) returns (stream TrainDataReply) {}
+   // Save on the server the report headers and predict values they are should be read by another clients
+   rpc SaveTitle(SaveTitleRequest) returns (SaveTitleReply) {}
+   rpc SavePredicts(SavePredictsRequest) returns (SavePredictsReply) {}
+   // Another clients ask the report headers and predict values to show these predicts on the dialog or web or
+   // draw the charts.
+   rpc GetTitle(GetTitleRequest) returns (GetTitleReply) {}
+   rpc GetPredicts(PredictsDataRequest) returns (stream PredictsDataReply) {}
 }
 
-// The data request message contains client id, stock symbol (i.e., 'HP'), stock parameter (one of 'open','close',
-// 'high', 'low', 'volume'), start at (i.e., starting time '2021-12-09 09:30:00' or 'current').
+// The data request message contains client id, start_time, end_time (both are  like as '2021-12-09 09:30:00'),
+// region like as "ElHierro"
 message TrainDataRequest {
    int32 clientid = 1;
    string start_time = 2;
@@ -33,7 +40,7 @@ message TrainDataRequest {
 }
 
 // The response message containing the time stamp (i.e., '2021-12-09 09:45:00'),values of real demand, programmed
-// demand, forecast demabd (MWatt),, status (i.e. -1 for error, 0,1,2, -number of response id success). statusmsg (i.e.
+// demand, forecast demabd (MWatt), status (i.e. -1 for error, 0,1,2, -number of response id success). statusmsg (i.e.
 // error message).
 message TrainDataReply {
    string timestamp = 1;
@@ -59,4 +66,97 @@ message DataReply {
    float forecast_demand = 4;
    int32 status = 10;
    string statusmsg = 11;
+}
+
+// The request message for SaveTitle -rpc  contains a headers of the report. The header of reports can comprise
+// 'timestamp', the name of the predicted process (i.e. 'Imbalnce'), the rest of 10 items are the forecating model
+// names (i.e., 'ARIMA', 'Seasonal ARIMA', 'LSTM vanila' and e.t.c.) or 'whitespace'.
+// The response message contains the status: 0 -success, 1- fail
+
+message SaveTitleRequest {
+    int32 clientid = 1;
+    string timestamp = 2;
+    string timeseries = 3;
+    string model0  = 4;
+    string model1 = 5;
+    string model2 = 6;
+    string model3 = 7;
+    string model4 = 8;
+    string model5 = 9;
+    string model6 = 10;
+    string model7 =11;
+    string model8 = 12;
+    string model9 = 13;
+}
+
+message SaveTitleReply {
+    int32 status = 1;
+}
+
+// The request message for SavePredicts-rpc contains timestamp and values. Rest of the values are filled by 'magic'
+// 1e-17 value.
+
+message SavePredictsRequest {
+    int32 clientid =1;
+    string timestamp = 2;
+    float timeseries = 3;
+    float model0  = 4;
+    float model1 = 5;
+    float model2 = 6;
+    float model3 = 7;
+    float model4 = 8;
+    float model5 = 9;
+    float model6 = 10;
+    float model7 = 11;
+    float model8 = 12;
+    float model9 = 13;
+}
+
+message SavePredictsReply {
+    int32 status = 1;
+}
+
+// The request message for GetTitle-rpc contains only flag 'ask'.
+// The replay message contains the status (0-success, 1 -fail) and header names.
+message GetTitleRequest {
+    int32 clientid = 1;
+}
+
+message GetTitleReply {
+    int32 status = 1;
+    string timestamp = 2;
+    string timeseries = 3;
+    string model0  = 4;
+    string model1 = 5;
+    string model2 = 6;
+    string model3 = 7;
+    string model4 = 8;
+    string model5 = 9;
+    string model6 = 10;
+    string model7 = 11;
+    string model8 = 12;
+    string model9 = 13;
+}
+
+//
+//
+
+message PredictsDataRequest {
+    int32 clientid = 1;
+}
+
+message PredictsDataReply {
+    int32 status = 1;
+    string timestamp = 2;
+    float timeseries = 3;
+    float model0 = 4;
+    float model1 = 5;
+    float model2 = 6;
+    float model3 = 7;
+    float model4 = 8;
+    float model5 = 9;
+    float model6 = 10;
+    float model7 = 11;
+    float model8 = 12;
+    float model9 = 13;
 }

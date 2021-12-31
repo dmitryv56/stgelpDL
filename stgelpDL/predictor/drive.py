@@ -12,6 +12,8 @@ from pathlib import Path
 from shutil import copyfile
 from time import sleep
 import logging
+import pandas as pd
+import numpy as np
 
 from predictor.Statmodel import tsARIMA
 from predictor.api import d_models_assembly, fit_models, save_modeles_in_repository, get_list_trained_models, \
@@ -22,7 +24,8 @@ from predictor.dataset import Dataset
 from predictor.demandwidget import DemandWidget
 from predictor.utility import exec_time, msg2log, PlotPrintManager, cSFMT, incDateStr, PERIOD_MODEL_RETRAIN
 from msrvcpred.src.api import ClientDemandWidget
-
+from msrvcpred.app.clients.client_Predictor import PredictorClient
+from msrvcpred.cfg import PREDICTOR_ID, MICROSERVICES_PREDICTOR_ID
 
 logger=logging.getLogger(__name__)
 
@@ -577,7 +580,7 @@ class ControlPlaneObserver(IObserver):
         start_time = start_time_t.strftime(cSFMT)
 
         dmwdg = None
-        if ControlPlane._magic_app_number == 222:
+        if ControlPlane._magic_app_number == MICROSERVICES_PREDICTOR_ID:
             dmwdg = ClientDemandWidget(scaled_data, start_time, end_time, 'hour', None, None, self.f)
         else:
             dmwdg = DemandWidget(scaled_data, start_time, end_time, 'hour', None, None, self.f)
@@ -612,7 +615,7 @@ class ControlPlaneObserver(IObserver):
         end_time = datetime.now().strftime(cSFMT)
 
         dmwdg = None
-        if ControlPlane._magic_app_number == 222:
+        if ControlPlane._magic_app_number == MICROSERVICES_PREDICTOR_ID:
             start_time = incDateStr(cp.drtDescriptor['lastTime'], minutes=cp.discret * 4)
             dmwdg = ClientDemandWidget(scaled_data, start_time, end_time, 'hour', None, None, self.f)
         else:
@@ -623,7 +626,7 @@ class ControlPlaneObserver(IObserver):
         requested_widget = dmwdg.getDemandRT(None)
         if requested_widget is None:
             nRet = -1
-            if ControlPlane._magic_app_number == 222:
+            if ControlPlane._magic_app_number == MICROSERVICES_PREDICTOR_ID:
                 nRet = 0
 
         if ControlPlane.get_modeImbalance():
@@ -827,6 +830,12 @@ class PredictPlaneObserver(IObserver):
         msg2log(self.PredictByModels.__name__, '\nThe prediction finished.\n', self.f)
         dct['ControlPlane'] = cp
         dct['Dataset'] = ds
+
+        if ControlPlane._magic_app_number == MICROSERVICES_PREDICTOR_ID:
+            logger.info("Save predictors on server")
+            client = PredictorClient()
+            client.save_predicts(cp.bundle_predictions_file)
+
         return
 
 

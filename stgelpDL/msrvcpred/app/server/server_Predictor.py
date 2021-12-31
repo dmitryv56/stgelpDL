@@ -25,9 +25,9 @@ import grpc
 # from io import BytesIO
 from msrvcpred.app import microservices_pb2, microservices_pb2_grpc
 
-from msrvcpred.src.readdata import get_data_for_train, get_data_for_predict
+from msrvcpred.src.readdata import get_data_for_train, get_data_for_predict, PredictReport
 from msrvcpred.cfg import MAX_LOG_SIZE_BYTES, BACKUP_COUNT, PATH_SERVER_LOG, MAGIC_TRAIN_CLIENT, MAGIC_PREDICT_CLIENT,\
-    GRPC_PORT
+    MAGIC_CHART_CLIENT, MAGIC_WEB_CLIENT, GRPC_PORT, MMV
 from predictor.utility import cSFMT
 
 # set logger
@@ -50,25 +50,27 @@ class ObtainData(microservices_pb2_grpc.ObtainDataServicer):
         gRPC server for Obtain Data Service
     """
     def __init__(self, *args, **kwargs):
+        self._log = logger
         self.server_port = GRPC_PORT  # 46001
+        self.predictreport = None
 
     def SendData(self, request, context):
         """
                 Implementation of the rpc SendData declared in the proto
                 file above.
         """
-        logger.info("Server: Predict client  {}".format(request))
+        self._log.info("Server: Predict client  {}".format(request))
         list_results = get_data_for_predict(start_time=request.start_time, end_time=request.end_time)
         result = {}
         if list_results is None:
-            logger.critical(CRITICAL_MESSAGE)
+            self._log.critical(CRITICAL_MESSAGE)
             timestamp = datetime.now().strftime(cSFMT)
             result = {'timestamp': timestamp, 'real_demand': 0.0, 'programmed_demand': 0.0,
                       'forecast_demand': 0.0, 'status': -1, 'statusmsg': "can not get requested data"}
-            logger.error("Server sends {} {}".format(request.clientid, result))
+            self._log.error("Server sends {} {}".format(request.clientid, result))
         else:
             result = list_results[-1]  # last item
-            logger.info("Server sends {} {}".format(request.clientid, result))
+            self._log.info("Server sends {} {}".format(request.clientid, result))
 
         return microservices_pb2.DataReply(**result)
 
@@ -76,21 +78,73 @@ class ObtainData(microservices_pb2_grpc.ObtainDataServicer):
         """
         Implementation of the rpc SSendStreamData declared in the proto  file above.
         """
-        logger.info("Server: Train client  {}".format(request))
+        self._log.info("Server: Train client  {}".format(request))
 
         list_results = get_data_for_train(start_time=request.start_time, end_time=request.end_time)
         if list_results is None:
-            logger.critical(CRITICAL_MESSAGE)
+            self._log.critical(CRITICAL_MESSAGE)
             timestamp = datetime.now().strftime(cSFMT)
             result = {'timestamp': timestamp, 'real_demand': 0.0, 'programmed_demand': 0.0,
                       'forecast_demand': 0.0, 'status': -1, 'statusmsg': "can not get requested data"}
-            logger.error("Server sends {}: {}".format(request.clientid, result))
+            self._log.error("Server sends {}: {}".format(request.clientid, result))
             yield microservices_pb2.TrainDataReply(**result)
             return
 
         for result in list_results:
-            logger.info("Server sends {}: {}".format(request.clientid, result))
+            self._log.info("Server sends {}: {}".format(request.clientid, result))
             yield microservices_pb2.TrainDataReply(**result)
+
+    def SaveTitle(self,request, context):
+        self._log.info("Server: Predict client saves titles  {}- client".format(request))
+        self.predictreport = PredictReport(timestamp = request.timestamp, timeseries = request.timeseries,
+            model0=request.model0, model1=request.model1, model2=request.model2, model3=request.model3,
+            model4=request.model4, model5=request.model5, model6=request.model6, model7=request.model7,
+            model8=request.model8, model9=request.model9)
+        status=0
+        result={'status':status}
+        return microservices_pb2.SaveTitleReply(**result)
+
+    def GetTitle(self, request, context):
+        self._log.info("Server:  {}- client requests forecasting model names".format(request))
+        if self.predictreport is None:
+            self._log.critical("PredictReport object is None")
+            result = PredictReport.error_predict_result()
+        else:
+            result = self.predictreport.get_titles()
+        self._log.info(result)
+        return microservices_pb2.GetTitleReply(**result)
+
+    def SavePredicts(self, request, context):
+        self._log.info("Server: Predict client saves predicts {}- client".format(request))
+        status = 0
+        if self.predictreport is None:
+            self.predictreport = PredictReport()
+            status=1
+        self.predictreport.save_predict(request.timestamp, request.timeseries, request.model0, request.model1,
+            request.model2, request.model3, request.model4, request.model5, request.model6, request.model7,
+            request.model8, request.model9)
+
+        result = {'status': status}
+        return microservices_pb2.SaveTitleReply(**result)
+
+    def GetPredicts(self, request, context):
+        result_error ={}
+        if self.predictreport is None:
+            self._log.critical("PredictReport object is None")
+            result = PredictReport.error_predict_result()
+            yield microservices_pb2.PredictsDataReply(**result)
+            return
+        list_results = self.predictreport.get_predict(request.clientid)
+        if not list_results:
+            self._log.critical("PredictReport object is empty")
+            result = PredictReport.error_predict_result()
+            yield microservices_pb2.PredictsDataReply(**result)
+            return
+
+
+        for result in list_results:
+            self._log.info("Server sends predicts{}: {}".format(request.clientid, result))
+            yield microservices_pb2.PredictsDataReply(**result)
 
     def start_server(self):
         """
@@ -110,7 +164,7 @@ class ObtainData(microservices_pb2_grpc.ObtainDataServicer):
         # start the server
         data_server.start()
         print('Data Server running ...')
-        logger.info('Data Server running ...')
+        self._log.info('Data Server running ...')
 
         try:
             # need an infinite loop since the above
@@ -121,13 +175,13 @@ class ObtainData(microservices_pb2_grpc.ObtainDataServicer):
         except KeyboardInterrupt:
             data_server.stop(0)
             print('Data Server Stopped ...')
-            logger.info('Data Server Stopped ...')
+            self._log.info('Data Server Stopped ...')
 
 # class ObtainData(microservices_pb2_grpc.ObtainDataServicer):
 #     def SendData(self,request,context):
 #
-#         logger.info("Predict client  {}".format(request.clientid))
-#         logger.info(request)
+#         self._log.info("Predict client  {}".format(request.clientid))
+#         self._log.info(request)
 #
 #         return microservices_pb2.DataReply(timestamp = "2021-12-17 20:00:01", real_demand = 22.2,
 #                                            programmed_demand = 22.3, forecast_demand = 22.4, status = 10,
@@ -137,8 +191,8 @@ class ObtainData(microservices_pb2_grpc.ObtainDataServicer):
 #
 # class ObtainTrainData(microservices_pb2_grpc.ObtainTrainDataServicer):
 #     def SendTrainData(self, request, context):
-#         logger.info("Train client {}".format(request.clientid))
-#         logger.info(request)
+#         self._log.info("Train client {}".format(request.clientid))
+#         self._log.info(request)
 #
 #         microservices_pb2.TrainDataReply(timestamp = "2021-12-17 21:00:01", real_demand = 22.2,
 #                                            programmed_demand = 23.3, forecast_demand = 24.4, status = 20,

@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x13microservices.proto\x12\tmsrvcpred\"Z\n\x10TrainDataRequest\x12\x10\n\x08\x63lientid\x18\x01 \x01(\x05\x12\x12\n\nstart_time\x18\x02 \x01(\t\x12\x10\n\x08\x65nd_time\x18\x03 \x01(\t\x12\x0e\n\x06region\x18\x04 \x01(\t\"\x8f\x01\n\x0eTrainDataReply\x12\x11\n\ttimestamp\x18\x01 \x01(\t\x12\x13\n\x0breal_demand\x18\x02 \x01(\x02\x12\x19\n\x11programmed_demand\x18\x03 \x01(\x02\x12\x17\n\x0f\x66orecast_demand\x18\x04 \x01(\x02\x12\x0e\n\x06status\x18\n \x01(\x05\x12\x11\n\tstatusmsg\x18\x0b \x01(\t\"/\n\x0b\x44\x61taRequest\x12\x10\n\x08\x63lientid\x18\x01 \x01(\x05\x12\x0e\n\x06region\x18\x04 \x01(\t\"\x8a\x01\n\tDataReply\x12\x11\n\ttimestamp\x18\x01 \x01(\t\x12\x13\n\x0breal_demand\x18\x02 \x01(\x02\x12\x19\n\x11programmed_demand\x18\x03 \x01(\x02\x12\x17\n\x0f\x66orecast_demand\x18\x04 \x01(\x02\x12\x0e\n\x06status\x18\n \x01(\x05\x12\x11\n\tstatusmsg\x18\x0b \x01(\t2\x96\x01\n\nObtainData\x12:\n\x08SendData\x12\x16.msrvcpred.DataRequest\x1a\x14.msrvcpred.DataReply\"\x00\x12L\n\x0eSendStreamData\x12\x1b.msrvcpred.TrainDataRequest\x1a\x19.msrvcpred.TrainDataReply\"\x00\x30\x01\x62\x06proto3'
+  serialized_pb=b'\n\x13microservices.proto\x12\tmsrvcpred\"Z\n\x10TrainDataRequest\x12\x10\n\x08\x63lientid\x18\x01 \x01(\x05\x12\x12\n\nstart_time\x18\x02 \x01(\t\x12\x10\n\x08\x65nd_time\x18\x03 \x01(\t\x12\x0e\n\x06region\x18\x04 \x01(\t\"\x8f\x01\n\x0eTrainDataReply\x12\x11\n\ttimestamp\x18\x01 \x01(\t\x12\x13\n\x0breal_demand\x18\x02 \x01(\x02\x12\x19\n\x11programmed_demand\x18\x03 \x01(\x02\x12\x17\n\x0f\x66orecast_demand\x18\x04 \x01(\x02\x12\x0e\n\x06status\x18\n \x01(\x05\x12\x11\n\tstatusmsg\x18\x0b \x01(\t\"/\n\x0b\x44\x61taRequest\x12\x10\n\x08\x63lientid\x18\x01 \x01(\x05\x12\x0e\n\x06region\x18\x04 \x01(\t\"\x8a\x01\n\tDataReply\x12\x11\n\ttimestamp\x18\x01 \x01(\t\x12\x13\n\x0breal_demand\x18\x02 \x01(\x02\x12\x19\n\x11programmed_demand\x18\x03 \x01(\x02\x12\x17\n\x0f\x66orecast_demand\x18\x04 \x01(\x02\x12\x0e\n\x06status\x18\n \x01(\x05\x12\x11\n\tstatusmsg\x18\x0b \x01(\t\"\xeb\x01\n\x10SaveTitleRequest\x12\x10\n\x08\x63lientid\x18\x01 \x01(\x05\x12\x11\n\ttimestamp\x18\x02 \x01(\t\x12\x12\n\ntimeseries\x18\x03 \x01(\t\x12\x0e\n\x06model0\x18\x04 \x01(\t\x12\x0e\n\x06model1\x18\x05 \x01(\t\x12\x0e\n\x06model2\x18\x06 \x01(\t\x12\x0e\n\x06model3\x18\x07 \x01(\t\x12\x0e\n\x06model4\x18\x08 \x01(\t\x12\x0e\n\x06model5\x18\t \x01(\t\x12\x0e\n\x06model6\x18\n \x01(\t\x12\x0e\n\x06model7\x18\x0b \x01(\t\x12\x0e\n\x06model8\x18\x0c \x01(\t\x12\x0e\n\x06model9\x18\r \x01(\t\" \n\x0eSaveTitleReply\x12\x0e\n\x06status\x18\x01 \x01(\x05\"\xee\x01\n\x13SavePredictsRequest\x12\x10\n\x08\x63lientid\x18\x01 \x01(\x05\x12\x11\n\ttimestamp\x18\x02 \x01(\t\x12\x12\n\ntimeseries\x18\x03 \x01(\x02\x12\x0e\n\x06model0\x18\x04 \x01(\x02\x12\x0e\n\x06model1\x18\x05 \x01(\x02\x12\x0e\n\x06model2\x18\x06 \x01(\x02\x12\x0e\n\x06model3\x18\x07 \x01(\x02\x12\x0e\n\x06model4\x18\x08 \x01(\x02\x12\x0e\n\x06model5\x18\t \x01(\x02\x12\x0e\n\x06model6\x18\n \x01(\x02\x12\x0e\n\x06model7\x18\x0b \x01(\x02\x12\x0e\n\x06model8\x18\x0c \x01(\x02\x12\x0e\n\x06model9\x18\r \x01(\x02\"#\n\x11SavePredictsReply\x12\x0e\n\x06status\x18\x01 \x01(\x05\"#\n\x0fGetTitleRequest\x12\x10\n\x08\x63lientid\x18\x01 \x01(\x05\"\xe6\x01\n\rGetTitleReply\x12\x0e\n\x06status\x18\x01 \x01(\x05\x12\x11\n\ttimestamp\x18\x02 \x01(\t\x12\x12\n\ntimeseries\x18\x03 \x01(\t\x12\x0e\n\x06model0\x18\x04 \x01(\t\x12\x0e\n\x06model1\x18\x05 \x01(\t\x12\x0e\n\x06model2\x18\x06 \x01(\t\x12\x0e\n\x06model3\x18\x07 \x01(\t\x12\x0e\n\x06model4\x18\x08 \x01(\t\x12\x0e\n\x06model5\x18\t \x01(\t\x12\x0e\n\x06model6\x18\n \x01(\t\x12\x0e\n\x06model7\x18\x0b \x01(\t\x12\x0e\n\x06model8\x18\x0c \x01(\t\x12\x0e\n\x06model9\x18\r \x01(\t\"\'\n\x13PredictsDataRequest\x12\x10\n\x08\x63lientid\x18\x01 \x01(\x05\"\xea\x01\n\x11PredictsDataReply\x12\x0e\n\x06status\x18\x01 \x01(\x05\x12\x11\n\ttimestamp\x18\x02 \x01(\t\x12\x12\n\ntimeseries\x18\x03 \x01(\x02\x12\x0e\n\x06model0\x18\x04 \x01(\x02\x12\x0e\n\x06model1\x18\x05 \x01(\x02\x12\x0e\n\x06model2\x18\x06 \x01(\x02\x12\x0e\n\x06model3\x18\x07 \x01(\x02\x12\x0e\n\x06model4\x18\x08 \x01(\x02\x12\x0e\n\x06model5\x18\t \x01(\x02\x12\x0e\n\x06model6\x18\n \x01(\x02\x12\x0e\n\x06model7\x18\x0b \x01(\x02\x12\x0e\n\x06model8\x18\x0c \x01(\x02\x12\x0e\n\x06model9\x18\r \x01(\x02\x32\xc2\x03\n\nObtainData\x12:\n\x08SendData\x12\x16.msrvcpred.DataRequest\x1a\x14.msrvcpred.DataReply\"\x00\x12L\n\x0eSendStreamData\x12\x1b.msrvcpred.TrainDataRequest\x1a\x19.msrvcpred.TrainDataReply\"\x00\x30\x01\x12\x45\n\tSaveTitle\x12\x1b.msrvcpred.SaveTitleRequest\x1a\x19.msrvcpred.SaveTitleReply\"\x00\x12N\n\x0cSavePredicts\x12\x1e.msrvcpred.SavePredictsRequest\x1a\x1c.msrvcpred.SavePredictsReply\"\x00\x12\x42\n\x08GetTitle\x12\x1a.msrvcpred.GetTitleRequest\x1a\x18.msrvcpred.GetTitleReply\"\x00\x12O\n\x0bGetPredicts\x12\x1e.msrvcpred.PredictsDataRequest\x1a\x1c.msrvcpred.PredictsDataReply\"\x00\x30\x01\x62\x06proto3'
 )
 
 
@@ -250,10 +250,610 @@ _DATAREPLY = _descriptor.Descriptor(
   serialized_end=460,
 )
 
+
+_SAVETITLEREQUEST = _descriptor.Descriptor(
+  name='SaveTitleRequest',
+  full_name='msrvcpred.SaveTitleRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='clientid', full_name='msrvcpred.SaveTitleRequest.clientid', index=0,
+      number=1, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='timestamp', full_name='msrvcpred.SaveTitleRequest.timestamp', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='timeseries', full_name='msrvcpred.SaveTitleRequest.timeseries', index=2,
+      number=3, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model0', full_name='msrvcpred.SaveTitleRequest.model0', index=3,
+      number=4, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model1', full_name='msrvcpred.SaveTitleRequest.model1', index=4,
+      number=5, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model2', full_name='msrvcpred.SaveTitleRequest.model2', index=5,
+      number=6, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model3', full_name='msrvcpred.SaveTitleRequest.model3', index=6,
+      number=7, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model4', full_name='msrvcpred.SaveTitleRequest.model4', index=7,
+      number=8, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model5', full_name='msrvcpred.SaveTitleRequest.model5', index=8,
+      number=9, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model6', full_name='msrvcpred.SaveTitleRequest.model6', index=9,
+      number=10, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model7', full_name='msrvcpred.SaveTitleRequest.model7', index=10,
+      number=11, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model8', full_name='msrvcpred.SaveTitleRequest.model8', index=11,
+      number=12, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model9', full_name='msrvcpred.SaveTitleRequest.model9', index=12,
+      number=13, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=463,
+  serialized_end=698,
+)
+
+
+_SAVETITLEREPLY = _descriptor.Descriptor(
+  name='SaveTitleReply',
+  full_name='msrvcpred.SaveTitleReply',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='status', full_name='msrvcpred.SaveTitleReply.status', index=0,
+      number=1, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=700,
+  serialized_end=732,
+)
+
+
+_SAVEPREDICTSREQUEST = _descriptor.Descriptor(
+  name='SavePredictsRequest',
+  full_name='msrvcpred.SavePredictsRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='clientid', full_name='msrvcpred.SavePredictsRequest.clientid', index=0,
+      number=1, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='timestamp', full_name='msrvcpred.SavePredictsRequest.timestamp', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='timeseries', full_name='msrvcpred.SavePredictsRequest.timeseries', index=2,
+      number=3, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model0', full_name='msrvcpred.SavePredictsRequest.model0', index=3,
+      number=4, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model1', full_name='msrvcpred.SavePredictsRequest.model1', index=4,
+      number=5, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model2', full_name='msrvcpred.SavePredictsRequest.model2', index=5,
+      number=6, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model3', full_name='msrvcpred.SavePredictsRequest.model3', index=6,
+      number=7, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model4', full_name='msrvcpred.SavePredictsRequest.model4', index=7,
+      number=8, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model5', full_name='msrvcpred.SavePredictsRequest.model5', index=8,
+      number=9, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model6', full_name='msrvcpred.SavePredictsRequest.model6', index=9,
+      number=10, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model7', full_name='msrvcpred.SavePredictsRequest.model7', index=10,
+      number=11, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model8', full_name='msrvcpred.SavePredictsRequest.model8', index=11,
+      number=12, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model9', full_name='msrvcpred.SavePredictsRequest.model9', index=12,
+      number=13, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=735,
+  serialized_end=973,
+)
+
+
+_SAVEPREDICTSREPLY = _descriptor.Descriptor(
+  name='SavePredictsReply',
+  full_name='msrvcpred.SavePredictsReply',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='status', full_name='msrvcpred.SavePredictsReply.status', index=0,
+      number=1, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=975,
+  serialized_end=1010,
+)
+
+
+_GETTITLEREQUEST = _descriptor.Descriptor(
+  name='GetTitleRequest',
+  full_name='msrvcpred.GetTitleRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='clientid', full_name='msrvcpred.GetTitleRequest.clientid', index=0,
+      number=1, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1012,
+  serialized_end=1047,
+)
+
+
+_GETTITLEREPLY = _descriptor.Descriptor(
+  name='GetTitleReply',
+  full_name='msrvcpred.GetTitleReply',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='status', full_name='msrvcpred.GetTitleReply.status', index=0,
+      number=1, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='timestamp', full_name='msrvcpred.GetTitleReply.timestamp', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='timeseries', full_name='msrvcpred.GetTitleReply.timeseries', index=2,
+      number=3, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model0', full_name='msrvcpred.GetTitleReply.model0', index=3,
+      number=4, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model1', full_name='msrvcpred.GetTitleReply.model1', index=4,
+      number=5, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model2', full_name='msrvcpred.GetTitleReply.model2', index=5,
+      number=6, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model3', full_name='msrvcpred.GetTitleReply.model3', index=6,
+      number=7, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model4', full_name='msrvcpred.GetTitleReply.model4', index=7,
+      number=8, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model5', full_name='msrvcpred.GetTitleReply.model5', index=8,
+      number=9, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model6', full_name='msrvcpred.GetTitleReply.model6', index=9,
+      number=10, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model7', full_name='msrvcpred.GetTitleReply.model7', index=10,
+      number=11, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model8', full_name='msrvcpred.GetTitleReply.model8', index=11,
+      number=12, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model9', full_name='msrvcpred.GetTitleReply.model9', index=12,
+      number=13, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1050,
+  serialized_end=1280,
+)
+
+
+_PREDICTSDATAREQUEST = _descriptor.Descriptor(
+  name='PredictsDataRequest',
+  full_name='msrvcpred.PredictsDataRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='clientid', full_name='msrvcpred.PredictsDataRequest.clientid', index=0,
+      number=1, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1282,
+  serialized_end=1321,
+)
+
+
+_PREDICTSDATAREPLY = _descriptor.Descriptor(
+  name='PredictsDataReply',
+  full_name='msrvcpred.PredictsDataReply',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='status', full_name='msrvcpred.PredictsDataReply.status', index=0,
+      number=1, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='timestamp', full_name='msrvcpred.PredictsDataReply.timestamp', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='timeseries', full_name='msrvcpred.PredictsDataReply.timeseries', index=2,
+      number=3, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model0', full_name='msrvcpred.PredictsDataReply.model0', index=3,
+      number=4, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model1', full_name='msrvcpred.PredictsDataReply.model1', index=4,
+      number=5, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model2', full_name='msrvcpred.PredictsDataReply.model2', index=5,
+      number=6, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model3', full_name='msrvcpred.PredictsDataReply.model3', index=6,
+      number=7, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model4', full_name='msrvcpred.PredictsDataReply.model4', index=7,
+      number=8, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model5', full_name='msrvcpred.PredictsDataReply.model5', index=8,
+      number=9, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model6', full_name='msrvcpred.PredictsDataReply.model6', index=9,
+      number=10, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model7', full_name='msrvcpred.PredictsDataReply.model7', index=10,
+      number=11, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model8', full_name='msrvcpred.PredictsDataReply.model8', index=11,
+      number=12, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='model9', full_name='msrvcpred.PredictsDataReply.model9', index=12,
+      number=13, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1324,
+  serialized_end=1558,
+)
+
 DESCRIPTOR.message_types_by_name['TrainDataRequest'] = _TRAINDATAREQUEST
 DESCRIPTOR.message_types_by_name['TrainDataReply'] = _TRAINDATAREPLY
 DESCRIPTOR.message_types_by_name['DataRequest'] = _DATAREQUEST
 DESCRIPTOR.message_types_by_name['DataReply'] = _DATAREPLY
+DESCRIPTOR.message_types_by_name['SaveTitleRequest'] = _SAVETITLEREQUEST
+DESCRIPTOR.message_types_by_name['SaveTitleReply'] = _SAVETITLEREPLY
+DESCRIPTOR.message_types_by_name['SavePredictsRequest'] = _SAVEPREDICTSREQUEST
+DESCRIPTOR.message_types_by_name['SavePredictsReply'] = _SAVEPREDICTSREPLY
+DESCRIPTOR.message_types_by_name['GetTitleRequest'] = _GETTITLEREQUEST
+DESCRIPTOR.message_types_by_name['GetTitleReply'] = _GETTITLEREPLY
+DESCRIPTOR.message_types_by_name['PredictsDataRequest'] = _PREDICTSDATAREQUEST
+DESCRIPTOR.message_types_by_name['PredictsDataReply'] = _PREDICTSDATAREPLY
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 TrainDataRequest = _reflection.GeneratedProtocolMessageType('TrainDataRequest', (_message.Message,), {
@@ -284,6 +884,62 @@ DataReply = _reflection.GeneratedProtocolMessageType('DataReply', (_message.Mess
   })
 _sym_db.RegisterMessage(DataReply)
 
+SaveTitleRequest = _reflection.GeneratedProtocolMessageType('SaveTitleRequest', (_message.Message,), {
+  'DESCRIPTOR' : _SAVETITLEREQUEST,
+  '__module__' : 'microservices_pb2'
+  # @@protoc_insertion_point(class_scope:msrvcpred.SaveTitleRequest)
+  })
+_sym_db.RegisterMessage(SaveTitleRequest)
+
+SaveTitleReply = _reflection.GeneratedProtocolMessageType('SaveTitleReply', (_message.Message,), {
+  'DESCRIPTOR' : _SAVETITLEREPLY,
+  '__module__' : 'microservices_pb2'
+  # @@protoc_insertion_point(class_scope:msrvcpred.SaveTitleReply)
+  })
+_sym_db.RegisterMessage(SaveTitleReply)
+
+SavePredictsRequest = _reflection.GeneratedProtocolMessageType('SavePredictsRequest', (_message.Message,), {
+  'DESCRIPTOR' : _SAVEPREDICTSREQUEST,
+  '__module__' : 'microservices_pb2'
+  # @@protoc_insertion_point(class_scope:msrvcpred.SavePredictsRequest)
+  })
+_sym_db.RegisterMessage(SavePredictsRequest)
+
+SavePredictsReply = _reflection.GeneratedProtocolMessageType('SavePredictsReply', (_message.Message,), {
+  'DESCRIPTOR' : _SAVEPREDICTSREPLY,
+  '__module__' : 'microservices_pb2'
+  # @@protoc_insertion_point(class_scope:msrvcpred.SavePredictsReply)
+  })
+_sym_db.RegisterMessage(SavePredictsReply)
+
+GetTitleRequest = _reflection.GeneratedProtocolMessageType('GetTitleRequest', (_message.Message,), {
+  'DESCRIPTOR' : _GETTITLEREQUEST,
+  '__module__' : 'microservices_pb2'
+  # @@protoc_insertion_point(class_scope:msrvcpred.GetTitleRequest)
+  })
+_sym_db.RegisterMessage(GetTitleRequest)
+
+GetTitleReply = _reflection.GeneratedProtocolMessageType('GetTitleReply', (_message.Message,), {
+  'DESCRIPTOR' : _GETTITLEREPLY,
+  '__module__' : 'microservices_pb2'
+  # @@protoc_insertion_point(class_scope:msrvcpred.GetTitleReply)
+  })
+_sym_db.RegisterMessage(GetTitleReply)
+
+PredictsDataRequest = _reflection.GeneratedProtocolMessageType('PredictsDataRequest', (_message.Message,), {
+  'DESCRIPTOR' : _PREDICTSDATAREQUEST,
+  '__module__' : 'microservices_pb2'
+  # @@protoc_insertion_point(class_scope:msrvcpred.PredictsDataRequest)
+  })
+_sym_db.RegisterMessage(PredictsDataRequest)
+
+PredictsDataReply = _reflection.GeneratedProtocolMessageType('PredictsDataReply', (_message.Message,), {
+  'DESCRIPTOR' : _PREDICTSDATAREPLY,
+  '__module__' : 'microservices_pb2'
+  # @@protoc_insertion_point(class_scope:msrvcpred.PredictsDataReply)
+  })
+_sym_db.RegisterMessage(PredictsDataReply)
+
 
 
 _OBTAINDATA = _descriptor.ServiceDescriptor(
@@ -293,8 +949,8 @@ _OBTAINDATA = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=463,
-  serialized_end=613,
+  serialized_start=1561,
+  serialized_end=2011,
   methods=[
   _descriptor.MethodDescriptor(
     name='SendData',
@@ -313,6 +969,46 @@ _OBTAINDATA = _descriptor.ServiceDescriptor(
     containing_service=None,
     input_type=_TRAINDATAREQUEST,
     output_type=_TRAINDATAREPLY,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+  _descriptor.MethodDescriptor(
+    name='SaveTitle',
+    full_name='msrvcpred.ObtainData.SaveTitle',
+    index=2,
+    containing_service=None,
+    input_type=_SAVETITLEREQUEST,
+    output_type=_SAVETITLEREPLY,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+  _descriptor.MethodDescriptor(
+    name='SavePredicts',
+    full_name='msrvcpred.ObtainData.SavePredicts',
+    index=3,
+    containing_service=None,
+    input_type=_SAVEPREDICTSREQUEST,
+    output_type=_SAVEPREDICTSREPLY,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+  _descriptor.MethodDescriptor(
+    name='GetTitle',
+    full_name='msrvcpred.ObtainData.GetTitle',
+    index=4,
+    containing_service=None,
+    input_type=_GETTITLEREQUEST,
+    output_type=_GETTITLEREPLY,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+  _descriptor.MethodDescriptor(
+    name='GetPredicts',
+    full_name='msrvcpred.ObtainData.GetPredicts',
+    index=5,
+    containing_service=None,
+    input_type=_PREDICTSDATAREQUEST,
+    output_type=_PREDICTSDATAREPLY,
     serialized_options=None,
     create_key=_descriptor._internal_create_key,
   ),
