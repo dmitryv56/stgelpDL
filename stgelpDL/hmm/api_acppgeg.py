@@ -1,6 +1,10 @@
 #!/usr/bin/python3
 
-""" Api for HMM_acppgeg """
+""" Api for HMM_acppgeg
+The parameters of H(idden)M(arkov)M(odel) are estimated.
+
+"""
+
 import copy
 from pathlib import Path
 
@@ -9,13 +13,14 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import logging
 
 
 from hmm.fwd import fwd_bkw, viterbi, probNormDist
 from hmm.HMM import hmm_gmix
 from hmm.HMM_drive import emissionDistribution,logDist, imprLogDist, transitionsDist,plotArray,drive_HMM,input4FwdBkw,\
 logFwdBkwDict,logViterbi,plotViterbiPath
-from hmm.state import state8, state36, DIESEL, WIND, HYDRO
+from hmm.state import state5, state8, state36, DIESEL, WIND, HYDRO
 from predictor.control import ControlPlane
 from predictor.utility import  msg2log,tsBoundaries2log,logDictArima
 
@@ -32,15 +37,19 @@ aux_col_name = "Programmed_demand"
 DATA_COL_NAME = "Imbalance"
 DT_COL_NAME   = "Date Time"
 
+logger = logging.getLogger(__name__)
+
 
 
 def printListState(states_dict: dict, f:object=None):
     msg="{:^20s} {:^20s} {:^40s}".format("Index State","Short State Name","Full State Name")
     msg2log(None,"\n\n{}".format(msg),f)
+
     for i in range(len(states_dict)):
         shName,Name=getStateNamesByIndex(i,states_dict)
         msg = "{:>20d} {:^20s} {:^40s}".format(i, shName, Name)
         msg2log(None, msg, f)
+
     msg2log(None, "\n\n", f)
     return
 
@@ -161,9 +170,10 @@ def trainHMMprob(df:pd.DataFrame,data_col_name, states: list, cp: object) -> (np
     return (pai, transDist, emisDist,np_states.tolist())
 
 
-def trainPath(cp):
-    # (concat_list, states, states_concat_list, states_set, observations, observation_labels) =trainDataset(cp, mypath, LISTCSV)
-    # (pai, transDist, emisDist) = trainHMMprob(concat_list, states_concat_list, cp)
+def trainPath(cp, mode_states:int):
+    """ The parameters of H(idden)M(arkov)M(odel) are estimated here.
+    First the state set is defined. The dataset contailed a timeserires (TS), timestamp labels(labels) and exogenious is
+    read. The """
 
     csv_file      = cp.csv_path
     data_col_name = cp.rcpower_dset
@@ -175,8 +185,20 @@ def trainPath(cp):
 
     # ds, state_sequence = readDataset(csv_file, data_col_name, dt_col_name, cp.fc)
     #states_dict=copy.copy(STATES_DICT)
+    st = None
+    if mode_states == 5:
+        st = state5(cp.fc)
+    elif mode_states == 8:
+        st = state8(cp.fc)
+    elif mode_states == 36:
+        st = state36(cp.fc)
+    else:
+        logger.critical("Invalid states mode: {}\n Exit!".format(mode_states))
+        return -1
+    if st is None:
+        logger.critical("Can not create state-object. Invalid states mode: {}\n Exit!".format(mode_states))
+        return -2
 
-    st = state36(cp.fc) #st = state8(cp.fc)
     ds, state_sequence= st.readDataset(csv_file, data_col_name, dt_col_name, [DIESEL, WIND, HYDRO])
     ds.to_csv("Imbalance_ElHierro_hiddenStates.csv")
     st.printListState()
@@ -187,11 +209,6 @@ def trainPath(cp):
     printListState(states_dict, cp.fc)
     printListState(states_dict, cp.fp)
     printListState(states_dict, cp.ft)
-
-
-
-
-
 
     csv_file_with_hidden_states=Path(cp.folder_control_log/"backup_ds.csv")
     ds.to_csv(str(csv_file_with_hidden_states))
@@ -321,26 +338,35 @@ def diffSequences(seqViterbi: np.array,seqOrigin:np.array,observation_labels:np.
     diff = np.subtract(seqViterbi,seqOrigin)
     diff_value,diff_count =np.unique(diff,return_counts=True)
 
+    msg =  "Differences in Viterbi and original sequence of states"
     msg2log(None, "Differences in Viterbi and original sequence of states", f)
+    logger.info(msg)
+
     for i in range(len(diff_value)):
         msg="Distance {}  Amount {}".format(diff_value[i],diff_count[i])
         if diff_value[i] == 0:
             msg = "Match! Distance {}  Amount {}".format(diff_value[i], diff_count[i])
         msg2log(None,msg,f)
+        logger.info(msg)
 
     msg="{:<30s}:{:>10s}{:>10s}{:<40s} ".format("Date Time", "Viterbi","Origin","Previous")
     msg2log(None, msg, f)
+    logger.info(msg)
     if (diff[0]!=0):
         s0,_ = getStateNamesByIndex(seqViterbi[0], states_dict)
         s1,_ = getStateNamesByIndex(seqOrigin[0], states_dict)
-        msg2log(None, "{:<30s}:{:>10s}{:<40s}".format(observation_labels[0], s0,s1 ), f)
+        msg="{:<30s}:{:>10s}{:<40s}".format(observation_labels[0], s0,s1 )
+        msg2log(None, msg, f)
+        logger.info(msg)
 
     for i in range(1,len(diff)):
         if (diff[i]!=0):
             s0,_ = getStateNamesByIndex(seqViterbi[i], states_dict)
             s1,_ = getStateNamesByIndex(seqOrigin[i], states_dict)
             s2,_ = getStateNamesByIndex(seqOrigin[i - 1], states_dict)
-            msg2log(None, "{:<30s}:  {:>10s}  {:>10s}  {:<60s} ".format(observation_labels[i],s0,s1,s2), f)
+            msg= "{:<30s}:  {:>10s}  {:>10s}  {:<60s} ".format(observation_labels[i],s0,s1,s2)
+            msg2log(None, msg, f)
+            logger.info(msg)
 
     return
 
@@ -354,6 +380,8 @@ def logStateSequence(ds, dt_col_name, data_col_name, state_sequence, viterbi_seq
     msg="{:<6s} {:<30s} {:<9s} {:<7s} {:<7s} {:<7s} {:<7s}".format("##", "Date Time", "Imbalance", "Hidden","States",
                                                                    "Viterby","Path" )
     msg2log(None, msg, f)
+    logger.info("State sequence...")
+    logger.info(msg)
     for i in range(len(ds)):
         dt=ds[dt_col_name].values[i]
         val=ds[data_col_name].values[i]
@@ -361,7 +389,10 @@ def logStateSequence(ds, dt_col_name, data_col_name, state_sequence, viterbi_seq
         st_name,_=stateObj.getStateNamesByIndex(st)
         vt=viterbi_sequence[i]
         vt_name, _ = stateObj.getStateNamesByIndex(vt)
-        f.write("{:>6d} {:<30s} {:<9.4f} {:>7d} {:<7s} {:>7d} {:<7s}\n".format(i,dt,val,st,st_name,vt,vt_name))
+        msg = "{:>6d} {:<30s} {:<9.4f} {:>7d} {:<7s} {:>7d} {:<7s}\n".format(i,dt,val,st,st_name,vt,vt_name)
+        f.write("{:>6d} {:<30s} {:<9.4f} {:>7d} {:<7s} {:>7d} {:<7s}\n".format(i, dt, val, st, st_name, vt, vt_name))
+        logger.info(msg)
+    logger.info("\n")
 
     return
 

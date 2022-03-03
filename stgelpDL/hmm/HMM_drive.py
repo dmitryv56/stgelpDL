@@ -13,6 +13,7 @@ from math import isnan
 from os import listdir
 from os.path import isfile, join
 from pathlib import Path
+import logging
 
 import numpy as np
 import pandas as pd
@@ -30,6 +31,8 @@ from predictor.utility import msg2log, PlotPrintManager, cSFMT, logDictArima
 
 LEARN_HMM = 0
 PREDICT_HMM = 1
+
+logger = logging.getLogger(__name__)
 
 
 def input4FwdBkw(states: tuple, observation_labels: np.array, ts_array: np.array, pai: np.array,
@@ -202,11 +205,14 @@ def statesRecoding(states_in: np.array, a_sign: np.array, f: object = None) -> (
     if f is not None:
         msg = 'The states recoding as in tensorflow_probability.hmm'
         f.write(msg)
+        logger.info(msg)
         for i in range(len(states_in)):
             msg = '{} => {}\n'.format(states_in[i], states[i])
             f.write(msg)
+            logger.info(msg)
         msg = '\n## Old  New state name\n'
         f.write(msg)
+        logger.info(msg)
     for i in range(len(a_sign)):
         for j in range(len(states_in)):
             if a_sign[i] == states_in[j]:
@@ -216,6 +222,7 @@ def statesRecoding(states_in: np.array, a_sign: np.array, f: object = None) -> (
         if f is not None:
             msg = '{}: {} => {}\n'.format(i, a_sign[i], states_train[i])
             f.write(msg)
+            logger.info(msg)
     return (states, states_train)
 
 
@@ -663,6 +670,7 @@ def plotDF(df, cp):
 
         """
         msg2log(plotDF.__name__, message, cp.fc)
+        logger.info(message)
     except:
         pass
     finally:
@@ -788,6 +796,7 @@ def logDist(arDist: np.array, title: str, f: object = None) -> None:
     if f is None:
         return
     f.write("\n{}\n".format(title))
+    logger.info(title)
     shp = arDist.shape
     if len(shp) == 1:
 
@@ -799,6 +808,7 @@ def logDist(arDist: np.array, title: str, f: object = None) -> None:
                 s = s + "  " + "{}".format(b[i][j])
             s = s + '\n'
             f.write(s)
+            logger.info(s)
         return
     elif len(shp) == 2:
         (n_row, n_col) = shp
@@ -811,15 +821,15 @@ def logDist(arDist: np.array, title: str, f: object = None) -> None:
             s = s + "  " + "{}".format(arDist[i][j])
         s = s + '\n'
         f.write(s)
+        logger.info(s)
     return
 
 def imprLogDist(arDist: np.array, row_header:list, col_header:list, title: str, f: object = None) -> None:
     if f is None:
         return
 
-
-
     f.write("\n{}\n".format(title))
+    logger.info(title)
     shp = arDist.shape
     if len(shp) == 1:
 
@@ -831,7 +841,9 @@ def imprLogDist(arDist: np.array, row_header:list, col_header:list, title: str, 
         (n_row, n_col) = shp
         auxLogDist(arDist, n_row, n_col, row_header, col_header, title, f)
     else:
+        msg = "Incorrect array shape {}".format(shp)
         msg2log(None,"Incorrect array shape {}".format(shp),f)
+        logger.error(msg)
 
     return
 
@@ -848,6 +860,7 @@ def auxLogDist(arDist: np.array, n_row:int, n_col:int,  row_header:list, col_hea
     for i in col_header:
         s = s + "{:^11s}".format(i)
     f.write("{}\n".format(s))
+    logger.info(s)
     for i in range(n_row):
         s = "{:<10s}".format(row_header[i])
         for j in range(n_col):
@@ -859,6 +872,7 @@ def auxLogDist(arDist: np.array, n_row:int, n_col:int,  row_header:list, col_hea
                 s1 = "{:^10s}".format(arDist[i][j])
             s = s + "  " + s1
         f.write("{}\n".format(s))
+        logger.info(s)
 
 
 def transitionsDist(a_sign: np.array, states: np.array, f: object = None) -> np.matrix:
@@ -1130,13 +1144,24 @@ def drive_HMM(cp: ControlPlane, pai: np.array, transitDist: np.matrix, emisDist:
     observations_tenzor = tf.convert_to_tensor(observations.tolist(), dtype=tf.float64)
 
     post_mode = model.posterior_mode(observations_tenzor)
-    msg2log(drive_HMM.__name__, "Posterior mode\n\n{}\n".format(post_mode), cp.fp)
+    msg = "Posterior mode\n\n{}\n".format(post_mode)
+    msg2log(drive_HMM.__name__, msg, cp.fp)
+    logger.info(msg)
+
     post_marg = model.posterior_marginals(observations_tenzor)
-    msg2log(drive_HMM.__name__, "{}\n\n{}\n".format(post_marg.name, post_marg.logits), cp.fp)
+    msg = "{}\n\n{}\n".format(post_marg.name, post_marg.logits)
+    msg2log(drive_HMM.__name__, msg, cp.fp)
+    logger.info(msg)
+
     mean_value = model.mean()
-    msg2log(drive_HMM.__name__, "mean \n\n{}\n".format(mean_value), cp.fp)
+    msg = "mean \n\n{}\n".format(mean_value)
+    msg2log(drive_HMM.__name__, msg, cp.fp)
+    logger.info(msg)
+
     log_probability = model.log_prob(observations_tenzor)
-    msg2log(drive_HMM.__name__, "Log probability \n\n{}\n".format(log_probability), cp.fp)
+    msg = "Log probability \n\n{}\n".format(log_probability)
+    msg2log(drive_HMM.__name__, msg, cp.fp)
+    logger.info(msg)
 
     plotViterbiPath(str(len(observations)), observation_labels, post_mode.numpy(), states_set, cp)
         

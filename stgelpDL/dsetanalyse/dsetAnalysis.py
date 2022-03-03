@@ -353,7 +353,7 @@ def totalPowerTime( v:list=None, res_list:list=[], states:list=None, discret:int
 
 """ Calculate the state according by rules:
     State1  1..2Mwt,   State1  2-3Mwt,   State3  3-4Mwt,        State4  4-...Mwt,
-    State5  -1..-2Mwt, State6  -2..-3Mwt,State7  -3..-4Mwt,     State8  -4-...Mwt,
+    State5  -1..-2Mwt, State6  -2..-3Mwt,state8  -3..-4Mwt,     State8  -4-...Mwt,
 """
 def calcState(v_start:float=None,v_end:float=None, mode:str='gain', i_start:int=0,i_end:int=0, states:list=None,
               discret:int=10,f:object=None)->int:
