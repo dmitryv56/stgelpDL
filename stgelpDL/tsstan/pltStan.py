@@ -11,7 +11,7 @@ import seaborn as sns
 
 warnings.filterwarnings(action='once')
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
-from tsstan.stan import l_seas_prhouse, l_seas_slplant
+from tsstan.stan import l_seas_prhouse, l_seas_slplant, l_seas_diesel, l_seas_demand, l_seas_imbalance
 
 
 def setPlot():
@@ -124,21 +124,29 @@ if __name__ == "__main__":
     setPlot()
     file_png_path = "Logs/predict"
     f = None
-    csv_source = "~/LaLaguna/stgelpDL/dataLaLaguna/PrivateHouseElectricityConsumption_21012020_seas.csv"
+    # csv_source = "~/LaLaguna/stgelpDL/dataLaLaguna/PrivateHouseElectricityConsumption_21012020_seas.csv"
+    # df = pd.read_csv(csv_source)
+    # name = "PrivateHouse"
+    # data_column_name = None
+    # l_d_names = l_seas_prhouse
+    #
+    # plotPACF(name, l_d_names, df, data_column_name, file_png_path, f)
+    #
+    # csv_source = "~/LaLaguna/stgelpDL/dataLaLaguna/SolarPlantPowerGen_21012020_seas.csv"
+    # data_col_name = None
+    # df = pd.read_csv(csv_source)
+    # name = "SolarPlant"
+    # data_column_name = None
+    # l_d_names = l_seas_slplant
+    #
+    # plotPACF(name, l_d_names, df, data_column_name, file_png_path, f)
+
+    csv_source = "~/LaLaguna/stgelpDL/dataLaLaguna/ElHierro_2012_2014.csv"
+    data_col_name = "Diesel"
     df = pd.read_csv(csv_source)
-    name = "PrivateHouse"
-    data_column_name = None
-    l_d_names = l_seas_prhouse
+    name = "Diesel_ElHierro_12_14"
+    data_column_name = "Diesel"
+    l_d_names = l_seas_diesel
 
     plotPACF(name, l_d_names, df, data_column_name, file_png_path, f)
-
-    csv_source = "~/LaLaguna/stgelpDL/dataLaLaguna/SolarPlantPowerGen_21012020_seas.csv"
-    data_col_name = None
-    df = pd.read_csv(csv_source)
-    name = "SolarPlant"
-    data_column_name = None
-    l_d_names = l_seas_slplant
-
-    plotPACF(name, l_d_names, df, data_column_name, file_png_path, f)
-
     pass

@@ -54,6 +54,54 @@ l_seas_prhouse = [
 
 ]
 
+l_seas_diesel = [
+
+    {0: {"Diesel": diff0}},
+    {1: {"DieselDiff": diff1}},
+    {2: {"DieselDiffDiff": ddiff1}},
+    {4: {"DieselSeas4h": seas}},
+    {6: {"DieselSeas6h": seas}},
+    {8: {"DieselSeas8h": seas}},
+    {12: {"DieselSeas12h": seas}},
+    {24: {"DieselSeas1d": seas}},
+    {24: {"DieselDiffSeas1d": diffseas}},
+    {24: {"DieselDiffDiffSeas1d": ddiffseas}},
+    {168: {"DieselSeas1w": seas}},
+
+]
+
+l_seas_demand = [
+
+    {0: {"Demand": diff0}},
+    {1: {"DemandDiff": diff1}},
+    {2: {"DemandDiffDiff": ddiff1}},
+    {4: {"DemandSeas4h": seas}},
+    {6: {"DemandSeas6h": seas}},
+    {8: {"DemandSeas8h": seas}},
+    {12: {"DemandSeas12h": seas}},
+    {24: {"DemandSeas1d": seas}},
+    {24: {"DemandDiffSeas1d": diffseas}},
+    {24: {"DemandDiffDiffSeas1d": ddiffseas}},
+    {168: {"DemandSeas1w": seas}},
+
+]
+
+l_seas_imbalance = [
+
+    {0: {"Imbalance": diff0}},
+    {1: {"ImbalanceDiff": diff1}},
+    {2: {"ImbalanceDiffDiff": ddiff1}},
+    {4: {"ImbalanceSeas4h": seas}},
+    {6: {"ImbalanceSeas6h": seas}},
+    {8: {"DImbalanceSeas8h": seas}},
+    {12: {"ImbalanceSeas12h": seas}},
+    {24: {"ImbalanceSeas1d": seas}},
+    {24: {"ImbalanceDiffSeas1d": diffseas}},
+    {24: {"ImbalanceDiffDiffSeas1d": ddiffseas}},
+    {168: {"ImbalanceSeas1w": seas}},
+
+]
+
 
 def setElHiero() -> (str, str, list):
     name = "ElHiero"
@@ -64,6 +112,19 @@ def setElHiero() -> (str, str, list):
                     {
                         'HydroTurbine_Power': "~/LaLaguna/stgelpDL/dataLaLaguna/ElHiero_24092020_20102020_HydroTurbinePower.csv"},
                     {'Pump_Power': "~/LaLaguna/stgelpDL/dataLaLaguna/ElHiero_24092020_20102020_PumpPower.csv"},
+                    ]
+
+    discret = 10
+
+    return name, src_file, l_names_dest, discret
+
+def setElHierro2012_2014() -> (str, str, list):
+    name = "ElHierro"
+    src_file = "~/LaLaguna/stgelpDL/dataLaLaguna/ElHierro_2012_2014.csv"
+    l_names_dest = [{'Demand': "~/LaLaguna/stgelpDL/dataLaLaguna/ElHierro_2012_2014_Demand.csv"},
+                    {'Diesel': "~/LaLaguna/stgelpDL/dataLaLaguna/ElHierro_2012_2014_Diesel.csv"},
+                    {'Imbalance': "~/LaLaguna/stgelpDL/dataLaLaguna/ElHierro_2012_2014_Imbalance.csv"},
+
                     ]
 
     discret = 10
@@ -211,6 +272,20 @@ def driveElHiero():
 
     return
 
+def driveElHierro2012_2014():
+    name, csv_source, list_pairs_name_dest_file, discret = setElHierro2012_2014()
+
+    for item in list_pairs_name_dest_file:
+        for data_col_name, csv_dest in item.items():
+            setElHieroLogs(name, data_col_name)
+            l_seas = setSeasElHiero(data_col_name)
+            main_log = "{}_{}.log".format(name, data_col_name)
+            with open(main_log, 'w') as flog:
+                elHiero(name, csv_source, csv_dest, l_seas, data_col_name, discret, flog)
+                flog.close()
+
+    return
+
 
 def elHiero(name: str, csv_source: str, csv_dest: str, l_seas: list, data_col_name: str, discret: int,
             f: object = None):
@@ -237,7 +312,8 @@ def elHiero(name: str, csv_source: str, csv_dest: str, l_seas: list, data_col_na
 if __name__ == "__main__":
     # drivePrivateHouse()
     # driveSolarPlant()
-    driveElHiero()
+    # driveElHiero()
+    driveElHierro2012_2014()
     pass
 
     # pass
