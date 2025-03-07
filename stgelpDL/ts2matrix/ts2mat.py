@@ -336,6 +336,10 @@ def main(argc,argv):
         df = pd.read_csv(csv_source)
         n = len(df)
         dt_start=df[dt_col_name][0]
+
+        """ check missing observations"""
+        check_missing_values(df, dt_col_name)
+
     except:
         n=0
         msg = "O-o-ops! I got an unexpected error - reason  {}\n".format(sys.exc_info())
@@ -352,6 +356,7 @@ def main(argc,argv):
         if n==0 or nret!=0:
             closeLogs()
             return -1
+
     """ scaling """
     del df
     df=None
@@ -381,6 +386,21 @@ def main(argc,argv):
 
 
     return 0
+
+def check_missing_values(df:pd.DataFrame, dt_col_name:str):
+    n=-1
+    prev=datetime.strptime(df[dt_col_name][0],"%d-%m-%Y %H:%M")
+    try:
+        for i in range(1,len(df)):
+            n=i
+            curr = datetime.strptime(df[dt_col_name][i], "%d-%m-%Y %H:%M")
+            if (curr-prev).seconds!=600:
+                print(df[dt_col_name][i])
+            prev=curr
+    except:
+        print(n)
+    return
+
 
 def tsScale(source_csv:str=None, bkp_csv:str=None,data_col_name:str=None, scale:str='no',f:object=None)->int:
 
